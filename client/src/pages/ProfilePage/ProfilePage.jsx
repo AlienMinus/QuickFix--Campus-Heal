@@ -158,6 +158,32 @@ export default function ProfilePage() {
     }
   };
 
+  const [deletingTicketId, setDeletingTicketId] = useState(null);
+  const [ticketActionMsg, setTicketActionMsg] = useState({ type: '', text: '' });
+
+  const handleDeleteTicket = async (e, ticketId, ticketTitle) => {
+    e.stopPropagation();
+    const confirmed = window.confirm(
+      `Delete Ticket?\n\n"${ticketTitle || 'Untitled Ticket'}"\n\nAre you sure you want to permanently delete this ticket?`
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingTicketId(ticketId);
+      await issueAPI.delete(ticketId);
+      setMyIssues((prev) => prev.filter((t) => (t._id || t.id) !== ticketId));
+      setTicketActionMsg({ type: 'success', text: 'Ticket deleted successfully.' });
+      setTimeout(() => setTicketActionMsg({ type: '', text: '' }), 3500);
+    } catch (err) {
+      console.error('Failed to delete ticket:', err);
+      const msg = err.response?.data?.message || 'Failed to delete ticket. Please check permissions.';
+      setTicketActionMsg({ type: 'error', text: msg });
+      setTimeout(() => setTicketActionMsg({ type: '', text: '' }), 4000);
+    } finally {
+      setDeletingTicketId(null);
+    }
+  };
+
   const totalCount = myIssues.length;
   const inProgressCount = myIssues.filter((i) => i.status === 'In Progress').length;
   const resolvedCount = myIssues.filter((i) => i.status === 'Resolved').length;
