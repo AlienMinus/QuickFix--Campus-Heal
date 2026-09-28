@@ -3,7 +3,7 @@ import './Navbar.css';
 import { useAuth } from '../../context/AuthContext';
 import { useOrg } from '../../context/OrgContext';
 import NotificationBell from '../NotificationBell/NotificationBell';
-import { FaUserGraduate, FaTools, FaUserShield, FaSignInAlt } from 'react-icons/fa';
+import { FaUserGraduate, FaTools, FaUserShield, FaSignInAlt, FaCrown } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
@@ -12,6 +12,7 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const getRoleIcon = (role) => {
+    if (role === 'superadmin') return <FaCrown className="role-icon superadmin" />;
     if (role === 'admin') return <FaUserShield className="role-icon admin" />;
     if (role === 'staff') return <FaTools className="role-icon staff" />;
     return <FaUserGraduate className="role-icon student" />;

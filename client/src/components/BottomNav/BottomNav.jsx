@@ -10,24 +10,27 @@ import {
   FaUserShield,
   FaUser,
   FaUserCog,
+  FaCrown,
 } from 'react-icons/fa';
 
 const BottomNav = () => {
   const { user, isAdmin, isStaff } = useAuth();
 
   const getDashboardLink = () => {
-    if (isAdmin) return '/admin';
+    if (isAdmin || user?.role === 'superadmin') return '/admin';
     if (isStaff) return '/staff';
     return '/profile';
   };
 
   const getDashboardLabel = () => {
+    if (user?.role === 'superadmin') return 'Super';
     if (isAdmin) return 'Admin';
     if (isStaff) return 'Staff';
     return 'Profile';
   };
 
   const getDashboardIcon = () => {
+    if (user?.role === 'superadmin') return <FaCrown />;
     if (isAdmin) return <FaUserShield />;
     if (isStaff) return <FaUserCog />;
     return <FaUser />;
