@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLocationContext } from '../../context/LocationContext';
+import { useOrg } from '../../context/OrgContext';
 import { issueAPI } from '../../services/api';
 import SeverityBadge from '../../components/SeverityBadge/SeverityBadge';
 import {
@@ -22,6 +23,7 @@ import './ProfilePage.css';
 export default function ProfilePage() {
   const { user, logout, token } = useAuth();
   const { location, isTracking } = useLocationContext();
+  const { orgConfig } = useOrg();
   const navigate = useNavigate();
 
   const [myIssues, setMyIssues] = useState([]);
@@ -76,7 +78,7 @@ export default function ProfilePage() {
               <FaEnvelope /> {user?.email}
             </span>
             <span className="info-chip">
-              <FaBuilding /> {user?.department || 'BPUT GIFT Autonomous'}
+              <FaBuilding /> {user?.department || orgConfig.name}
             </span>
           </div>
         </div>
