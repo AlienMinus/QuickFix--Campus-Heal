@@ -239,10 +239,9 @@ export default function IssueTrackingPage() {
       ) : (
         <div className="issues-list-grid">
           {filteredIssues.map(issue => (
-            <IssueCard
+            <TrackingCard
               key={issue._id}
               issue={issue}
-              onUpvoted={handleUpvoted}
             />
           ))}
         </div>
