@@ -9,6 +9,7 @@ const {
   assignIssue,
   checkDuplicates,
   deleteIssue,
+  addComment,
 } = require('../controllers/issueController');
 const { protect, optionalAuth, authorize } = require('../middleware/authMiddleware');
 const { upload } = require('../config/cloudinary');
@@ -40,6 +41,8 @@ router.route('/:id/status')
   .put(optionalAuth, uploadStatusMedia, updateIssueStatus)
   .patch(optionalAuth, uploadStatusMedia, updateIssueStatus);
 router.post('/:id/upvote', optionalAuth, upvoteIssue);
+router.post('/:id/comment', optionalAuth, addComment);
+router.post('/:id/comments', optionalAuth, addComment);
 router.put('/:id/assign', protect, authorize('staff', 'admin', 'superadmin'), assignIssue);
 router.patch('/:id/assign', protect, authorize('staff', 'admin', 'superadmin'), assignIssue);
 
