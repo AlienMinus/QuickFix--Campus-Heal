@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import Navbar from './components/Navbar/Navbar';
 import BottomNav from './components/BottomNav/BottomNav';
 import DeviceFrameToggle from './components/DeviceFrameToggle/DeviceFrameToggle';
@@ -19,6 +21,14 @@ import './App.css';
 function App() {
   const { user, isAdmin, isStaff } = useAuth();
   const [isFrameMode, setIsFrameMode] = useState(false);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: '#000000' }).catch(() => {});
+      StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+    }
+  }, []);
 
   // Small screen mobile devices must always remain in native fullscreen view
   const isMobileScreen = typeof window !== 'undefined' ? window.innerWidth <= 1024 : true;
