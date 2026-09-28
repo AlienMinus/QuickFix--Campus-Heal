@@ -67,7 +67,7 @@ function App() {
 
         <BottomNav />
 
-        {isFrameMode && <div className="phone-home-indicator" />}
+        {activeFrameMode && <div className="phone-home-indicator" />}
       </div>
     </div>
   );
