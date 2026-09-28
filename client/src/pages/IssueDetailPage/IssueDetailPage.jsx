@@ -400,6 +400,46 @@ export default function IssueDetailPage() {
             </div>
           </div>
 
+          {/* Quick Pipeline Buttons */}
+          <div className="pipeline-quick-actions">
+            {issue.status !== 'In Progress' && issue.status !== 'Resolved' && issue.status !== 'Closed' && (
+              <button
+                type="button"
+                className="pipeline-btn start-work"
+                onClick={async () => {
+                  try {
+                    setUpdatingStatus(true);
+                    const res = await issueAPI.updateStatus(issue._id, { status: 'In Progress' });
+                    setIssue(res.data.issue);
+                    setNewStatus('In Progress');
+                    setActionSuccess('Work marked In Progress!');
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setUpdatingStatus(false);
+                  }
+                }}
+                disabled={updatingStatus}
+              >
+                <FaTools /> Start Work
+              </button>
+            )}
+
+            {issue.status !== 'Resolved' && issue.status !== 'Closed' && (
+              <button
+                type="button"
+                className="pipeline-btn resolve-work"
+                onClick={() => {
+                  setNewStatus('Resolved');
+                  const formEl = document.querySelector('.staff-form');
+                  if (formEl) formEl.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                <FaCheckCircle /> Mark Resolved & Upload Proof
+              </button>
+            )}
+          </div>
+
           {actionSuccess && (
             <div className="action-success-badge">
               <FaCheckCircle /> {actionSuccess}

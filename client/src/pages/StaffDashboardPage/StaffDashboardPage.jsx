@@ -43,10 +43,11 @@ export default function StaffDashboardPage() {
       setLoading(true);
       setError('');
       const res = await issueAPI.getAll({ limit: 50 });
-      // Filter issues assigned to current staff user or in need of technician
+      // Filter issues assigned to current staff user, or critical submitted, or in-progress by this staff
       const staffTasks = res.data.issues.filter(
         i => (i.assignedTo?._id === user?._id || i.assignedTo === user?._id) ||
-             (i.status === 'Submitted' && i.severity === 'Critical')
+             (i.status === 'Submitted' && i.severity === 'Critical') ||
+             (i.status === 'In Progress' && (!i.assignedTo || i.assignedTo?._id === user?._id || i.assignedTo === user?._id))
       );
       setAssignedIssues(staffTasks);
     } catch (err) {
@@ -65,12 +66,12 @@ export default function StaffDashboardPage() {
       const res = await issueAPI.updateStatus(issueId, { status: 'In Progress' });
       const updated = res.data?.issue;
       setAssignedIssues(prev =>
-        prev.map(i => (i._id === issueId ? (updated || { ...i, status: 'In Progress' }) : i))
+        prev.map(i => (i._id === issueId ? (updated || { ...i, status: 'In Progress', assignedTo: user }) : i))
       );
     } catch (err) {
       console.error('Failed to start work:', err);
       setAssignedIssues(prev =>
-        prev.map(i => (i._id === issueId ? { ...i, status: 'In Progress' } : i))
+        prev.map(i => (i._id === issueId ? { ...i, status: 'In Progress', assignedTo: user } : i))
       );
     }
   };
@@ -163,19 +164,39 @@ export default function StaffDashboardPage() {
         </div>
       </div>
 
-      {/* Quick Metrics */}
+      {/* Quick Metrics (Squared Responsive Grid) */}
       <div className="staff-metrics-grid">
         <div className="staff-metric-card active">
-          <span className="metric-number">{inProgressCount}</span>
-          <span className="metric-title">In Progress Now</span>
+          <div className="staff-metric-icon-box">
+            <FaTools />
+          </div>
+          <div className="staff-metric-details">
+            <span className="metric-number">{inProgressCount}</span>
+            <span className="metric-title">In Progress</span>
+            <span className="metric-sub">Work Underway</span>
+          </div>
         </div>
+
         <div className="staff-metric-card pending">
-          <span className="metric-number">{pendingCount}</span>
-          <span className="metric-title">Tasks Pending</span>
+          <div className="staff-metric-icon-box">
+            <FaClock />
+          </div>
+          <div className="staff-metric-details">
+            <span className="metric-number">{pendingCount}</span>
+            <span className="metric-title">Tasks Pending</span>
+            <span className="metric-sub">Action Needed</span>
+          </div>
         </div>
+
         <div className="staff-metric-card done">
-          <span className="metric-number">{resolvedCount}</span>
-          <span className="metric-title">Resolved Today</span>
+          <div className="staff-metric-icon-box">
+            <FaCheckCircle />
+          </div>
+          <div className="staff-metric-details">
+            <span className="metric-number">{resolvedCount}</span>
+            <span className="metric-title">Resolved</span>
+            <span className="metric-sub">Completed</span>
+          </div>
         </div>
       </div>
 

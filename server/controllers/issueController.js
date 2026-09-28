@@ -251,6 +251,10 @@ exports.updateIssueStatus = async (req, res) => {
     const previousStatus = issue.status;
     issue.status = status;
 
+    if (status === 'In Progress' && !issue.assignedTo && req.user && (req.user.role === 'staff' || req.user.role === 'admin')) {
+      issue.assignedTo = req.user._id;
+    }
+
     let resolutionMediaUrl = issue.resolutionDetails ? issue.resolutionDetails.resolutionMediaUrl : '';
     let resolutionMediaType = issue.resolutionDetails?.resolutionMediaType || 'image';
 
@@ -307,10 +311,14 @@ exports.updateIssueStatus = async (req, res) => {
       });
     }
 
+    const populatedIssue = await Issue.findById(issue._id)
+      .populate('reportedBy', 'name email avatar role department')
+      .populate('assignedTo', 'name email avatar phone department');
+
     return res.status(200).json({
       success: true,
       message: `Status updated to ${status}`,
-      issue,
+      issue: populatedIssue || issue,
     });
   } catch (error) {
     console.error('Update Status Error:', error);

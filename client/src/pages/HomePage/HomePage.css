@@ -109,7 +109,7 @@
   width: 100%;
 }
 
-.filter-icon {
+.filter-select-wrapper .filter-icon {
   position: absolute;
   left: 8px;
   color: #c084fc;
