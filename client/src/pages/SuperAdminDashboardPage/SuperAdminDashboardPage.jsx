@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { adminAPI, instituteAPI } from '../../services/api';
+import { adminAPI, instituteAPI, categoryAPI } from '../../services/api';
 import {
   FaCrown,
   FaUniversity,
@@ -27,6 +27,7 @@ import {
   FaThList,
   FaUserCheck,
   FaCity,
+  FaTags,
 } from 'react-icons/fa';
 import './SuperAdminDashboardPage.css';
 
@@ -38,6 +39,7 @@ export default function SuperAdminDashboardPage() {
   const [institutes, setInstitutes] = useState([]);
   const [unassignedAdmins, setUnassignedAdmins] = useState([]);
   const [adminsList, setAdminsList] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [counts, setCounts] = useState({
     totalAdmins: 0,
     totalStaff: 0,
@@ -48,10 +50,11 @@ export default function SuperAdminDashboardPage() {
   const [error, setError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
 
-  // Active view tab: 'institutes' | 'directory'
+  // Active view tab: 'institutes' | 'directory' | 'categories'
   const [activeTab, setActiveTab] = useState('institutes');
   const [instituteSearch, setInstituteSearch] = useState('');
   const [adminSearch, setAdminSearch] = useState('');
+  const [categorySearch, setCategorySearch] = useState('');
 
   // Modals state
   const [showInstituteModal, setShowInstituteModal] = useState(false);
@@ -61,6 +64,20 @@ export default function SuperAdminDashboardPage() {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [deletingAdmin, setDeletingAdmin] = useState(null);
+
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [deletingCategory, setDeletingCategory] = useState(null);
+
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    code: '',
+    description: '',
+    defaultSeverity: 'Medium',
+    icon: 'wrench',
+    slaHours: 24,
+    status: 'Active',
+  });
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -91,9 +108,10 @@ export default function SuperAdminDashboardPage() {
       setLoading(true);
       setError('');
 
-      const [instRes, adminRes] = await Promise.allSettled([
+      const [instRes, adminRes, catRes] = await Promise.allSettled([
         instituteAPI.getWithAdmins(),
         adminAPI.getAdmins(),
+        categoryAPI.getAll(),
       ]);
 
       if (instRes.status === 'fulfilled' && instRes.value.data) {
@@ -106,6 +124,10 @@ export default function SuperAdminDashboardPage() {
         if (adminRes.value.data.counts) {
           setCounts(adminRes.value.data.counts);
         }
+      }
+
+      if (catRes.status === 'fulfilled' && catRes.value.data) {
+        setCategories(catRes.value.data.categories || []);
       }
     } catch (err) {
       console.error('Failed to load super admin data:', err);
