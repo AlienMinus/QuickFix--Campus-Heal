@@ -23,7 +23,7 @@ import {
   FaPrint,
   FaTimes,
   FaBuilding,
-  FaLightbulb,
+  FaThList,
 } from 'react-icons/fa';
 import './AdminDashboardPage.css';
 
@@ -49,10 +49,14 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Table filters & active tab
+  // Table filters & active section dropdown state (issues | zones | users | patrol)
   const [tableFilter, setTableFilter] = useState('all');
   const [tableSearch, setTableSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('issues'); // 'issues' | 'zones' | 'users' | 'patrol'
+  const [activeTab, setActiveTab] = useState('issues');
+
+  // Form Modals Visibility
+  const [showAddZoneModal, setShowAddZoneModal] = useState(false);
+  const [showOrgModal, setShowOrgModal] = useState(false);
 
   // Organization branding form state
   const [orgName, setOrgName] = useState(orgConfig.name);
@@ -102,7 +106,7 @@ export default function AdminDashboardPage() {
     e.preventDefault();
     updateOrgInfo(orgName.trim(), orgSubtitle.trim());
     setOrgSavedToast(true);
-    setTimeout(() => setOrgSavedToast(false), 3000);
+    setTimeout(() => setOrgSavedToast(false), 3500);
   };
 
   const handleAddZone = (e) => {
@@ -285,35 +289,36 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Main Administrative Tabs */}
-      <div className="admin-tab-nav">
-        <button
-          className={`tab-btn ${activeTab === 'issues' ? 'active' : ''}`}
-          onClick={() => setActiveTab('issues')}
-        >
-          Issues Dispatch ({issues.length})
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'zones' ? 'active' : ''}`}
-          onClick={() => setActiveTab('zones')}
-        >
-          <FaQrcode /> Zones & QR Generator ({zones.length})
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
-          <FaUsers /> User Roles ({usersList.length})
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'patrol' ? 'active' : ''}`}
-          onClick={() => setActiveTab('patrol')}
-        >
-          <FaSatelliteDish /> Staff Patrol ({activeStaff.length})
-        </button>
+      {/* Section Navigation via Dropdown - Strictly ZERO Horizontal Scrolling */}
+      <div className="admin-section-navigator">
+        <div className="section-nav-inner">
+          <span className="section-nav-label">
+            <FaThList className="section-nav-icon" /> Switch Section:
+          </span>
+          <div className="section-dropdown-wrapper">
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              className="admin-section-dropdown"
+              aria-label="Administrative Section Selection"
+            >
+              <option value="issues">📋 Issues Dispatch ({issues.length} Tickets)</option>
+              <option value="zones">🏷️ Campus Zones & QR Generator ({zones.length} Zones)</option>
+              <option value="users">👥 User Roles & Access ({usersList.length} Accounts)</option>
+              <option value="patrol">📡 Maintenance Staff Patrol ({activeStaff.length} Active)</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      {/* Tab 1: Issues Management Table */}
+      {/* Global Toast when Org Info is updated */}
+      {orgSavedToast && (
+        <div className="admin-global-toast">
+          <FaCheckCircle /> Campus & organization details saved across the entire application!
+        </div>
+      )}
+
+      {/* Section 1: Issues Management Table */}
       {activeTab === 'issues' && (
         <div className="admin-table-card">
           <div className="table-controls">
@@ -321,7 +326,7 @@ export default function AdminDashboardPage() {
               <FaSearch className="search-icon" />
               <input
                 type="text"
-                placeholder="Filter by title, room or category..."
+                placeholder="Filter title, room, category..."
                 value={tableSearch}
                 onChange={(e) => setTableSearch(e.target.value)}
                 className="table-search-input"
@@ -345,22 +350,19 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="responsive-table-wrapper">
-            <table className="admin-data-table">
+            <table className="admin-data-table issues-table">
               <thead>
                 <tr>
-                  <th>Ticket</th>
-                  <th>Category</th>
-                  <th>Severity</th>
-                  <th>Zone / Spot</th>
-                  <th>Status</th>
-                  <th>Assigned Staff</th>
-                  <th>Actions</th>
+                  <th style={{ width: '42%' }}>Ticket Info</th>
+                  <th style={{ width: '16%' }}>Severity</th>
+                  <th style={{ width: '18%' }}>Status</th>
+                  <th style={{ width: '24%' }}>Assign / Del</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredIssues.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="empty-table-msg">No tickets match criteria.</td>
+                    <td colSpan={4} className="empty-table-msg">No tickets match criteria.</td>
                   </tr>
                 ) : (
                   filteredIssues.map((issue) => (
@@ -372,13 +374,14 @@ export default function AdminDashboardPage() {
                         >
                           {issue.title}
                         </strong>
-                        <span className="table-sub">#{issue.trackingId || issue._id.slice(-6)}</span>
+                        <div className="table-meta-line">
+                          <span className="table-sub">#{issue.trackingId || issue._id.slice(-6)}</span>
+                          <span className="table-zone-sub">📍 {issue.locationName || issue.zone || 'Campus'}</span>
+                        </div>
+                        <span className="table-cat-tag">{issue.category}</span>
                       </td>
-                      <td>{issue.category}</td>
-                      <td><SeverityBadge severity={issue.severity} /></td>
                       <td>
-                        <span>{issue.locationName}</span>
-                        <span className="table-sub">{issue.zone}</span>
+                        <SeverityBadge severity={issue.severity} />
                       </td>
                       <td>
                         <span className={`table-status-pill ${issue.status.toLowerCase().replace(' ', '-')}`}>
@@ -386,21 +389,20 @@ export default function AdminDashboardPage() {
                         </span>
                       </td>
                       <td>
-                        <select
-                          value={issue.assignedTo?._id || issue.assignedTo || ''}
-                          onChange={(e) => handleAssignTechnician(issue._id, e.target.value)}
-                          className="staff-assign-select"
-                        >
-                          <option value="">Unassigned</option>
-                          {staffMembers.map((staff) => (
-                            <option key={staff._id} value={staff._id}>
-                              {staff.name} ({staff.department || 'Staff'})
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <div className="table-action-btns">
+                        <div className="table-action-cell">
+                          <select
+                            value={issue.assignedTo?._id || issue.assignedTo || ''}
+                            onChange={(e) => handleAssignTechnician(issue._id, e.target.value)}
+                            className="staff-assign-select"
+                            title="Assign staff technician"
+                          >
+                            <option value="">Unassigned</option>
+                            {staffMembers.map((staff) => (
+                              <option key={staff._id} value={staff._id}>
+                                {staff.name}
+                              </option>
+                            ))}
+                          </select>
                           <button
                             className="delete-icon-btn"
                             onClick={() => handleDeleteIssue(issue._id)}
@@ -419,69 +421,217 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Tab 2: Campus Zones & QR Code Generator */}
+      {/* Section 2: Campus Zones & QR Code Generator */}
       {activeTab === 'zones' && (
         <div className="zones-management-container">
-          {/* Organization Generalization Settings */}
-          <div className="admin-card-section">
-            <div className="section-title-wrap">
-              <FaBuilding className="sec-icon" />
-              <div>
-                <h3>Organization / Campus Customization</h3>
-                <p>Configure the organization name so the app can be deployed anywhere</p>
-              </div>
+          {/* Action Bar with Clickable Buttons to Display Form Modals (No Hardcoded Inline Forms) */}
+          <div className="zones-header-actions-card">
+            <div className="zones-header-info">
+              <h3>Campus Zones & QR Generator ({zones.length})</h3>
+              <p>Create facility spots, generate scannable QR codes, and customize organization details</p>
             </div>
-
-            <form onSubmit={handleSaveOrgInfo} className="org-edit-form">
-              <div className="form-row-grid">
-                <div className="admin-form-group">
-                  <label>Campus / Organization Name</label>
-                  <input
-                    type="text"
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    placeholder="e.g. Apex University, City Tech Park"
-                    className="admin-input"
-                    required
-                  />
-                </div>
-                <div className="admin-form-group">
-                  <label>Tagline / Subtitle</label>
-                  <input
-                    type="text"
-                    value={orgSubtitle}
-                    onChange={(e) => setOrgSubtitle(e.target.value)}
-                    placeholder="e.g. Facility & Operations Portal"
-                    className="admin-input"
-                  />
-                </div>
-              </div>
-
-              <div className="form-submit-row">
-                <button type="submit" className="save-org-btn">
-                  Save Organization Settings
-                </button>
-                {orgSavedToast && (
-                  <span className="saved-toast">
-                    <FaCheckCircle /> Organization updated across entire app!
-                  </span>
-                )}
-              </div>
-            </form>
+            <div className="zones-action-buttons">
+              <button
+                type="button"
+                className="open-modal-action-btn primary"
+                onClick={() => setShowAddZoneModal(true)}
+              >
+                <FaPlus /> Add New Zone
+              </button>
+              <button
+                type="button"
+                className="open-modal-action-btn secondary"
+                onClick={() => setShowOrgModal(true)}
+              >
+                <FaBuilding /> Customize Campus
+              </button>
+            </div>
           </div>
 
-          {/* Add New Zone Form */}
-          <div className="admin-card-section">
-            <div className="section-title-wrap">
-              <FaPlus className="sec-icon" />
-              <div>
-                <h3>Define New Campus Zone & Inspection Advice</h3>
-                <p>Register a building or room to generate its physical QR code</p>
+          {/* Zones Table with QR Generation */}
+          <div className="admin-table-card">
+            <div className="responsive-table-wrapper">
+              <table className="admin-data-table zones-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '48%' }}>Zone & Building</th>
+                    <th style={{ width: '24%' }}>Category</th>
+                    <th style={{ width: '18%' }}>QR Code</th>
+                    <th style={{ width: '10%' }}>Del</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {zones.map((zone) => (
+                    <tr key={zone.id}>
+                      <td>
+                        <strong className="table-highlight-name">{zone.name}</strong>
+                        <span className="table-sub">🏢 {zone.building} {zone.room ? `• ${zone.room}` : ''}</span>
+                        {zone.recommendation && (
+                          <span className="table-advice-sub">💡 {zone.recommendation}</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="zone-cat-pill">{zone.category}</span>
+                      </td>
+                      <td>
+                        <button
+                          className="generate-qr-btn"
+                          onClick={() => handleGenerateQR(zone)}
+                          title="Generate QR code for this zone"
+                        >
+                          <FaQrcode /> QR
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          className="delete-icon-btn"
+                          onClick={() => deleteZone(zone.id)}
+                          title="Delete zone"
+                        >
+                          <FaTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Section 3: User Role Management */}
+      {activeTab === 'users' && (
+        <div className="admin-table-card">
+          <div className="patrol-header">
+            <h3>Registered User Accounts & Access Roles ({usersList.length})</h3>
+            <p>Promote or modify staff and administrator permissions</p>
+          </div>
+
+          <div className="responsive-table-wrapper">
+            <table className="admin-data-table users-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '44%' }}>User</th>
+                  <th style={{ width: '24%' }}>Role</th>
+                  <th style={{ width: '32%' }}>Change Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersList.map((u) => (
+                  <tr key={u._id}>
+                    <td>
+                      <strong className="table-highlight-name">{u.name}</strong>
+                      <span className="table-sub">{u.email}</span>
+                      <span className="table-sub">{u.department || 'General Member'}</span>
+                    </td>
+                    <td>
+                      <span className={`role-badge-cell ${u.role}`}>
+                        {u.role ? u.role.toUpperCase() : 'STUDENT'}
+                      </span>
+                    </td>
+                    <td>
+                      <select
+                        value={u.role || 'student'}
+                        onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                        className="role-change-select"
+                      >
+                        <option value="student">Student</option>
+                        <option value="staff">Staff</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Section 4: Live 1s Patrol Telemetry */}
+      {activeTab === 'patrol' && (
+        <div className="admin-table-card">
+          <div className="patrol-header">
+            <h3>Active Maintenance Staff Geo-Telemetry (MongoDB 1s Stream)</h3>
+            <p>Real-time location stream from mobile personnel</p>
+          </div>
+
+          <div className="responsive-table-wrapper">
+            <table className="admin-data-table patrol-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '44%' }}>Staff Member</th>
+                  <th style={{ width: '36%' }}>Coordinates</th>
+                  <th style={{ width: '20%' }}>Map</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeStaff.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="empty-table-msg">
+                      No maintenance personnel currently broadcasting 1s GPS signals.
+                    </td>
+                  </tr>
+                ) : (
+                  activeStaff.map((staff) => (
+                    <tr key={staff.userId || staff._id}>
+                      <td>
+                        <strong className="table-highlight-name">{staff.name}</strong>
+                        <span className="table-sub">{staff.department || 'Maintenance'}</span>
+                        <span className="live-ping-indicator">
+                          <span className="dot pulse" /> Live Ping
+                        </span>
+                      </td>
+                      <td>
+                        <span className="coords-mono">
+                          {Number(staff.location?.latitude).toFixed(4)}°, {Number(staff.location?.longitude).toFixed(4)}°
+                        </span>
+                        <span className="table-sub">±{Math.round(staff.location?.accuracy || 5)}m</span>
+                      </td>
+                      <td>
+                        <button
+                          className="map-focus-btn"
+                          onClick={() => navigate('/map')}
+                        >
+                          Radar
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* FORM MODAL 1: Add New Campus Zone & QR Generator */}
+      {showAddZoneModal && (
+        <div className="admin-form-modal-backdrop" onClick={() => setShowAddZoneModal(false)}>
+          <div className="admin-form-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-form-modal-header">
+              <div className="admin-modal-title">
+                <FaPlus className="modal-title-icon" />
+                <h4>Define New Campus Zone & Inspection Advice</h4>
               </div>
+              <button
+                type="button"
+                className="admin-form-modal-close"
+                onClick={() => setShowAddZoneModal(false)}
+              >
+                <FaTimes />
+              </button>
             </div>
 
-            <form onSubmit={handleAddZone} className="add-zone-form">
-              <div className="form-grid-three">
+            <form
+              onSubmit={(e) => {
+                handleAddZone(e);
+                setShowAddZoneModal(false);
+              }}
+              className="admin-modal-form-content"
+            >
+              <div className="form-modal-grid">
                 <div className="admin-form-group">
                   <label>Zone Name *</label>
                   <input
@@ -516,9 +666,7 @@ export default function AdminDashboardPage() {
                     className="admin-input"
                   />
                 </div>
-              </div>
 
-              <div className="form-grid-two">
                 <div className="admin-form-group">
                   <label>Recommended Category</label>
                   <select
@@ -534,8 +682,8 @@ export default function AdminDashboardPage() {
                   </select>
                 </div>
 
-                <div className="admin-form-group">
-                  <label>Admin Recommendation Advice (Auto-fills on scan)</label>
+                <div className="admin-form-group full-width">
+                  <label>Admin Recommendation Advice (Auto-fills on QR scan)</label>
                   <input
                     type="text"
                     value={newRecommendation}
@@ -546,184 +694,88 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <button type="submit" className="create-zone-btn">
-                <FaPlus /> Add Zone to Campus Registry
-              </button>
+              <div className="admin-form-modal-actions">
+                <button
+                  type="button"
+                  className="modal-cancel-btn"
+                  onClick={() => setShowAddZoneModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="modal-submit-btn">
+                  <FaPlus /> Add Zone to Registry
+                </button>
+              </div>
             </form>
           </div>
-
-          {/* Zones Table with QR Generation */}
-          <div className="admin-table-card">
-            <div className="patrol-header">
-              <h3>Registered Campus Zones ({zones.length})</h3>
-              <p>Generate and print QR codes to paste on campus doors, walls, and desks</p>
-            </div>
-
-            <div className="responsive-table-wrapper">
-              <table className="admin-data-table">
-                <thead>
-                  <tr>
-                    <th>Zone Name</th>
-                    <th>Location</th>
-                    <th>Default Category</th>
-                    <th>Recommendation Advice</th>
-                    <th>QR Action</th>
-                    <th>Delete</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {zones.map((zone) => (
-                    <tr key={zone.id}>
-                      <td>
-                        <strong>{zone.name}</strong>
-                      </td>
-                      <td>
-                        <span>{zone.building}</span>
-                        {zone.room && <span className="table-sub">{zone.room}</span>}
-                      </td>
-                      <td>
-                        <span className="zone-cat-pill">{zone.category}</span>
-                      </td>
-                      <td>
-                        <span className="advice-text">{zone.recommendation || 'Standard check'}</span>
-                      </td>
-                      <td>
-                        <button
-                          className="generate-qr-btn"
-                          onClick={() => handleGenerateQR(zone)}
-                          title="Generate QR code for this zone"
-                        >
-                          <FaQrcode /> View QR
-                        </button>
-                      </td>
-                      <td>
-                        <button
-                          className="delete-icon-btn"
-                          onClick={() => deleteZone(zone.id)}
-                          title="Delete zone"
-                        >
-                          <FaTrash />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
       )}
 
-      {/* Tab 3: User Role Management */}
-      {activeTab === 'users' && (
-        <div className="admin-table-card">
-          <div className="patrol-header">
-            <h3>Registered Users & Access Roles ({usersList.length})</h3>
-            <p>Assign administrative and maintenance staff privileges</p>
-          </div>
+      {/* FORM MODAL 2: Organization / Campus Customization */}
+      {showOrgModal && (
+        <div className="admin-form-modal-backdrop" onClick={() => setShowOrgModal(false)}>
+          <div className="admin-form-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-form-modal-header">
+              <div className="admin-modal-title">
+                <FaBuilding className="modal-title-icon" />
+                <h4>Organization / Campus Customization</h4>
+              </div>
+              <button
+                type="button"
+                className="admin-form-modal-close"
+                onClick={() => setShowOrgModal(false)}
+              >
+                <FaTimes />
+              </button>
+            </div>
 
-          <div className="responsive-table-wrapper">
-            <table className="admin-data-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Email</th>
-                  <th>Department / Roll</th>
-                  <th>Current Role</th>
-                  <th>Change Permission</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersList.map((u) => (
-                  <tr key={u._id}>
-                    <td>
-                      <strong>{u.name}</strong>
-                    </td>
-                    <td>{u.email}</td>
-                    <td>{u.department || 'General Member'}</td>
-                    <td>
-                      <span className={`role-badge-cell ${u.role}`}>
-                        {u.role ? u.role.toUpperCase() : 'STUDENT'}
-                      </span>
-                    </td>
-                    <td>
-                      <select
-                        value={u.role || 'student'}
-                        onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                        className="role-change-select"
-                      >
-                        <option value="student">Student</option>
-                        <option value="staff">Maintenance Staff</option>
-                        <option value="admin">Administrator</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+            <form
+              onSubmit={(e) => {
+                handleSaveOrgInfo(e);
+                setShowOrgModal(false);
+              }}
+              className="admin-modal-form-content"
+            >
+              <p className="modal-intro-text">
+                Generalize the application so that any college, university, or corporate facility can use this portal.
+              </p>
 
-      {/* Tab 4: Live 1s Patrol Telemetry */}
-      {activeTab === 'patrol' && (
-        <div className="admin-table-card">
-          <div className="patrol-header">
-            <h3>Active Maintenance Staff Geo-Telemetry (MongoDB 1s Stream)</h3>
-            <p>Real-time location stream from mobile field personnel</p>
-          </div>
+              <div className="admin-form-group">
+                <label>Campus / Organization Name *</label>
+                <input
+                  type="text"
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                  placeholder="e.g. Apex University, City Tech Park"
+                  className="admin-input"
+                  required
+                />
+              </div>
 
-          <div className="responsive-table-wrapper">
-            <table className="admin-data-table">
-              <thead>
-                <tr>
-                  <th>Staff Member</th>
-                  <th>Department</th>
-                  <th>Current Lat / Lng</th>
-                  <th>Accuracy</th>
-                  <th>Status</th>
-                  <th>Live Map</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeStaff.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="empty-table-msg">
-                      No maintenance personnel currently broadcasting 1s GPS signals.
-                    </td>
-                  </tr>
-                ) : (
-                  activeStaff.map((staff) => (
-                    <tr key={staff.userId || staff._id}>
-                      <td>
-                        <strong>{staff.name}</strong>
-                        <span className="table-sub">{staff.email}</span>
-                      </td>
-                      <td>{staff.department || 'Maintenance'}</td>
-                      <td>
-                        <span className="coords-mono">
-                          {Number(staff.location?.latitude).toFixed(5)}°, {Number(staff.location?.longitude).toFixed(5)}°
-                        </span>
-                      </td>
-                      <td>±{Math.round(staff.location?.accuracy || 5)}m</td>
-                      <td>
-                        <span className="live-ping-indicator">
-                          <span className="dot pulse" /> Live
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className="map-focus-btn"
-                          onClick={() => navigate('/map')}
-                        >
-                          View Radar
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+              <div className="admin-form-group">
+                <label>Tagline / Subtitle</label>
+                <input
+                  type="text"
+                  value={orgSubtitle}
+                  onChange={(e) => setOrgSubtitle(e.target.value)}
+                  placeholder="e.g. Facility & Operations Portal"
+                  className="admin-input"
+                />
+              </div>
+
+              <div className="admin-form-modal-actions">
+                <button
+                  type="button"
+                  className="modal-cancel-btn"
+                  onClick={() => setShowOrgModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="modal-submit-btn">
+                  <FaCheckCircle /> Save Organization Settings
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

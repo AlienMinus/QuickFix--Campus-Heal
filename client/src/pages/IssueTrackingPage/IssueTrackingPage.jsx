@@ -185,17 +185,25 @@ export default function IssueTrackingPage() {
         </div>
       </div>
 
-      {/* Status Segmented Tabs */}
-      <div className="status-tabs-nav">
-        {STATUS_TABS.map(tab => (
-          <button
-            key={tab.id}
-            className={`status-tab-btn ${statusFilter === tab.id ? 'active' : ''}`}
-            onClick={() => setStatusFilter(tab.id)}
+      {/* Status Filter Dropdown (Zero Horizontal Scrolling) */}
+      <div className="status-nav-container">
+        <div className="status-dropdown-wrap">
+          <label htmlFor="status-select-nav" className="status-nav-label">
+            <FaFilter /> Status Filter:
+          </label>
+          <select
+            id="status-select-nav"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="status-nav-select"
           >
-            <span>{tab.label}</span>
-          </button>
-        ))}
+            {STATUS_TABS.map((tab) => (
+              <option key={tab.id} value={tab.id}>
+                {tab.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Ticket List View */}
