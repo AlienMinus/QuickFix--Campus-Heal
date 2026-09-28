@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { issueAPI } from '../../services/api';
-import IssueCard from '../../components/IssueCard/IssueCard';
+import TrackingCard from '../../components/TrackingCard/TrackingCard';
 import {
   FaSearch,
   FaFilter,
