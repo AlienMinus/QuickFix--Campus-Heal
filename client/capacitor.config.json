@@ -1,0 +1,9 @@
+{
+  "appId": "com.techcarnival.quickfix",
+  "appName": "Smart Campus QuickFix",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
+}
