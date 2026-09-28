@@ -46,7 +46,9 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/report" element={<ReportIssuePage />} />
             <Route path="/track" element={<IssueTrackingPage />} />
+            <Route path="/issues" element={<IssueTrackingPage />} />
             <Route path="/issue/:id" element={<IssueDetailPage />} />
+            <Route path="/issues/:id" element={<IssueDetailPage />} />
             <Route path="/map" element={<LiveMapPage />} />
             <Route path="/admin" element={<AdminDashboardPage />} />
             <Route path="/staff" element={<StaffDashboardPage />} />

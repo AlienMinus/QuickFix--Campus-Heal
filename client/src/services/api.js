@@ -30,4 +30,46 @@ api.interceptors.response.use(
   }
 );
 
+// Modular API helper services
+export const issueAPI = {
+  getAll: (params) => api.get('/issues', { params }),
+  getById: (id) => api.get(`/issues/${id}`),
+  create: (formData) => api.post('/issues', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  upvote: (id) => api.post(`/issues/${id}/upvote`),
+  updateStatus: (id, formData) => api.patch(`/issues/${id}/status`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  addComment: (id, text) => api.post(`/issues/${id}/comment`, { text }),
+  checkDuplicates: (params) => api.get('/issues/check-duplicate', { params }),
+  getStats: () => api.get('/issues/stats/overview'),
+};
+
+export const adminAPI = {
+  getStats: () => api.get('/admin/stats'),
+  getUsers: () => api.get('/admin/users'),
+  updateUserRole: (userId, role) => api.patch(`/admin/users/${userId}/role`, { role }),
+  assignTechnician: (issueId, staffId) => api.patch(`/admin/issues/${issueId}/assign`, { staffId }),
+  deleteIssue: (issueId) => api.delete(`/admin/issues/${issueId}`),
+};
+
+export const locationAPI = {
+  getActiveStaff: () => api.get('/location/active-staff'),
+  logLocation: (data) => api.post('/location/log', data),
+  getRecentLogs: () => api.get('/location/recent'),
+};
+
+export const authAPI = {
+  login: (email, password) => api.post('/auth/login', { email, password }),
+  register: (data) => api.post('/auth/register', data),
+  google: (token) => api.post('/auth/google', { token }),
+  getProfile: () => api.get('/auth/me'),
+};
+
+export const notificationAPI = {
+  getAll: () => api.get('/notifications'),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+};
+
 export default api;
