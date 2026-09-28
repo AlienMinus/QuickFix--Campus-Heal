@@ -2,11 +2,11 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(15, 23, 42, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  height: 60px;
+  background: rgba(20, 10, 42, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.18);
+  height: 52px;
   display: flex;
   align-items: center;
 }
@@ -15,7 +15,7 @@
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -24,15 +24,15 @@
 .navbar-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-decoration: none;
 }
 
 .brand-logo {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
-  filter: drop-shadow(0 2px 8px rgba(37, 99, 235, 0.4));
+  filter: drop-shadow(0 2px 8px rgba(95, 37, 159, 0.5));
 }
 
 .brand-text {
@@ -41,7 +41,7 @@
 }
 
 .brand-title {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.02em;
@@ -49,9 +49,9 @@
 }
 
 .brand-subtitle {
-  font-size: 0.7rem;
+  font-size: 0.64rem;
   font-weight: 700;
-  color: #3b82f6;
+  color: #c084fc;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -59,7 +59,7 @@
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .role-switcher-dropdown {
@@ -69,63 +69,63 @@
 .role-badge-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 5px;
+  padding: 5px 8px;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: rgba(36, 20, 68, 0.8);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .role-badge-btn:hover {
-  background: rgba(51, 65, 85, 0.9);
+  background: rgba(48, 28, 88, 0.9);
 }
 
 .role-badge-btn.admin {
   border-color: rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.12);
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .role-badge-btn.staff {
   border-color: rgba(245, 158, 11, 0.4);
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(245, 158, 11, 0.15);
 }
 
 .role-badge-btn.student {
-  border-color: rgba(59, 130, 246, 0.4);
-  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(168, 85, 247, 0.4);
+  background: rgba(95, 37, 159, 0.25);
 }
 
 .role-icon {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
 }
 
 .role-icon.admin { color: #ef4444; }
 .role-icon.staff { color: #f59e0b; }
-.role-icon.student { color: #3b82f6; }
+.role-icon.student { color: #c084fc; }
 
 .role-text {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #f1f5f9;
   letter-spacing: 0.04em;
 }
 
 .dropdown-arrow {
-  font-size: 0.65rem;
-  color: #94a3b8;
+  font-size: 0.6rem;
+  color: #a79bbf;
 }
 
 .role-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 250px;
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 240px;
+  background: #1d1138;
+  border: 1px solid rgba(168, 85, 247, 0.25);
   border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
   overflow: hidden;
   z-index: 1050;
   animation: fadeInDown 0.15s ease-out;
@@ -138,13 +138,13 @@
 
 .dropdown-header {
   padding: 8px 12px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: #a79bbf;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.12);
 }
 
 .dropdown-item {
@@ -152,7 +152,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   background: none;
   border: none;
   text-align: left;
@@ -162,26 +162,26 @@
 }
 
 .dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(168, 85, 247, 0.12);
 }
 
 .dropdown-item.active {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(95, 37, 159, 0.35);
 }
 
 .item-icon {
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .item-title {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #ffffff;
 }
 
 .item-sub {
-  font-size: 0.72rem;
-  color: #94a3b8;
+  font-size: 0.68rem;
+  color: #a79bbf;
 }
 
 .user-profile-btn {
@@ -189,11 +189,11 @@
 }
 
 .user-avatar {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #3b82f6;
+  border: 2px solid #a855f7;
   transition: transform 0.2s ease;
 }
 

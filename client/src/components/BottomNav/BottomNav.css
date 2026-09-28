@@ -1,23 +1,27 @@
 .mobile-bottom-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 14px));
+  left: 12px;
+  right: 12px;
+  max-width: 520px;
+  margin: 0 auto;
   z-index: 1000;
-  height: 64px;
-  background: rgba(15, 23, 42, 0.96);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  height: 56px;
+  background: rgba(29, 17, 56, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 0 8px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+  padding: 0 4px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 16px rgba(95, 37, 159, 0.35);
 }
 
 .device-frame .mobile-bottom-nav {
   position: absolute;
+  bottom: 14px;
 }
 
 .nav-tab {
@@ -25,59 +29,61 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  color: #94a3b8;
+  gap: 2px;
+  color: #a79bbf;
   text-decoration: none;
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   font-weight: 600;
   transition: all 0.2s ease;
   flex: 1;
-  padding: 6px 0;
+  padding: 4px 0;
 }
 
 .nav-tab-icon {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   transition: transform 0.2s ease;
 }
 
 .nav-tab:hover {
-  color: #cbd5e1;
+  color: #e2e8f0;
 }
 
 .nav-tab.active {
-  color: #3b82f6;
+  color: #d8b4fe;
 }
 
 .nav-tab.active .nav-tab-icon {
-  transform: translateY(-2px);
+  color: #c084fc;
+  transform: translateY(-1px);
 }
 
 .center-action-tab {
   position: relative;
-  top: -12px;
+  top: -14px;
 }
 
 .center-plus-circle {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #7b2cbf, #5f259f);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.35rem;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.5);
-  border: 3px solid #0f172a;
+  font-size: 1.25rem;
+  box-shadow: 0 4px 16px rgba(123, 44, 191, 0.6);
+  border: 3px solid #140b28;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .center-action-tab:hover .center-plus-circle,
 .center-action-tab.active .center-plus-circle {
   transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.7);
+  box-shadow: 0 6px 22px rgba(123, 44, 191, 0.85);
 }
 
 .center-action-tab .nav-tab-label {
   margin-top: 2px;
+  font-size: 0.64rem;
 }

@@ -1,19 +1,19 @@
 .location-tracker-card {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  border-radius: 14px;
+  background: rgba(29, 17, 56, 0.92);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 12px;
   overflow: hidden;
-  margin: 12px 0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  margin: 10px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   transition: all 0.2s ease;
 }
 
 .location-tracker-card.tracking-on {
-  border-color: rgba(16, 185, 129, 0.4);
+  border-color: rgba(16, 185, 129, 0.45);
 }
 
 .location-tracker-card.tracking-off {
-  border-color: rgba(148, 163, 184, 0.2);
+  border-color: rgba(168, 85, 247, 0.2);
   opacity: 0.8;
 }
 
@@ -21,31 +21,32 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 8px 12px;
   cursor: pointer;
 }
 
 .tracker-status-indicator {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .live-pulse-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .live-pulse-dot.pulse {
   background: #10b981;
-  box-shadow: 0 0 10px #10b981;
+  box-shadow: 0 0 8px #10b981;
   animation: radarBlink 1s infinite alternate;
 }
 
 .live-pulse-dot.off {
-  background: #64748b;
+  background: #7d6e96;
 }
 
 @keyframes radarBlink {
@@ -59,64 +60,64 @@
 }
 
 .status-title {
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 700;
   color: #f8fafc;
 }
 
 .status-zone {
-  font-size: 0.72rem;
-  color: #94a3b8;
+  font-size: 0.66rem;
+  color: #a79bbf;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
 .mini-icon {
-  font-size: 0.7rem;
-  color: #3b82f6;
+  font-size: 0.68rem;
+  color: #c084fc;
 }
 
 .tracker-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .logged-counter {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  background: rgba(30, 41, 59, 0.6);
-  padding: 3px 8px;
+  background: rgba(39, 23, 75, 0.7);
+  padding: 2px 7px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
 .counter-val {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 800;
-  color: #38bdf8;
+  color: #d8b4fe;
   font-family: 'JetBrains Mono', monospace;
   line-height: 1;
 }
 
 .counter-label {
-  font-size: 0.6rem;
-  color: #64748b;
+  font-size: 0.56rem;
+  color: #a79bbf;
   text-transform: uppercase;
 }
 
 .toggle-tracking-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   transition: all 0.2s ease;
 }
 
@@ -133,7 +134,7 @@
 .toggle-tracking-btn.resume {
   background: rgba(16, 185, 129, 0.15);
   color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(168, 85, 247, 0.3);
 }
 
 .toggle-tracking-btn.resume:hover {
@@ -143,42 +144,42 @@
 .expand-btn {
   background: none;
   border: none;
-  color: #64748b;
-  font-size: 0.8rem;
+  color: #a79bbf;
+  font-size: 0.75rem;
   cursor: pointer;
 }
 
 .tracker-details-tray {
-  padding: 10px 14px 14px 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(10, 15, 30, 0.4);
+  padding: 8px 12px 12px 12px;
+  border-top: 1px solid rgba(168, 85, 247, 0.15);
+  background: rgba(18, 9, 38, 0.5);
 }
 
 .telemetry-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .telemetry-item {
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  padding: 6px 10px;
+  background: rgba(39, 23, 75, 0.5);
+  border: 1px solid rgba(168, 85, 247, 0.12);
+  padding: 5px 8px;
   border-radius: 8px;
 }
 
 .item-label {
   display: block;
-  font-size: 0.65rem;
-  color: #64748b;
+  font-size: 0.6rem;
+  color: #a79bbf;
   text-transform: uppercase;
   font-weight: 600;
   margin-bottom: 2px;
 }
 
 .item-val {
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #e2e8f0;
   font-family: 'JetBrains Mono', monospace;
@@ -188,13 +189,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.7rem;
-  color: #94a3b8;
+  font-size: 0.66rem;
+  color: #a79bbf;
   padding-top: 4px;
 }
 
 .footer-icon {
-  color: #06b6d4;
+  color: #c084fc;
   margin-right: 4px;
 }
 
@@ -204,5 +205,5 @@
   gap: 4px;
   color: #10b981;
   font-weight: 600;
-  font-size: 0.68rem;
+  font-size: 0.64rem;
 }
