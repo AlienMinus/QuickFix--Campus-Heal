@@ -525,10 +525,72 @@
 
 .row-right {
   display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.row-status-group {
+  display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.3rem;
+}
+
+.ticket-delete-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  padding: 0;
   flex-shrink: 0;
+}
+
+.ticket-delete-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+.ticket-delete-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ticket-delete-btn .trash-icon {
+  font-size: 0.78rem;
+}
+
+.ticket-action-toast {
+  margin: 0.4rem 0 0.8rem 0;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.ticket-action-toast.success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.ticket-action-toast.error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
 }
 
 .status-pill {
