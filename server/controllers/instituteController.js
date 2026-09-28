@@ -16,6 +16,50 @@ exports.getInstitutes = async (req, res) => {
   }
 };
 
+// Get all institutes with their respective campus admins (Super Admin only)
+exports.getInstitutesWithAdmins = async (req, res) => {
+  try {
+    const institutes = await Institute.find().sort({ name: 1 });
+    const admins = await User.find({ role: 'admin' })
+      .select('name email role institute department identifier phone createdAt')
+      .sort({ name: 1 });
+
+    const institutesWithAdmins = institutes.map((inst) => {
+      const assignedAdmins = admins.filter(
+        (a) => a.institute && a.institute.trim().toLowerCase() === inst.name.trim().toLowerCase()
+      );
+      return {
+        _id: inst._id,
+        name: inst.name,
+        code: inst.code,
+        location: inst.location,
+        city: inst.city,
+        state: inst.state,
+        contactEmail: inst.contactEmail,
+        contactPhone: inst.contactPhone,
+        status: inst.status,
+        createdAt: inst.createdAt,
+        admins: assignedAdmins,
+      };
+    });
+
+    const instituteNames = new Set(institutes.map((i) => i.name.trim().toLowerCase()));
+    const unassignedAdmins = admins.filter(
+      (a) => !a.institute || !instituteNames.has(a.institute.trim().toLowerCase())
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: institutesWithAdmins.length,
+      institutes: institutesWithAdmins,
+      unassignedAdmins,
+    });
+  } catch (error) {
+    console.error('Get Institutes With Admins Error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Create a new institute (Super Admin only)
 exports.createInstitute = async (req, res) => {
   try {

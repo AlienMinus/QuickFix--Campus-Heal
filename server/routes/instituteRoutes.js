@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getInstitutes,
+  getInstitutesWithAdmins,
   createInstitute,
   updateInstitute,
   deleteInstitute,
@@ -14,6 +15,7 @@ router.get('/', getInstitutes);
 
 // Super Admin protected routes
 router.get('/superadmin/overview', protect, authorize('superadmin'), getSuperAdminOverview);
+router.get('/with-admins', protect, authorize('superadmin'), getInstitutesWithAdmins);
 router.post('/', protect, authorize('superadmin'), createInstitute);
 router.put('/:id', protect, authorize('superadmin'), updateInstitute);
 router.delete('/:id', protect, authorize('superadmin'), deleteInstitute);

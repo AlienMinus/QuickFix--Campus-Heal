@@ -92,8 +92,8 @@ exports.getDashboardStats = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const userFilter = {};
-    if (req.user?.role !== 'superadmin' && req.user?.institute) {
-      userFilter.institute = req.user.institute;
+    if (req.user?.role !== 'superadmin') {
+      userFilter.institute = req.user?.institute || 'None';
     }
 
     const users = await User.find(userFilter).select('-password').sort({ createdAt: -1 });
@@ -274,6 +274,17 @@ exports.updateUserRole = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    // Role lock: Normal admins CANNOT modify their own role
+    if (!isSuper && userToUpdate._id.toString() === req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Administrators cannot modify their own role' });
+    }
+
+    // Protection: Normal admins cannot alter superadmin accounts or assign superadmin role
+    if (!isSuper && (userToUpdate.role === 'superadmin' || role === 'superadmin')) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to alter superadmin accounts or assign superadmin role' });
+    }
+
+    // Scope check: Normal admin can ONLY modify users belonging to their own institute
     if (!isSuper && userToUpdate.institute !== req.user?.institute) {
       return res.status(403).json({ success: false, message: 'Cannot modify users from another institute' });
     }
@@ -307,10 +318,17 @@ exports.assignTechnician = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
+    if (req.user?.role !== 'superadmin' && issue.institute !== req.user?.institute) {
+      return res.status(403).json({ success: false, message: 'Not authorized to manage issues from another institute' });
+    }
+
     let staffName = 'Unassigned';
     if (staffId) {
       const staff = await User.findById(staffId);
       if (staff) {
+        if (req.user?.role !== 'superadmin' && staff.institute !== req.user?.institute) {
+          return res.status(403).json({ success: false, message: 'Cannot assign staff from another institute' });
+        }
         issue.assignedTo = staff._id;
         issue.assignedToName = staff.name;
         staffName = staff.name;
@@ -357,6 +375,12 @@ exports.mergeDuplicates = async (req, res) => {
 
     if (!primary || !duplicate) {
       return res.status(404).json({ success: false, message: 'Primary or duplicate issue not found' });
+    }
+
+    if (req.user?.role !== 'superadmin') {
+      if (primary.institute !== req.user?.institute || duplicate.institute !== req.user?.institute) {
+        return res.status(403).json({ success: false, message: 'Not authorized to merge issues from another institute' });
+      }
     }
 
     duplicate.isDuplicate = true;
