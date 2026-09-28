@@ -8,8 +8,32 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const { user, isAuthenticated } = useAuth();
-  const { orgConfig } = useOrg();
+  const { globalHeader, instituteHeader, fetchInstituteHeader } = useOrg();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.institute) {
+      fetchInstituteHeader(user.institute);
+    }
+  }, [user?.institute, fetchInstituteHeader]);
+
+  // Logged-in institute members (students, staff, normal admin) see their institute's customized header.
+  // Super admin and unauthenticated guests see the Global Platform Header (managed solely by Super Admin).
+  const isInstituteMember = Boolean(isAuthenticated && user?.role !== 'superadmin' && user?.institute);
+
+  const brandTitle = isInstituteMember
+    ? (instituteHeader?.name || user.institute)
+    : (globalHeader?.name || 'Smart Campus QuickFix');
+
+  const brandSubtitle = isInstituteMember
+    ? (instituteHeader?.subtitle || 'Campus Facility QuickFix')
+    : (globalHeader?.subtitle || 'Civic & Facility Operations');
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.title = `${brandTitle} | ${brandSubtitle}`;
+    }
+  }, [brandTitle, brandSubtitle]);
 
   const getRoleIcon = (role) => {
     if (role === 'superadmin') return <FaCrown className="role-icon superadmin" />;
@@ -24,8 +48,8 @@ const Navbar = () => {
         <Link to="/" className="navbar-brand">
           <img src="/favicon.svg" alt="App Logo" className="brand-logo" />
           <div className="brand-text">
-            <span className="brand-title">{orgConfig.name}</span>
-            <span className="brand-subtitle">{orgConfig.subtitle || 'Facility QuickFix'}</span>
+            <span className="brand-title">{brandTitle}</span>
+            <span className="brand-subtitle">{brandSubtitle}</span>
           </div>
         </Link>
 

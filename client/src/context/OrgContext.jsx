@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { settingsAPI, instituteAPI } from '../services/api';
 
 const OrgContext = createContext();
 
@@ -65,7 +66,7 @@ const DEFAULT_ZONES = [
   },
 ];
 
-const DEFAULT_CONFIG = {
+const DEFAULT_GLOBAL_CONFIG = {
   name: 'Smart Campus QuickFix',
   subtitle: 'Civic & Facility Operations',
   tagline: 'Rapid Resolution Platform',
@@ -73,34 +74,116 @@ const DEFAULT_CONFIG = {
 };
 
 export const OrgProvider = ({ children }) => {
-  const [orgConfig, setOrgConfig] = useState(() => {
+  // 1. Global Header State (Operated exclusively by Super Admin)
+  const [globalHeader, setGlobalHeader] = useState(() => {
     try {
-      const saved = localStorage.getItem('quickfix_org_config');
+      const saved = localStorage.getItem('quickfix_global_header');
       if (saved) return JSON.parse(saved);
     } catch (e) {
-      console.warn('Failed to parse saved org config:', e);
+      console.warn('Failed to parse saved global header:', e);
     }
-    return DEFAULT_CONFIG;
+    return {
+      name: DEFAULT_GLOBAL_CONFIG.name,
+      subtitle: DEFAULT_GLOBAL_CONFIG.subtitle,
+      tagline: DEFAULT_GLOBAL_CONFIG.tagline,
+    };
   });
 
+  // 2. Institute Header State (Operated by Normal Admin for their own institute members)
+  const [instituteHeader, setInstituteHeader] = useState({
+    name: '',
+    subtitle: '',
+    tagline: '',
+  });
+
+  // 3. Registered Zones
+  const [zones, setZones] = useState(() => {
+    try {
+      const saved = localStorage.getItem('quickfix_org_zones');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Failed to parse saved zones:', e);
+    }
+    return DEFAULT_ZONES;
+  });
+
+  // Fetch Global Header from backend on mount
+  useEffect(() => {
+    settingsAPI
+      .getGlobalHeader()
+      .then((res) => {
+        if (res.data?.headerConfig) {
+          setGlobalHeader(res.data.headerConfig);
+          try {
+            localStorage.setItem('quickfix_global_header', JSON.stringify(res.data.headerConfig));
+          } catch (e) {
+            // ignore
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not fetch global header from server, using cached/default:', err);
+      });
+  }, []);
+
+  // Sync zones to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('quickfix_org_config', JSON.stringify(orgConfig));
-      document.title = `${orgConfig.name} | ${orgConfig.subtitle}`;
+      localStorage.setItem('quickfix_org_zones', JSON.stringify(zones));
     } catch (e) {
-      console.error('Error saving org config:', e);
+      // ignore
     }
-  }, [orgConfig]);
+  }, [zones]);
 
-  const updateOrgInfo = (name, subtitle, tagline) => {
-    setOrgConfig((prev) => ({
-      ...prev,
-      name: name || prev.name,
-      subtitle: subtitle || prev.subtitle,
-      tagline: tagline || prev.tagline,
-    }));
+  // Fetch an institute's header config (for members of that institute)
+  const fetchInstituteHeader = useCallback(async (instituteName) => {
+    if (!instituteName) return;
+    try {
+      const res = await instituteAPI.getBranchesForInstitute(instituteName);
+      if (res.data?.headerConfig) {
+        setInstituteHeader({
+          name: res.data.headerConfig.name || instituteName,
+          subtitle: res.data.headerConfig.subtitle || '',
+          tagline: res.data.headerConfig.tagline || '',
+        });
+      } else {
+        setInstituteHeader({
+          name: instituteName,
+          subtitle: '',
+          tagline: '',
+        });
+      }
+    } catch (err) {
+      setInstituteHeader({
+        name: instituteName,
+        subtitle: '',
+        tagline: '',
+      });
+    }
+  }, []);
+
+  // Update Global Header (SUPER ADMIN ONLY)
+  const updateGlobalHeader = async (newConfig) => {
+    const res = await settingsAPI.updateGlobalHeader(newConfig);
+    if (res.data?.headerConfig) {
+      setGlobalHeader(res.data.headerConfig);
+      try {
+        localStorage.setItem('quickfix_global_header', JSON.stringify(res.data.headerConfig));
+      } catch (e) {}
+    }
+    return res.data;
   };
 
+  // Update Institute Header (NORMAL ADMIN FOR THEIR OWN INSTITUTE)
+  const updateInstituteHeader = async (newConfig) => {
+    const res = await instituteAPI.updateMyInstituteHeader(newConfig);
+    if (res.data?.headerConfig) {
+      setInstituteHeader(res.data.headerConfig);
+    }
+    return res.data;
+  };
+
+  // Zone management
   const addZone = (zone) => {
     const newZone = {
       id: `zone-${Date.now()}`,
@@ -112,37 +195,39 @@ export const OrgProvider = ({ children }) => {
       lat: Number(zone.lat) || 20.2195,
       lng: Number(zone.lng) || 85.7360,
     };
-
-    setOrgConfig((prev) => ({
-      ...prev,
-      zones: [newZone, ...prev.zones],
-    }));
+    setZones((prev) => [newZone, ...prev]);
     return newZone;
   };
 
   const updateZone = (id, updatedData) => {
-    setOrgConfig((prev) => ({
-      ...prev,
-      zones: prev.zones.map((z) => (z.id === id ? { ...z, ...updatedData } : z)),
-    }));
+    setZones((prev) => prev.map((z) => (z.id === id ? { ...z, ...updatedData } : z)));
   };
 
   const deleteZone = (id) => {
-    setOrgConfig((prev) => ({
-      ...prev,
-      zones: prev.zones.filter((z) => z.id !== id),
-    }));
+    setZones((prev) => prev.filter((z) => z.id !== id));
+  };
+
+  // Backward compatible orgConfig object
+  const orgConfig = {
+    name: globalHeader.name || DEFAULT_GLOBAL_CONFIG.name,
+    subtitle: globalHeader.subtitle || DEFAULT_GLOBAL_CONFIG.subtitle,
+    tagline: globalHeader.tagline || DEFAULT_GLOBAL_CONFIG.tagline,
+    zones,
   };
 
   return (
     <OrgContext.Provider
       value={{
         orgConfig,
-        updateOrgInfo,
+        globalHeader,
+        instituteHeader,
+        fetchInstituteHeader,
+        updateGlobalHeader,
+        updateInstituteHeader,
+        zones,
         addZone,
         updateZone,
         deleteZone,
-        zones: orgConfig.zones || DEFAULT_ZONES,
       }}
     >
       {children}
