@@ -276,7 +276,7 @@ export default function ReportIssuePage() {
 
     if (locName) setLocationName(locName);
     if (parsed.zone) setZone(parsed.zone);
-    if (parsed.category && CATEGORIES.includes(parsed.category)) setCategory(parsed.category);
+    if (parsed.category && categoriesList.includes(parsed.category)) setCategory(parsed.category);
 
     if (parsed.recommendation && !description.includes(parsed.recommendation)) {
       setDescription(prev => prev ? `${prev}\n[Check: ${parsed.recommendation}]` : `[Check: ${parsed.recommendation}]`);
@@ -290,7 +290,7 @@ export default function ReportIssuePage() {
       setDescription(prev => prev ? `${prev}\n${voiceReport.description}` : voiceReport.description);
     }
     if (voiceReport.title && !title) setTitle(voiceReport.title);
-    if (voiceReport.category && CATEGORIES.includes(voiceReport.category)) setCategory(voiceReport.category);
+    if (voiceReport.category && categoriesList.includes(voiceReport.category)) setCategory(voiceReport.category);
     if (voiceReport.severity && SEVERITIES.includes(voiceReport.severity)) setSeverity(voiceReport.severity);
     if (voiceReport.locationName && !locationName) setLocationName(voiceReport.locationName);
   };
@@ -479,7 +479,7 @@ export default function ReportIssuePage() {
                 {showCategoryPicker && (
                   <div className="chip-dropdown-menu">
                     <div className="dropdown-menu-header">Select Category (#)</div>
-                    {CATEGORIES.map(c => (
+                    {categoriesList.map(c => (
                       <button
                         key={c}
                         type="button"
