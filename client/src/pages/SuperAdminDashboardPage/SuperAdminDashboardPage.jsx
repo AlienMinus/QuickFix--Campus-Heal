@@ -390,67 +390,71 @@ export default function SuperAdminDashboardPage() {
         </div>
       )}
 
-      {/* Platform High-Level Governance KPIs */}
-      <div className="superadmin-kpis">
+      {/* Platform High-Level Governance KPIs (Squared Responsive Grid) */}
+      <div className="superadmin-kpi-grid">
         <div className="super-kpi-card institutes-card">
-          <div className="kpi-icon">
+          <div className="super-kpi-icon-box">
             <FaUniversity />
           </div>
-          <div className="kpi-data">
-            <span className="kpi-count">{institutes.length}</span>
-            <span className="kpi-name">Registered Institutes</span>
-            <span className="kpi-sub">Campus Networks</span>
+          <div className="super-kpi-details">
+            <span className="super-kpi-number">{institutes.length}</span>
+            <span className="super-kpi-label">Institutes</span>
+            <span className="super-kpi-sub">Campus Networks</span>
           </div>
         </div>
 
         <div className="super-kpi-card admins-card">
-          <div className="kpi-icon">
+          <div className="super-kpi-icon-box">
             <FaUserShield />
           </div>
-          <div className="kpi-data">
-            <span className="kpi-count">{counts.totalAdmins}</span>
-            <span className="kpi-name">Campus Admins</span>
-            <span className="kpi-sub">Authorized Directors</span>
+          <div className="super-kpi-details">
+            <span className="super-kpi-number">{counts.totalAdmins}</span>
+            <span className="super-kpi-label">Admins</span>
+            <span className="super-kpi-sub">Directors</span>
           </div>
         </div>
 
         <div className="super-kpi-card users-card">
-          <div className="kpi-icon">
+          <div className="super-kpi-icon-box">
             <FaUsers />
           </div>
-          <div className="kpi-data">
-            <span className="kpi-count">{counts.totalUsers}</span>
-            <span className="kpi-name">Total Platform Users</span>
-            <span className="kpi-sub">Aggregated System Count</span>
+          <div className="super-kpi-details">
+            <span className="super-kpi-number">{counts.totalUsers}</span>
+            <span className="super-kpi-label">Users</span>
+            <span className="super-kpi-sub">Total Accounts</span>
           </div>
         </div>
 
         <div className="super-kpi-card security-card">
-          <div className="kpi-icon">
+          <div className="super-kpi-icon-box">
             <FaLock />
           </div>
-          <div className="kpi-data">
-            <span className="kpi-count active">Enforced</span>
-            <span className="kpi-name">Multi-Tenant Isolation</span>
-            <span className="kpi-sub">Role Locked for Admins</span>
+          <div className="super-kpi-details">
+            <span className="super-kpi-number active">Active</span>
+            <span className="super-kpi-label">Isolation</span>
+            <span className="super-kpi-sub">Role Locked</span>
           </div>
         </div>
       </div>
 
-      {/* View Switcher Tabs */}
-      <div className="superadmin-tabs-bar">
-        <button
-          className={`super-tab-btn ${activeTab === 'institutes' ? 'active' : ''}`}
-          onClick={() => setActiveTab('institutes')}
-        >
-          <FaUniversity /> Institutes & Respective Admins ({institutes.length})
-        </button>
-        <button
-          className={`super-tab-btn ${activeTab === 'directory' ? 'active' : ''}`}
-          onClick={() => setActiveTab('directory')}
-        >
-          <FaThList /> All Administrators Directory ({adminsList.length})
-        </button>
+      {/* Section Navigation via Dropdown - Strictly ZERO Horizontal Scrolling */}
+      <div className="superadmin-section-navigator">
+        <div className="section-nav-inner">
+          <span className="section-nav-label">
+            <FaThList className="section-nav-icon" /> Switch Console View:
+          </span>
+          <div className="section-dropdown-wrapper">
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              className="superadmin-section-dropdown"
+              aria-label="Super Administrator Section Selection"
+            >
+              <option value="institutes">🏛️ Campus Institutes & Respective Admins ({institutes.length})</option>
+              <option value="directory">👥 All Campus Administrators Directory ({adminsList.length})</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* TAB 1: Institutes & Their Respective Admins */}
