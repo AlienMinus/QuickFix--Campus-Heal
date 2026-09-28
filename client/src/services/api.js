@@ -66,6 +66,13 @@ export const adminAPI = {
   deleteIssue: (issueId) => api.delete(`/issues/${issueId}`),
 };
 
+export const categoryAPI = {
+  getAll: () => api.get('/categories'),
+  create: (data) => api.post('/categories', data),
+  update: (id, data) => api.put(`/categories/${id}`, data),
+  delete: (id) => api.delete(`/categories/${id}`),
+};
+
 export const instituteAPI = {
   getAll: () => api.get('/institutes'),
   getWithAdmins: () => api.get('/institutes/with-admins'),
