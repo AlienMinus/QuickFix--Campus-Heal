@@ -191,13 +191,31 @@ export default function AdminDashboardPage() {
   };
 
   const handleRoleChange = async (userId, newRole) => {
+    if (userId === user?._id) {
+      alert('Administrators cannot modify their own role.');
+      return;
+    }
     try {
-      const res = await adminAPI.updateUserRole(userId, { role: newRole });
+      await adminAPI.updateUserRole(userId, { role: newRole });
       setUsersList((prev) =>
         prev.map((u) => (u._id === userId ? { ...u, role: newRole } : u))
       );
     } catch (err) {
-      alert('Failed to update user role');
+      alert(err.response?.data?.message || 'Failed to update user role');
+    }
+  };
+
+  const handleStatusChange = async (issueId, newStatus) => {
+    try {
+      await issueAPI.updateStatus(issueId, {
+        status: newStatus,
+        remarks: `Status updated to ${newStatus} by campus administrator ${user?.name || ''}`,
+      });
+      setIssues((prev) =>
+        prev.map((i) => (i._id === issueId ? { ...i, status: newStatus } : i))
+      );
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update issue status');
     }
   };
 
@@ -416,9 +434,16 @@ export default function AdminDashboardPage() {
                         <SeverityBadge severity={issue.severity} compact />
                       </td>
                       <td>
-                        <span className={`table-status-pill ${issue.status.toLowerCase().replace(' ', '-')}`}>
-                          {issue.status}
-                        </span>
+                        <select
+                          value={issue.status}
+                          onChange={(e) => handleStatusChange(issue._id, e.target.value)}
+                          className={`table-status-select ${issue.status.toLowerCase().replace(' ', '-')}`}
+                          title="Click to update ticket status"
+                        >
+                          <option value="Submitted">Submitted</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Resolved">Resolved</option>
+                        </select>
                       </td>
                       <td>
                         <div className="table-action-cell">
@@ -560,15 +585,24 @@ export default function AdminDashboardPage() {
                     </td>
                     <td>
                       <div className="user-role-actions-cell">
-                        <select
-                          value={u.role || 'student'}
-                          onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                          className="role-change-select"
-                        >
-                          <option value="student">Student</option>
-                          <option value="staff">Staff</option>
-                          <option value="admin">Admin</option>
-                        </select>
+                        {u._id === user?._id ? (
+                          <span
+                            className="self-role-lock-badge"
+                            title="You cannot modify your own administrative role"
+                          >
+                            🔒 Locked (Self)
+                          </span>
+                        ) : (
+                          <select
+                            value={u.role || 'student'}
+                            onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                            className="role-change-select"
+                          >
+                            <option value="student">Student</option>
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        )}
                       </div>
                     </td>
                   </tr>
