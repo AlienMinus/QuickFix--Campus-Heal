@@ -203,7 +203,13 @@ export default function IssueDetailPage() {
         <div className="ticket-hero-top">
           <div className="ticket-meta-badges">
             <span className="tracking-id-pill">#{issue.trackingId || issue._id.slice(-6).toUpperCase()}</span>
-            <span className="category-pill">{issue.category}</span>
+            {issue.categories && issue.categories.length > 0 ? (
+              issue.categories.map((c) => (
+                <span key={c} className="category-pill">#{c}</span>
+              ))
+            ) : (
+              <span className="category-pill">{issue.category}</span>
+            )}
             <SeverityBadge severity={issue.severity} />
           </div>
           <button

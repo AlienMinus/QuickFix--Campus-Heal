@@ -290,9 +290,17 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
         <span className="tag-pill zone-pill" title="Campus Zone">
           @{zoneName}
         </span>
-        <span className="tag-pill category-pill" title="Facility Category">
-          #{issue.category}
-        </span>
+        {issue.categories && issue.categories.length > 0 ? (
+          issue.categories.map((c) => (
+            <span key={c} className="tag-pill category-pill" title="Facility Category">
+              #{c}
+            </span>
+          ))
+        ) : (
+          <span className="tag-pill category-pill" title="Facility Category">
+            #{issue.category}
+          </span>
+        )}
         <span className={`tag-pill severity-pill ${issue.severity?.toLowerCase() || 'medium'}`} title="Severity Level">
           ${issue.severity || 'Medium'}
         </span>

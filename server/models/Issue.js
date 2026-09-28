@@ -15,18 +15,14 @@ const issueSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      enum: [
-        'Damaged Infrastructure',
-        'Electrical & Lighting',
-        'Water Leakage & Plumbing',
-        'Cleanliness & Sanitation',
-        'Network & Wi-Fi',
-        'Lab & Classroom Equipment',
-        'Safety & Security Hazard',
-        'Other',
-      ],
       default: 'Damaged Infrastructure',
     },
+    categories: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     severity: {
       type: String,
       enum: ['Low', 'Medium', 'High', 'Critical'],

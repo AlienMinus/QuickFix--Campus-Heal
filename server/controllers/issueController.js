@@ -88,10 +88,25 @@ exports.createIssue = async (req, res) => {
       }
     }
 
+    let categoriesList = [];
+    if (req.body.categories) {
+      try {
+        categoriesList = typeof req.body.categories === 'string'
+          ? JSON.parse(req.body.categories)
+          : req.body.categories;
+      } catch (e) {
+        categoriesList = [category];
+      }
+    }
+    if (!Array.isArray(categoriesList) || categoriesList.length === 0) {
+      categoriesList = [category];
+    }
+
     const newIssue = new Issue({
       title,
       description,
       category,
+      categories: categoriesList,
       severity: severity || 'Medium',
       location: {
         building: building || 'Main Academic Block',
