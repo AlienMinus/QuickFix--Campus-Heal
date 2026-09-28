@@ -1,0 +1,1 @@
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r "e:\Semesters\7th Sem\Tech-Carnival2026\SmartCampusQuickFix-debug.apk"
