@@ -8,6 +8,7 @@ const {
   upvoteIssue,
   assignIssue,
   checkDuplicates,
+  deleteIssue,
 } = require('../controllers/issueController');
 const { protect, optionalAuth, authorize } = require('../middleware/authMiddleware');
 const { upload } = require('../config/cloudinary');
@@ -19,7 +20,8 @@ router.route('/')
 router.post('/check-duplicates', checkDuplicates);
 
 router.route('/:id')
-  .get(getIssueById);
+  .get(getIssueById)
+  .delete(protect, authorize('admin', 'superadmin'), deleteIssue);
 
 const uploadStatusMedia = upload.fields([
   { name: 'resolutionMedia', maxCount: 1 },
@@ -31,6 +33,7 @@ router.route('/:id/status')
   .put(optionalAuth, uploadStatusMedia, updateIssueStatus)
   .patch(optionalAuth, uploadStatusMedia, updateIssueStatus);
 router.post('/:id/upvote', optionalAuth, upvoteIssue);
-router.put('/:id/assign', protect, authorize('staff', 'admin'), assignIssue);
+router.put('/:id/assign', protect, authorize('staff', 'admin', 'superadmin'), assignIssue);
+router.patch('/:id/assign', protect, authorize('staff', 'admin', 'superadmin'), assignIssue);
 
 module.exports = router;

@@ -138,9 +138,20 @@ exports.createIssue = async (req, res) => {
 
 exports.getIssues = async (req, res) => {
   try {
-    const { category, status, severity, building, search, myIssues, assignedToMe, sort } = req.query;
+    const { category, status, severity, building, search, myIssues, assignedToMe, sort, institute } = req.query;
 
     const filter = {};
+
+    // Multi-Institute Data Isolation:
+    if (req.user?.role === 'superadmin') {
+      if (institute && institute !== 'All') {
+        filter.institute = institute;
+      }
+    } else if (req.user?.institute) {
+      filter.institute = req.user.institute;
+    } else if (institute && institute !== 'All') {
+      filter.institute = institute;
+    }
 
     if (category && category !== 'All') filter.category = category;
     if (status && status !== 'All') filter.status = status;
@@ -390,3 +401,25 @@ exports.checkDuplicates = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.deleteIssue = async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    // Role check: superadmin or admin/staff of same institute
+    if (req.user && req.user.role !== 'superadmin') {
+      if (req.user.institute && issue.institute && req.user.institute !== issue.institute) {
+        return res.status(403).json({ success: false, message: 'Not authorized to delete issues from another institute' });
+      }
+    }
+
+    await Issue.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ success: true, message: 'Issue deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+

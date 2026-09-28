@@ -4,18 +4,31 @@ const LocationLog = require('../models/LocationLog');
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    const totalIssues = await Issue.countDocuments();
-    const submittedCount = await Issue.countDocuments({ status: 'Submitted' });
-    const inProgressCount = await Issue.countDocuments({ status: 'In Progress' });
-    const resolvedCount = await Issue.countDocuments({ status: 'Resolved' });
-    const criticalCount = await Issue.countDocuments({ severity: 'Critical', status: { $ne: 'Resolved' } });
+    const issueFilter = {};
+    if (req.user?.role === 'superadmin') {
+      if (req.query.institute && req.query.institute !== 'All') {
+        issueFilter.institute = req.query.institute;
+      }
+    } else if (req.user?.institute) {
+      issueFilter.institute = req.user.institute;
+    }
+
+    const totalIssues = await Issue.countDocuments(issueFilter);
+    const submittedCount = await Issue.countDocuments({ ...issueFilter, status: 'Submitted' });
+    const inProgressCount = await Issue.countDocuments({ ...issueFilter, status: 'In Progress' });
+    const resolvedCount = await Issue.countDocuments({ ...issueFilter, status: 'Resolved' });
+    const criticalCount = await Issue.countDocuments({ ...issueFilter, severity: 'Critical', status: { $ne: 'Resolved' } });
+
+    const matchStage = Object.keys(issueFilter).length > 0 ? [{ $match: issueFilter }] : [];
 
     const categoryStats = await Issue.aggregate([
+      ...matchStage,
       { $group: { _id: '$category', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
 
     const buildingStats = await Issue.aggregate([
+      ...matchStage,
       { $group: { _id: '$location.building', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
@@ -37,6 +50,7 @@ exports.getDashboardStats = async (req, res) => {
     ]);
 
     const resolvedIssues = await Issue.find({
+      ...issueFilter,
       status: 'Resolved',
       'resolutionDetails.resolvedAt': { $exists: true, $ne: null },
     }).select('createdAt resolutionDetails.resolvedAt');
@@ -51,10 +65,10 @@ exports.getDashboardStats = async (req, res) => {
       avgResolutionHours = Number((totalTimeMs / (resolvedIssues.length * 3600000)).toFixed(1));
     }
 
-    const recentIssues = await Issue.find()
+    const recentIssues = await Issue.find(issueFilter)
       .sort({ createdAt: -1 })
-      .limit(5)
-      .populate('reportedBy', 'name email role');
+      .limit(6)
+      .populate('reportedBy', 'name email role department institute');
 
     return res.status(200).json({
       success: true,
@@ -81,7 +95,16 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    const userFilter = {};
+    if (req.user?.role === 'superadmin') {
+      if (req.query.institute && req.query.institute !== 'All') {
+        userFilter.institute = req.query.institute;
+      }
+    } else if (req.user?.institute) {
+      userFilter.institute = req.user.institute;
+    }
+
+    const users = await User.find(userFilter).select('-password').sort({ createdAt: -1 });
     return res.status(200).json({ success: true, count: users.length, users });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -90,22 +113,91 @@ exports.getAllUsers = async (req, res) => {
 
 exports.updateUserRole = async (req, res) => {
   try {
-    const { role } = req.body;
-    if (!['student', 'staff', 'admin'].includes(role)) {
+    const { role, institute } = req.body;
+    const isSuper = req.user?.role === 'superadmin';
+    const allowedRoles = isSuper
+      ? ['student', 'staff', 'admin', 'superadmin']
+      : ['student', 'staff', 'admin'];
+
+    if (role && !allowedRoles.includes(role)) {
       return res.status(400).json({ success: false, message: 'Invalid role specified' });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role },
-      { new: true }
-    ).select('-password');
-
-    if (!user) {
+    const userToUpdate = await User.findById(req.params.id);
+    if (!userToUpdate) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    return res.status(200).json({ success: true, message: `User role changed to ${role}`, user });
+    if (!isSuper && userToUpdate.institute !== req.user?.institute) {
+      return res.status(403).json({ success: false, message: 'Cannot modify users from another institute' });
+    }
+
+    if (role) userToUpdate.role = role;
+    if (isSuper && institute) userToUpdate.institute = institute.trim();
+
+    await userToUpdate.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `User updated successfully`,
+      user: {
+        id: userToUpdate._id,
+        name: userToUpdate.name,
+        email: userToUpdate.email,
+        role: userToUpdate.role,
+        institute: userToUpdate.institute,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.assignTechnician = async (req, res) => {
+  try {
+    const { staffId } = req.body;
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    let staffName = 'Unassigned';
+    if (staffId) {
+      const staff = await User.findById(staffId);
+      if (staff) {
+        issue.assignedTo = staff._id;
+        issue.assignedToName = staff.name;
+        staffName = staff.name;
+      }
+    } else {
+      issue.assignedTo = null;
+      issue.assignedToName = 'Unassigned';
+    }
+
+    await issue.save();
+    return res.status(200).json({
+      success: true,
+      message: `Assigned technician to ${staffName}`,
+      issue,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteIssue = async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    if (req.user?.role !== 'superadmin' && issue.institute !== req.user?.institute) {
+      return res.status(403).json({ success: false, message: 'Not authorized to delete issue from another institute' });
+    }
+
+    await Issue.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ success: true, message: 'Issue permanently deleted' });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
