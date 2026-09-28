@@ -99,9 +99,17 @@ export default function ReportIssuePage() {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.max(120, textareaRef.current.scrollHeight)}px`;
+      textareaRef.current.style.height = `${Math.max(130, textareaRef.current.scrollHeight)}px`;
     }
   }, [description]);
+
+  const handleCancel = () => {
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate('/track');
+    }
+  };
 
   // Synchronize URL parameters (e.g. from QR scan link)
   useEffect(() => {
