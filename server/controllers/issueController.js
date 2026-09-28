@@ -215,6 +215,7 @@ exports.getIssueById = async (req, res) => {
     const issue = await Issue.findById(req.params.id)
       .populate('reportedBy', 'name email avatar role department')
       .populate('assignedTo', 'name email avatar phone department')
+      .populate('comments.user', 'name email avatar role department')
       .populate('duplicateOf', 'title status severity createdAt');
 
     if (!issue) {
@@ -495,7 +496,7 @@ exports.deleteIssue = async (req, res) => {
 
 exports.addComment = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, authorName, userName, userRole, userAvatar } = req.body;
     if (!text || !text.trim()) {
       return res.status(400).json({ success: false, message: 'Comment text cannot be empty' });
     }
@@ -505,11 +506,15 @@ exports.addComment = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
+    const resolvedName = req.user?.name || authorName || userName || 'Campus Member';
+    const resolvedRole = req.user?.role || userRole || 'student';
+    const resolvedAvatar = req.user?.avatar || userAvatar || '';
+
     const newComment = {
       user: req.user ? req.user._id : null,
-      userName: req.user ? req.user.name : (req.body.authorName || 'Campus Resident'),
-      userRole: req.user ? req.user.role : 'student',
-      userAvatar: req.user?.avatar || '',
+      userName: resolvedName,
+      userRole: resolvedRole,
+      userAvatar: resolvedAvatar,
       text: text.trim(),
       createdAt: new Date(),
     };
@@ -518,10 +523,15 @@ exports.addComment = async (req, res) => {
     issue.comments.push(newComment);
     await issue.save();
 
+    const populatedIssue = await Issue.findById(issue._id)
+      .populate('reportedBy', 'name email avatar role department')
+      .populate('assignedTo', 'name email avatar phone department')
+      .populate('comments.user', 'name email avatar role department');
+
     return res.status(201).json({
       success: true,
       message: 'Comment posted successfully',
-      comments: issue.comments,
+      comments: populatedIssue ? populatedIssue.comments : issue.comments,
       comment: newComment,
     });
   } catch (error) {

@@ -46,7 +46,10 @@ export const issueAPI = {
     }
     return api.put(`/issues/${id}/status`, payload);
   },
-  addComment: (id, text) => api.post(`/issues/${id}/comment`, { text }),
+  addComment: (id, data) => {
+    const payload = typeof data === 'string' ? { text: data } : data;
+    return api.post(`/issues/${id}/comment`, payload);
+  },
   checkDuplicates: (params) => api.get('/issues/check-duplicate', { params }),
   getStats: () => api.get('/issues/stats/overview'),
 };
