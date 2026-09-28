@@ -21,6 +21,7 @@ import {
   FaGlobeAmericas,
   FaChevronDown,
   FaTags,
+  FaHeading,
 } from 'react-icons/fa';
 import './ReportIssuePage.css';
 
@@ -75,6 +76,7 @@ export default function ReportIssuePage() {
   const [detectedCategories, setDetectedCategories] = useState([]);
   const [detectedZones, setDetectedZones] = useState([]);
   const [detectedSeverities, setDetectedSeverities] = useState([]);
+  const [detectedHeading, setDetectedHeading] = useState('');
   
   // Fetch dynamic categories defined by Super Admin
   useEffect(() => {
@@ -146,6 +148,66 @@ export default function ReportIssuePage() {
     if (qrCat && categoriesList.includes(qrCat)) setCategory(qrCat);
   }, [routerLocation.search, categoriesList]);
 
+  // Extract issue heading from special character syntax: - <Issue Heading>
+  // Strictly prevents MAB or parenthesized zone acronyms from becoming the title!
+  const extractHeadingFromText = (text, primaryCat = category, loc = locationName, z = zone) => {
+    if (!text || !text.trim()) return '';
+
+    // 1. Explicit hyphen (-) heading syntax: - <Heading>
+    // e.g. "- Broken fan switchboard @Main Academic Block" or "- Water Leakage"
+    const hyphenMatch = text.match(/(?:^|\n|\s)-\s*([^@#$\n\r]+)/);
+    if (hyphenMatch && hyphenMatch[1]) {
+      let cleanHyphenHeading = hyphenMatch[1]
+        // Strip any embedded bracket notes [Check: ...]
+        .replace(/\[[^\]]*\]/g, '')
+        // Strip zone with parenthesized acronyms, e.g. @Main Academic Block (MAB)
+        .replace(/@[\w\s-]+\s*\([^)]*\)/gi, '')
+        .replace(/@[\w\s-]+/gi, '')
+        // Strip standalone parenthesized acronyms like (MAB)
+        .replace(/\([A-Z0-9\s&-]{2,10}\)/gi, '')
+        .replace(/#[a-zA-Z0-9_\-/]+/g, '')
+        .replace(/\$[a-zA-Z0-9]+/g, '')
+        .replace(/^\s*[-–—:\s]+/, '')
+        .replace(/\s*[-–—:\s]+$/, '')
+        .trim();
+
+      if (cleanHyphenHeading.length >= 2) {
+        return cleanHyphenHeading.slice(0, 80);
+      }
+    }
+
+    // 2. Fallback: Clean title from first meaningful sentence/line, strictly excluding (MAB) / zone acronyms
+    const firstLine = text.split(/[\n\r]+/)[0] || '';
+    let cleanLine = firstLine
+      // Strip zone tags and their parenthesized acronyms like @Main Academic Block (MAB)
+      .replace(/@[\w\s-]+\s*\([^)]*\)/gi, '')
+      .replace(/@[\w\s-]+/gi, '')
+      // Strip standalone parenthesized acronyms like (MAB) or (HQ)
+      .replace(/\([A-Z0-9\s&-]{2,10}\)/gi, '')
+      // Strip bracketed inspection or check notes like [Check: ...]
+      .replace(/\[[^\]]*\]/g, '')
+      // Strip category tags (#Electrical) and severity tags ($High)
+      .replace(/#[a-zA-Z0-9_\-/]+/g, '')
+      .replace(/\$[a-zA-Z0-9]+/g, '')
+      // Strip leading bullet or hyphen markers
+      .replace(/^[\s\-–—*•:]+/, '')
+      .trim();
+
+    // If cleanLine is substantial (at least 3 characters and not just punctuation or acronyms)
+    if (cleanLine && cleanLine.replace(/[^a-zA-Z0-9]/g, '').length >= 3) {
+      // Remove trailing prepositions like 'in', 'at', 'near', 'on'
+      cleanLine = cleanLine.replace(/\b(in|at|near|on|for|to)\s*$/i, '').trim();
+      if (cleanLine.length >= 3) {
+        return cleanLine.slice(0, 80);
+      }
+    }
+
+    // 3. Fallback to descriptive default (NEVER "(MAB)")
+    const safeLoc = loc?.trim() || z || 'Campus';
+    const safeCat = primaryCat || 'Facility';
+    return `${safeCat} issue at ${safeLoc}`;
+  };
+
   // Match category in text (supports full hashtag, clean name, or individual keywords like #Plumbing, #Electrical)
   const matchCategoryInText = (cat, text) => {
     const cleanFull = cat.replace(/[^a-zA-Z0-9]/g, '');
@@ -193,10 +255,20 @@ export default function ReportIssuePage() {
     return null;
   };
 
-  // Intelligent parser: parse @zone, #category, $severity from description text in real time
+  // Intelligent parser: parse -heading, @zone, #category, $severity from description text in real time
+  // Hyphen (-) designated Heading
   // Multiple categories (#) ALLOWED
   // Single zone (@) and Single severity ($) ENFORCED
   const parseTagsFromText = (text) => {
+    // 0. Detect Heading (-)
+    const hasHyphen = /(?:^|\n|\s)-\s*([^@#$\n\r]+)/.test(text);
+    if (hasHyphen) {
+      const explicitHeading = extractHeadingFromText(text);
+      setDetectedHeading(explicitHeading);
+    } else {
+      setDetectedHeading('');
+    }
+
     // 1. Detect Category #... (Multiple allowed)
     const foundCategories = [];
     for (const cat of categoriesList) {
