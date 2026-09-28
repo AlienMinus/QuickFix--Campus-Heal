@@ -249,16 +249,15 @@
   width: 100%;
 }
 
-/* Floating Instagram-Style Autocomplete Popover */
+/* Floating Instagram-Style Autocomplete Popover (Top-left anchored on cursor) */
 .insta-autocomplete-popover {
   position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+  width: 310px;
+  max-width: calc(100% - 16px);
   background: #170b2e;
   border: 1px solid rgba(168, 85, 247, 0.45);
   border-radius: 14px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(168, 85, 247, 0.2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 20px rgba(168, 85, 247, 0.25);
   z-index: 1000;
   overflow: hidden;
   backdrop-filter: blur(16px);
