@@ -14,6 +14,7 @@ import {
   FaClock,
   FaExclamationCircle,
   FaPlus,
+  FaUniversity,
 } from 'react-icons/fa';
 import './ProfilePage.css';
 
@@ -79,10 +80,13 @@ export default function ProfilePage() {
           <h2>{user?.name || 'Campus Member'}</h2>
           <div className="info-meta-row">
             <span className="info-chip">
+              <FaUniversity /> {user?.institute || 'BPUT Tech Campus'}
+            </span>
+            <span className="info-chip">
               <FaEnvelope /> {user?.email}
             </span>
             <span className="info-chip">
-              <FaBuilding /> {user?.department || orgConfig.name}
+              <FaBuilding /> {user?.department || 'General Campus'}
             </span>
           </div>
         </div>
