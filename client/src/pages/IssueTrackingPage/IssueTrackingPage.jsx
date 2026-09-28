@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { issueAPI } from '../../services/api';
+import { issueAPI, categoryAPI } from '../../services/api';
 import TrackingCard from '../../components/TrackingCard/TrackingCard';
 import {
   FaSearch,
@@ -36,8 +36,25 @@ const STATUS_TABS = [
 export default function IssueTrackingPage() {
   const navigate = useNavigate();
   const [issues, setIssues] = useState([]);
+  const [categoriesList, setCategoriesList] = useState(CATEGORIES);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Fetch dynamic categories defined by Super Admin
+  useEffect(() => {
+    categoryAPI.getAll()
+      .then(res => {
+        if (res.data?.categories && res.data.categories.length > 0) {
+          const activeCats = res.data.categories
+            .filter(c => c.status !== 'Inactive')
+            .map(c => c.name);
+          if (activeCats.length > 0) {
+            setCategoriesList(['All', ...activeCats]);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
   
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
