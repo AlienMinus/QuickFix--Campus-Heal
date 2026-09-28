@@ -358,6 +358,13 @@ export default function ProfilePage() {
           </button>
         </div>
 
+        {ticketActionMsg.text && (
+          <div className={`ticket-action-toast ${ticketActionMsg.type}`}>
+            {ticketActionMsg.type === 'success' ? <FaCheckCircle /> : <FaExclamationCircle />}
+            <span>{ticketActionMsg.text}</span>
+          </div>
+        )}
+
         {loading ? (
           <div className="tickets-loading-box">
             <FaSpinner className="loading-spin" />
@@ -375,9 +382,9 @@ export default function ProfilePage() {
           <div className="user-tickets-list">
             {myIssues.map((issue) => (
               <div
-                key={issue._id}
+                key={issue._id || issue.id}
                 className="user-ticket-row"
-                onClick={() => navigate(`/issues/${issue._id}`)}
+                onClick={() => navigate(`/issues/${issue._id || issue.id}`)}
               >
                 <div className="row-left">
                   <span className="ticket-cat">{issue.category}</span>
@@ -388,10 +395,26 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <div className="row-right">
-                  <SeverityBadge severity={issue.severity} />
-                  <span className={`status-pill ${issue.status.toLowerCase().replace(' ', '-')}`}>
-                    {issue.status}
-                  </span>
+                  <div className="row-status-group">
+                    <SeverityBadge severity={issue.severity} />
+                    <span className={`status-pill ${issue.status.toLowerCase().replace(' ', '-')}`}>
+                      {issue.status}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="ticket-delete-btn"
+                    onClick={(e) => handleDeleteTicket(e, issue._id || issue.id, issue.title)}
+                    title="Delete ticket"
+                    aria-label="Delete ticket"
+                    disabled={deletingTicketId === (issue._id || issue.id)}
+                  >
+                    {deletingTicketId === (issue._id || issue.id) ? (
+                      <FaSpinner className="loading-spin" />
+                    ) : (
+                      <FaTrash className="trash-icon" />
+                    )}
+                  </button>
                 </div>
               </div>
             ))}
