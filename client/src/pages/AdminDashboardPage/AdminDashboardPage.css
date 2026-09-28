@@ -76,38 +76,47 @@
   font-size: 0.82rem;
 }
 
-/* Small Square KPI Cards Grid with Reduced Text Size */
+/* Responsive Squared KPI Cards Grid */
 .kpi-cards-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: clamp(8px, 1.5vw, 14px);
   width: 100%;
+  margin-bottom: clamp(1rem, 2vw, 1.5rem);
 }
 
 .kpi-card {
   background: var(--bg-card, #1d1138);
   border: 1px solid var(--border, rgba(168, 85, 247, 0.25));
-  border-radius: 14px;
-  padding: 8px 4px;
+  border-radius: clamp(12px, 1.8vw, 18px);
+  padding: clamp(8px, 1.2vw, 16px) clamp(4px, 1vw, 10px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   aspect-ratio: 1;
-  min-height: 76px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-height: clamp(80px, 14vw, 115px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(168, 85, 247, 0.25);
 }
 
 .kpi-icon-box {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
+  width: clamp(26px, 4.5vw, 38px);
+  height: clamp(26px, 4.5vw, 38px);
+  border-radius: clamp(7px, 1.2vw, 10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.88rem;
-  margin-bottom: 2px;
+  font-size: clamp(0.85rem, 1.5vw, 1.25rem);
+  margin-bottom: clamp(2px, 0.5vw, 6px);
+  flex-shrink: 0;
 }
 
 .kpi-card.total .kpi-icon-box {
@@ -134,21 +143,34 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
 }
 
 .kpi-number {
-  font-size: 1rem;
+  font-size: clamp(1rem, 2.2vw, 1.55rem);
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1.1;
 }
 
 .kpi-label {
-  font-size: 0.58rem;
-  font-weight: 600;
+  font-size: clamp(0.58rem, 1.1vw, 0.76rem);
+  font-weight: 700;
   color: #a79bbf;
   line-height: 1.1;
-  margin-top: 2px;
+  margin-top: clamp(2px, 0.4vw, 4px);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .kpi-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .kpi-card {
+    min-height: 84px;
+    aspect-ratio: 1.05;
+  }
 }
 
 /* 1. Section Navigation Dropdown (Zero Horizontal Scrolling) */
