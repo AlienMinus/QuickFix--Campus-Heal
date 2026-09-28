@@ -243,109 +243,317 @@
   font-size: 0.95rem;
 }
 
-/* Tag Helpers Bar */
-.tag-helpers-bar {
+/* 1. Unbound Textarea Container & Instagram-Style Dropdown */
+.unbound-textarea-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Floating Instagram-Style Autocomplete Popover */
+.insta-autocomplete-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #170b2e;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(168, 85, 247, 0.2);
+  z-index: 1000;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  animation: instaPopoverFadeIn 0.15s ease-out;
+}
+
+@keyframes instaPopoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.insta-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(14, 7, 32, 0.85);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.popover-trigger-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.82rem;
+  margin-right: 6px;
+}
+
+.popover-trigger-badge.trigger-zone {
+  background: rgba(192, 132, 252, 0.25);
+  color: #c084fc;
+}
+
+.popover-trigger-badge.trigger-category {
+  background: rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+}
+
+.popover-trigger-badge.trigger-severity {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+
+.popover-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  flex: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.popover-hint {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.insta-popover-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.45) rgba(14, 7, 32, 0.5);
+}
+
+.insta-popover-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.insta-popover-list::-webkit-scrollbar-track {
+  background: rgba(14, 7, 32, 0.5);
+  border-radius: 9999px;
+}
+
+.insta-popover-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.45);
+  border-radius: 9999px;
+}
+
+.insta-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.insta-suggestion-item:hover,
+.insta-suggestion-item.focused {
+  background: rgba(168, 85, 247, 0.22);
+  transform: translateX(2px);
+}
+
+.item-prefix-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.item-prefix-icon.zone {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+}
+
+.item-prefix-icon.category {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+.item-prefix-icon.severity.critical {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+
+.item-prefix-icon.severity.high {
+  background: rgba(251, 146, 60, 0.25);
+  color: #fb923c;
+}
+
+.item-prefix-icon.severity.medium {
+  background: rgba(251, 191, 36, 0.25);
+  color: #fbbf24;
+}
+
+.item-prefix-icon.severity.low {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+.item-text-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.item-main-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-subtitle {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.insta-no-match {
+  padding: 14px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+/* Active Recognition Tag Strip (Read-only badges, strictly zero permanent dropboxes) */
+.active-detected-tags-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.strip-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detected-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.detected-pill .mini-icon {
+  font-size: 0.68rem;
+}
+
+.detected-pill.zone {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.detected-pill.category {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.detected-pill.severity.critical {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.detected-pill.severity.high {
+  background: rgba(251, 146, 60, 0.15);
+  color: #fb923c;
+  border-color: rgba(251, 146, 60, 0.3);
+}
+
+.detected-pill.severity.medium {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.detected-pill.severity.low {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Quick Typing Guide Shortcuts */
+.insta-typing-guide {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 4px 0 2px;
   flex-wrap: wrap;
-  padding-bottom: 4px;
 }
 
-.tag-chip-dropdown-wrapper {
-  position: relative;
+.guide-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 600;
 }
 
-.tag-chip-btn {
+.quick-tag-trigger-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: rgba(30, 20, 55, 0.9);
-  border: 1px solid rgba(168, 85, 247, 0.3);
+  gap: 4px;
+  background: rgba(30, 20, 55, 0.7);
+  border: 1px solid rgba(168, 85, 247, 0.25);
   color: #cbd5e1;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.tag-chip-btn:hover {
+.quick-tag-trigger-btn:hover {
   background: rgba(168, 85, 247, 0.2);
-  border-color: rgba(168, 85, 247, 0.6);
+  border-color: rgba(168, 85, 247, 0.5);
   color: #ffffff;
 }
 
-.tag-chip-btn .chip-prefix {
-  font-weight: 800;
+.quick-tag-trigger-btn.zone .sym {
+  color: #c084fc;
 }
 
-.tag-chip-btn.zone-chip .chip-prefix { color: #c084fc; }
-.tag-chip-btn.category-chip .chip-prefix { color: #38bdf8; }
-
-.tag-chip-btn.severity-chip.critical .chip-prefix { color: #f87171; }
-.tag-chip-btn.severity-chip.high .chip-prefix { color: #fb923c; }
-.tag-chip-btn.severity-chip.medium .chip-prefix { color: #fde047; }
-.tag-chip-btn.severity-chip.low .chip-prefix { color: #34d399; }
-
-.chip-arrow {
-  font-size: 0.6rem;
-  opacity: 0.7;
+.quick-tag-trigger-btn.category .sym {
+  color: #38bdf8;
 }
 
-/* Dropdown Menu for Tags */
-.chip-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  background: #150a29;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  border-radius: 12px;
-  padding: 6px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  z-index: 100;
-  max-height: 220px;
-  overflow-y: auto;
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.dropdown-menu-header {
-  font-size: 0.68rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: #94a3b8;
-  padding: 4px 8px;
-  letter-spacing: 0.04em;
-  border-bottom: 1px solid rgba(168, 85, 247, 0.15);
-  margin-bottom: 4px;
-}
-
-.dropdown-option {
-  text-align: left;
-  background: transparent;
-  border: none;
-  color: #cbd5e1;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.dropdown-option:hover {
-  background: rgba(168, 85, 247, 0.25);
-  color: #ffffff;
-}
-
-.dropdown-option.selected {
-  background: rgba(168, 85, 247, 0.35);
-  color: #d8b4fe;
-  font-weight: 700;
+.quick-tag-trigger-btn.severity .sym {
+  color: #fbbf24;
 }
 
 /* 2. Room / Spot Input Field with QR Button */
