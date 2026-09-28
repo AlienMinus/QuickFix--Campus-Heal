@@ -51,6 +51,7 @@ const locationLogSchema = new mongoose.Schema(
     loggedAt: {
       type: Date,
       default: Date.now,
+      index: true,
     },
   },
   {
