@@ -574,10 +574,9 @@ export default function ReportIssuePage() {
     // so using the dropdown naturally maintains a single zone and single severity without duplicate errors!
     if (type === '@') {
       for (const z of availableZones) {
-        const shortName = z.split(' ')[0];
         const cleanZ = z.replace(/[^a-zA-Z0-9]/g, '');
         const escapedZ = z.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const reg = new RegExp(`@${escapedZ}\\b|@${cleanZ}\\b|@${shortName}\\b`, 'gi');
+        const reg = new RegExp(`@${escapedZ}(?:\\s*\\([^)]*\\))?|@${cleanZ}\\b`, 'gi');
         let m;
         while ((m = reg.exec(currentText)) !== null) {
           if (m.index < startIndex || m.index >= endIndex) {
@@ -807,6 +806,12 @@ export default function ReportIssuePage() {
   const hasMultipleZones = detectedZones.length > 1;
   const hasMultipleSeverities = detectedSeverities.length > 1;
   const hasMultipleSingleTags = hasMultipleZones || hasMultipleSeverities;
+  const hasAnyDetected = Boolean(
+    detectedHeading ||
+    detectedZones.length > 0 ||
+    detectedCategories.length > 0 ||
+    detectedSeverities.length > 0
+  );
 
   // Submit Handler
   const handleSubmit = async (e) => {
@@ -833,11 +838,13 @@ export default function ReportIssuePage() {
 
     const activeCategories = detectedCategories.length > 0 ? detectedCategories : [category];
     const primaryCategory = activeCategories[0] || category;
+    const finalZone = detectedZones.length === 1 ? detectedZones[0] : zone;
+    const finalSeverity = detectedSeverities.length === 1 ? detectedSeverities[0] : severity;
 
     // Determine issue heading:
     // 1. Explicit hyphen (-) syntax if typed by user (e.g. - Broken fan switchboard)
     // 2. Or fallback to clean title strictly excluding MAB / zone acronyms / bracketed notes
-    const finalTitle = title.trim() || detectedHeading || extractHeadingFromText(description, primaryCategory, locationName, zone);
+    const finalTitle = title.trim() || detectedHeading || extractHeadingFromText(description, primaryCategory, locationName, finalZone);
 
     try {
       setSubmitting(true);
@@ -846,12 +853,12 @@ export default function ReportIssuePage() {
       submitData.append('description', description.trim());
       submitData.append('category', primaryCategory);
       submitData.append('categories', JSON.stringify(activeCategories));
-      submitData.append('severity', severity);
+      submitData.append('severity', finalSeverity);
       submitData.append('locationName', locationName.trim());
-      submitData.append('zone', zone);
+      submitData.append('zone', finalZone);
       submitData.append('latitude', location?.latitude || 20.2185);
       submitData.append('longitude', location?.longitude || 85.7368);
-      submitData.append('isUrgent', severity === 'Critical');
+      submitData.append('isUrgent', finalSeverity === 'Critical');
 
       if (mediaFile) {
         submitData.append('media', mediaFile);
@@ -1071,7 +1078,8 @@ export default function ReportIssuePage() {
             </div>
 
             {/* Active Recognition Bar (Read-only pills, not dropboxes) */}
-            {(zone || category || severity || detectedCategories.length > 0 || detectedHeading) && (
+            {/* Active Recognition Bar - Strictly displays tags recognized from text */}
+            {hasAnyDetected ? (
               <div className="active-detected-tags-strip">
                 <span className="strip-title">Recognized:</span>
 
@@ -1087,14 +1095,14 @@ export default function ReportIssuePage() {
                   <span className="detected-pill error zone" title="Only 1 zone allowed per report">
                     <FaExclamationTriangle className="mini-icon" /> Multiple Zones ({detectedZones.map(z => '@' + z).join(', ')}) — 1 allowed!
                   </span>
-                ) : (
+                ) : detectedZones.length === 1 ? (
                   <span className="detected-pill zone" title="Campus Zone">
-                    <FaMapMarkerAlt className="mini-icon" /> @{zone}
+                    <FaMapMarkerAlt className="mini-icon" /> @{detectedZones[0]}
                   </span>
-                )}
+                ) : null}
 
                 {/* CATEGORIES: Multiple Categories Allowed */}
-                {detectedCategories.length > 0 ? (
+                {detectedCategories.length > 0 && (
                   detectedCategories.map((cat) => (
                     <button
                       key={cat}
@@ -1106,10 +1114,6 @@ export default function ReportIssuePage() {
                       <FaTags className="mini-icon" /> #{cat} {detectedCategories.length > 1 && cat === category ? '★ Primary' : ''}
                     </button>
                   ))
-                ) : (
-                  <span className="detected-pill category" title="Facility Category">
-                    <FaTags className="mini-icon" /> #{category}
-                  </span>
                 )}
 
                 {/* SEVERITY: Single Severity Allowed */}
@@ -1117,11 +1121,19 @@ export default function ReportIssuePage() {
                   <span className="detected-pill error severity" title="Only 1 severity allowed per report">
                     <FaExclamationTriangle className="mini-icon" /> Multiple Severities ({detectedSeverities.map(s => '$' + s).join(', ')}) — 1 allowed!
                   </span>
-                ) : (
-                  <span className={`detected-pill severity ${severity.toLowerCase()}`} title="Urgency Severity">
-                    <FaExclamationTriangle className="mini-icon" /> ${severity}
+                ) : detectedSeverities.length === 1 ? (
+                  <span className={`detected-pill severity ${detectedSeverities[0].toLowerCase()}`} title="Urgency Severity">
+                    <FaExclamationTriangle className="mini-icon" /> ${detectedSeverities[0]}
                   </span>
-                )}
+                ) : null}
+              </div>
+            ) : (
+              <div className="active-detected-tags-strip idle-hint">
+                <span className="strip-title">Syntax:</span>
+                <span className="syntax-hint-tag"><span className="sym">-</span> Heading</span>
+                <span className="syntax-hint-tag"><span className="sym">@</span> Zone</span>
+                <span className="syntax-hint-tag"><span className="sym">#</span> Category</span>
+                <span className="syntax-hint-tag"><span className="sym">$</span> Severity</span>
               </div>
             )}
 
