@@ -3,8 +3,7 @@
   flex-direction: column;
   gap: 1.25rem;
   max-width: 780px;
-  margin: 0 auto;
-  padding-bottom: 3.5rem;
+  padding: 10px 12px calc(88px + env(safe-area-inset-bottom, 20px)) 12px;
 }
 
 .back-nav-btn {
