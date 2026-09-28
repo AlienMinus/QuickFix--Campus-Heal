@@ -489,6 +489,27 @@
   border-color: rgba(56, 189, 248, 0.3);
 }
 
+.detected-pill.category.primary {
+  background: rgba(56, 189, 248, 0.28);
+  border-color: #38bdf8;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.clickable-cat-pill {
+  cursor: pointer;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.clickable-cat-pill:hover {
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+  background: rgba(56, 189, 248, 0.22);
+}
+
 .detected-pill.severity.critical {
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
@@ -511,6 +532,59 @@
   background: rgba(16, 185, 129, 0.15);
   color: #34d399;
   border-color: rgba(16, 185, 129, 0.3);
+}
+
+.detected-pill.error {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.6);
+  animation: tagErrorPulse 2s infinite ease-in-out;
+}
+
+@keyframes tagErrorPulse {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.6); }
+  50% { border-color: rgba(239, 68, 68, 0.95); box-shadow: 0 0 10px rgba(239, 68, 68, 0.45); }
+}
+
+/* Tag Validation Callout Box */
+.tag-validation-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 6px;
+}
+
+.tag-callout-icon {
+  color: #ef4444;
+  font-size: 1.15rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.tag-callout-text {
+  font-size: 0.78rem;
+  color: #fca5a5;
+}
+
+.tag-callout-text p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.tag-callout-text p + p {
+  margin-top: 5px;
+}
+
+.tag-callout-text code {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 /* Quick Typing Guide Shortcuts */
@@ -697,7 +771,11 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  background: rgba(18, 10, 36, 0.6);
+  background: rgba(18, 10, 36, 0.95);
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+  position: relative;
+  z-index: 10;
 }
 
 .toolbar-icons-group {
