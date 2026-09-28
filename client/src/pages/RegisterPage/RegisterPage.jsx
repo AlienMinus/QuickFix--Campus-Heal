@@ -43,6 +43,8 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [institutes, setInstitutes] = useState(DEFAULT_INSTITUTES);
+  const [branches, setBranches] = useState(DEPARTMENTS);
+  const [loadingBranches, setLoadingBranches] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -56,20 +58,48 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const fetchBranchesForInstitute = async (instituteName) => {
+    if (!instituteName) return;
+    try {
+      setLoadingBranches(true);
+      const res = await instituteAPI.getBranchesForInstitute(instituteName);
+      if (res.data?.branches && Array.isArray(res.data.branches) && res.data.branches.length > 0) {
+        setBranches(res.data.branches);
+        setFormData((prev) => ({
+          ...prev,
+          department: res.data.branches.includes(prev.department) ? prev.department : res.data.branches[0],
+        }));
+      } else {
+        setBranches(DEPARTMENTS);
+      }
+    } catch (e) {
+      console.warn('Could not load branches for institute:', instituteName, e);
+      setBranches(DEPARTMENTS);
+    } finally {
+      setLoadingBranches(false);
+    }
+  };
+
   useEffect(() => {
     const fetchInstitutesList = async () => {
+      let currentInst = formData.institute;
       try {
         const res = await instituteAPI.getAll();
         if (res.data && res.data.institutes && res.data.institutes.length > 0) {
           setInstitutes(res.data.institutes);
-          // Set first institute if available
+          const firstInstName = res.data.institutes[0].name;
+          currentInst = formData.institute || firstInstName;
           setFormData((prev) => ({
             ...prev,
-            institute: prev.institute || res.data.institutes[0].name,
+            institute: currentInst,
           }));
         }
       } catch (e) {
         console.warn('Could not load live institutes list, fallback to defaults');
+      } finally {
+        if (currentInst) {
+          fetchBranchesForInstitute(currentInst);
+        }
       }
     };
     fetchInstitutesList();
@@ -78,6 +108,9 @@ export default function RegisterPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'institute') {
+      fetchBranchesForInstitute(value);
+    }
   };
 
   const handleSubmit = async (e) => {
