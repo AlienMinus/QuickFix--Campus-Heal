@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
 import { useOrg } from '../../context/OrgContext';
-import { adminAPI, issueAPI, locationAPI, instituteAPI } from '../../services/api';
+import { adminAPI, issueAPI, locationAPI } from '../../services/api';
 import SeverityBadge from '../../components/SeverityBadge/SeverityBadge';
 import {
   FaChartLine,
@@ -24,9 +24,6 @@ import {
   FaTimes,
   FaBuilding,
   FaThList,
-  FaCrown,
-  FaUniversity,
-  FaEye,
 } from 'react-icons/fa';
 import './AdminDashboardPage.css';
 
@@ -62,7 +59,7 @@ const getCategoryShortTag = (category) => {
 };
 
 export default function AdminDashboardPage() {
-  const { user, isSuperAdmin } = useAuth();
+  const { user } = useAuth();
   const { orgConfig, updateOrgInfo, zones, addZone, deleteZone } = useOrg();
   const navigate = useNavigate();
 
@@ -70,13 +67,10 @@ export default function AdminDashboardPage() {
   const [issues, setIssues] = useState([]);
   const [usersList, setUsersList] = useState([]);
   const [activeStaff, setActiveStaff] = useState([]);
-  const [institutesList, setInstitutesList] = useState([]);
-  const [selectedInstitute, setSelectedInstitute] = useState('All');
-  const [superOverview, setSuperOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Table filters & active section dropdown state (issues | zones | users | patrol | institutes)
+  // Table filters & active section dropdown state (issues | zones | users | patrol)
   const [tableFilter, setTableFilter] = useState('all');
   const [tableSearch, setTableSearch] = useState('');
   const [activeTab, setActiveTab] = useState('issues');
@@ -84,7 +78,6 @@ export default function AdminDashboardPage() {
   // Form Modals Visibility
   const [showAddZoneModal, setShowAddZoneModal] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
-  const [showAddInstituteModal, setShowAddInstituteModal] = useState(false);
 
   // Organization branding form state
   const [orgName, setOrgName] = useState(orgConfig.name);
@@ -100,35 +93,21 @@ export default function AdminDashboardPage() {
   const [newLat, setNewLat] = useState('20.2195');
   const [newLng, setNewLng] = useState('85.7360');
 
-  // New Institute Form state (Super Admin)
-  const [newInstName, setNewInstName] = useState('');
-  const [newInstCode, setNewInstCode] = useState('');
-  const [newInstCity, setNewInstCity] = useState('');
-  const [newInstLocation, setNewInstLocation] = useState('');
-  const [newInstEmail, setNewInstEmail] = useState('');
-
   // QR Modal preview state
   const [activeQRZone, setActiveQRZone] = useState(null);
   const [generatedQRUrl, setGeneratedQRUrl] = useState('');
 
-  const fetchAdminData = async (instFilter = selectedInstitute) => {
+  const fetchAdminData = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const queryParams = instFilter && instFilter !== 'All' ? { institute: instFilter } : {};
-
       const calls = [
-        adminAPI.getStats(queryParams),
-        issueAPI.getAll({ ...queryParams, limit: 100 }),
-        adminAPI.getUsers(queryParams),
+        adminAPI.getStats(),
+        issueAPI.getAll({ limit: 100 }),
+        adminAPI.getUsers(),
         locationAPI.getActiveStaff(),
-        instituteAPI.getAll(),
       ];
-
-      if (isSuperAdmin) {
-        calls.push(instituteAPI.getSuperAdminOverview());
-      }
 
       const results = await Promise.allSettled(calls);
 
@@ -136,10 +115,6 @@ export default function AdminDashboardPage() {
       if (results[1].status === 'fulfilled') setIssues(results[1].value.data.issues || []);
       if (results[2].status === 'fulfilled') setUsersList(results[2].value.data.users || []);
       if (results[3].status === 'fulfilled') setActiveStaff(results[3].value.data.activeStaff || []);
-      if (results[4].status === 'fulfilled') setInstitutesList(results[4].value.data.institutes || []);
-      if (isSuperAdmin && results[5]?.status === 'fulfilled') {
-        setSuperOverview(results[5].value.data.stats);
-      }
     } catch (err) {
       setError('Could not load administrative data.');
     } finally {
@@ -148,12 +123,12 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    fetchAdminData(selectedInstitute);
-  }, [selectedInstitute]);
-
-  const handleInstituteChange = (instName) => {
-    setSelectedInstitute(instName);
-  };
+    if (user?.role === 'superadmin') {
+      navigate('/superadmin');
+      return;
+    }
+    fetchAdminData();
+  }, [user]);
 
   const handleSaveOrgInfo = (e) => {
     e.preventDefault();
@@ -184,46 +159,6 @@ export default function AdminDashboardPage() {
     setNewRoom('');
     setNewRecommendation('');
     setShowAddZoneModal(false);
-  };
-
-  const handleCreateInstitute = async (e) => {
-    e.preventDefault();
-    if (!newInstName.trim() || !newInstCode.trim()) {
-      alert('Institute Name and Code are required.');
-      return;
-    }
-
-    try {
-      await instituteAPI.create({
-        name: newInstName.trim(),
-        code: newInstCode.trim().toUpperCase(),
-        city: newInstCity.trim() || 'Bhubaneswar',
-        location: newInstLocation.trim() || 'Campus Area',
-        contactEmail: newInstEmail.trim(),
-      });
-
-      alert(`Institute ${newInstName} created successfully!`);
-      setShowAddInstituteModal(false);
-      setNewInstName('');
-      setNewInstCode('');
-      setNewInstCity('');
-      setNewInstLocation('');
-      setNewInstEmail('');
-      fetchAdminData(selectedInstitute);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create institute');
-    }
-  };
-
-  const handleDeleteInstitute = async (instId, instName) => {
-    if (!window.confirm(`Are you sure you want to delete institute ${instName}?`)) return;
-    try {
-      await instituteAPI.delete(instId);
-      alert(`Institute ${instName} deleted`);
-      fetchAdminData(selectedInstitute);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete institute');
-    }
   };
 
   const handleGenerateQR = async (zone) => {
@@ -263,18 +198,6 @@ export default function AdminDashboardPage() {
       );
     } catch (err) {
       alert('Failed to update user role');
-    }
-  };
-
-  const handleUserInstituteReassign = async (userId, newInst) => {
-    try {
-      await adminAPI.updateUserRole(userId, { institute: newInst });
-      setUsersList((prev) =>
-        prev.map((u) => (u._id === userId ? { ...u, institute: newInst } : u))
-      );
-      alert(`User assigned to ${newInst}`);
-    } catch (err) {
-      alert('Failed to reassign user institute');
     }
   };
 
@@ -341,45 +264,17 @@ export default function AdminDashboardPage() {
       {/* Top Banner with Super Admin Mode or Institute Command Center */}
       <div className="admin-header-row">
         <div>
-          <div className={`admin-role-badge ${isSuperAdmin ? 'super' : ''}`}>
-            {isSuperAdmin ? (
-              <>
-                <FaCrown /> Multi-Institute Governance • Super Admin HQ
-              </>
-            ) : (
-              <>
-                <FaUserShield /> {user?.institute || orgConfig.name} • Command Center
-              </>
-            )}
+          <div className="admin-role-badge">
+            <FaUserShield /> {user?.institute || orgConfig.name} • Campus Command Center
           </div>
           <h1>Facility & Operations Administration</h1>
         </div>
 
         <div className="admin-header-actions">
-          {/* Super Admin Institute Filter Dropdown */}
-          {isSuperAdmin && (
-            <div className="superadmin-filter-bar">
-              <FaUniversity className="inst-filter-icon" />
-              <select
-                value={selectedInstitute}
-                onChange={(e) => handleInstituteChange(e.target.value)}
-                className="institute-quick-switch-select"
-                title="Filter views by institute"
-              >
-                <option value="All">All Institutes ({institutesList.length})</option>
-                {institutesList.map((inst) => (
-                  <option key={inst._id || inst.name} value={inst.name}>
-                    {inst.name} ({inst.city || inst.code})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
           <button className="csv-export-btn" onClick={handleExportCSV}>
             <FaFileDownload /> CSV
           </button>
-          <button className="admin-refresh-btn" onClick={() => fetchAdminData(selectedInstitute)} title="Refresh records">
+          <button className="admin-refresh-btn" onClick={fetchAdminData} title="Refresh records">
             <FaSync className={loading ? 'spin' : ''} />
           </button>
         </div>
@@ -441,9 +336,6 @@ export default function AdminDashboardPage() {
               <option value="zones">🏷️ Campus Zones & QR Generator ({zones.length} Zones)</option>
               <option value="users">👥 User Roles & Access ({usersList.length} Accounts)</option>
               <option value="patrol">📡 Maintenance Staff Patrol ({activeStaff.length} Active)</option>
-              {isSuperAdmin && (
-                <option value="institutes">🏛️ Institutes Governance ({institutesList.length} Campuses)</option>
-              )}
             </select>
           </div>
         </div>
@@ -514,8 +406,7 @@ export default function AdminDashboardPage() {
                         </strong>
                         <div className="table-meta-line">
                           <span className="table-sub">#{issue.trackingId || issue._id.slice(-6)}</span>
-                          <span className="table-zone-sub">📍 {issue.locationName || issue.zone || 'Campus'}</span>
-                          {isSuperAdmin && issue.institute && (
+                          {issue.institute && (
                             <span className="table-inst-pill">🏛️ {issue.institute}</span>
                           )}
                         </div>
@@ -641,21 +532,17 @@ export default function AdminDashboardPage() {
       {activeTab === 'users' && (
         <div className="admin-table-card">
           <div className="patrol-header">
-            <h3>Registered User Accounts & Access Roles ({usersList.length})</h3>
-            <p>
-              {isSuperAdmin
-                ? 'Super Admin Directory: Manage roles and assign institutes across all colleges'
-                : `Users belonging to ${user?.institute || 'your institute'} (No data mixup)`}
-            </p>
+            <h3>Campus User Accounts & Roles ({usersList.length})</h3>
+            <p>Users registered at {user?.institute || 'your campus'}</p>
           </div>
 
           <div className="responsive-table-wrapper">
             <table className="admin-data-table users-table">
               <thead>
                 <tr>
-                  <th style={{ width: '42%' }}>User & Institute</th>
+                  <th style={{ width: '42%' }}>User & Details</th>
                   <th style={{ width: '22%' }}>Role</th>
-                  <th style={{ width: '36%' }}>Change Role</th>
+                  <th style={{ width: '36%' }}>Assign Role</th>
                 </tr>
               </thead>
               <tbody>
@@ -664,7 +551,7 @@ export default function AdminDashboardPage() {
                     <td>
                       <strong className="table-highlight-name">{u.name}</strong>
                       <span className="table-sub">{u.email}</span>
-                      <span className="user-inst-badge">🏛️ {u.institute || 'BPUT Tech Campus'}</span>
+                      <span className="user-inst-badge">🏛️ {u.institute || 'Campus'}</span>
                     </td>
                     <td>
                       <span className={`role-badge-cell ${u.role}`}>
@@ -681,23 +568,7 @@ export default function AdminDashboardPage() {
                           <option value="student">Student</option>
                           <option value="staff">Staff</option>
                           <option value="admin">Admin</option>
-                          {isSuperAdmin && <option value="superadmin">Super Admin</option>}
                         </select>
-
-                        {isSuperAdmin && (
-                          <select
-                            value={u.institute || 'BPUT Tech Campus'}
-                            onChange={(e) => handleUserInstituteReassign(u._id, e.target.value)}
-                            className="role-change-select inst-switch"
-                            title="Reassign Institute"
-                          >
-                            {institutesList.map((inst) => (
-                              <option key={inst._id || inst.name} value={inst.name}>
-                                {inst.code || inst.name}
-                              </option>
-                            ))}
-                          </select>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -761,121 +632,6 @@ export default function AdminDashboardPage() {
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* Section 5: Super Admin Multi-Institute Governance */}
-      {isSuperAdmin && activeTab === 'institutes' && (
-        <div className="superadmin-institutes-container">
-          <div className="zones-header-actions-card">
-            <div className="zones-header-info">
-              <h3>Higher Education Multi-Campus Governance</h3>
-              <p>Configure distinct institutions, manage cross-campus administrator delegations and prevent data pollution</p>
-            </div>
-            <div className="zones-action-buttons">
-              <button
-                type="button"
-                className="open-modal-action-btn primary"
-                onClick={() => setShowAddInstituteModal(true)}
-              >
-                <FaPlus /> Register Institute
-              </button>
-            </div>
-          </div>
-
-          {/* Super Admin Global Metrics */}
-          {superOverview && (
-            <div className="super-kpi-grid">
-              <div className="super-kpi-card">
-                <span className="super-kpi-val">{superOverview.totalInstitutes}</span>
-                <span className="super-kpi-sub">Total Campuses</span>
-              </div>
-              <div className="super-kpi-card">
-                <span className="super-kpi-val">{superOverview.totalUsers}</span>
-                <span className="super-kpi-sub">Total Members</span>
-              </div>
-              <div className="super-kpi-card">
-                <span className="super-kpi-val">{superOverview.issuesSummary?.total || 0}</span>
-                <span className="super-kpi-sub">Total Tickets</span>
-              </div>
-              <div className="super-kpi-card highlight">
-                <span className="super-kpi-val">{superOverview.issuesSummary?.overallResolutionRate || 0}%</span>
-                <span className="super-kpi-sub">System Resolution</span>
-              </div>
-            </div>
-          )}
-
-          {/* Institutes Directory */}
-          <div className="admin-table-card">
-            <div className="responsive-table-wrapper">
-              <table className="admin-data-table institutes-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '46%' }}>Institute & Campus</th>
-                    <th style={{ width: '22%' }}>Personnel</th>
-                    <th style={{ width: '18%' }}>Issues</th>
-                    <th style={{ width: '14%', textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {institutesList.map((inst) => {
-                    const statsForInst = superOverview?.institutes?.find((s) => s.name === inst.name);
-                    return (
-                      <tr key={inst._id || inst.code}>
-                        <td>
-                          <strong className="table-highlight-name">{inst.name}</strong>
-                          <span className="table-sub">Code: {inst.code} • {inst.city || inst.location}</span>
-                          {inst.contactEmail && (
-                            <span className="table-advice-sub">✉️ {inst.contactEmail}</span>
-                          )}
-                        </td>
-                        <td>
-                          <span className="inst-stat-pill admin">
-                            🛡️ {statsForInst?.adminsCount ?? '-'} Admin
-                          </span>
-                          <span className="inst-stat-pill staff">
-                            🛠️ {statsForInst?.staffCount ?? '-'} Staff
-                          </span>
-                          <span className="inst-stat-pill student">
-                            🎓 {statsForInst?.studentsCount ?? '-'} Students
-                          </span>
-                        </td>
-                        <td>
-                          <span className="inst-stat-pill issues">
-                            🎫 {statsForInst?.totalIssues ?? 0} Tickets
-                          </span>
-                          <span className="inst-stat-pill resolved">
-                            ✅ {statsForInst?.resolutionRate ?? 0}% Done
-                          </span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div className="inst-action-btns">
-                            <button
-                              className="focus-inst-btn"
-                              onClick={() => {
-                                setSelectedInstitute(inst.name);
-                                setActiveTab('issues');
-                              }}
-                              title={`Focus on ${inst.name}`}
-                            >
-                              <FaEye /> View
-                            </button>
-                            <button
-                              className="delete-icon-btn"
-                              onClick={() => handleDeleteInstitute(inst._id, inst.name)}
-                              title="Delete Institute"
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       )}
@@ -1048,93 +804,6 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* FORM MODAL 3: Super Admin Register New Institute */}
-      {showAddInstituteModal && (
-        <div className="admin-form-modal-backdrop" onClick={() => setShowAddInstituteModal(false)}>
-          <div className="admin-form-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-form-modal-header">
-              <div className="admin-modal-title">
-                <FaUniversity className="modal-title-icon" />
-                <h4>Register New Educational Institute</h4>
-              </div>
-              <button
-                type="button"
-                className="admin-form-modal-close"
-                onClick={() => setShowAddInstituteModal(false)}
-              >
-                <FaTimes />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateInstitute} className="admin-modal-form-content">
-              <p className="modal-intro-text">
-                Instantly provision a distinct organization namespace with segregated issues, zones, and personnel data.
-              </p>
-
-              <div className="admin-form-grid">
-                <div className="admin-form-group full-width">
-                  <label>Full Institute Name *</label>
-                  <input
-                    type="text"
-                    value={newInstName}
-                    onChange={(e) => setNewInstName(e.target.value)}
-                    placeholder="e.g. National Institute of Technology, Rourkela"
-                    className="admin-input"
-                    required
-                  />
-                </div>
-
-                <div className="admin-form-group">
-                  <label>Short Code (Unique) *</label>
-                  <input
-                    type="text"
-                    value={newInstCode}
-                    onChange={(e) => setNewInstCode(e.target.value)}
-                    placeholder="e.g. NITR"
-                    className="admin-input"
-                    required
-                  />
-                </div>
-
-                <div className="admin-form-group">
-                  <label>City / Campus Location</label>
-                  <input
-                    type="text"
-                    value={newInstCity}
-                    onChange={(e) => setNewInstCity(e.target.value)}
-                    placeholder="e.g. Rourkela"
-                    className="admin-input"
-                  />
-                </div>
-
-                <div className="admin-form-group full-width">
-                  <label>Official Admin Email</label>
-                  <input
-                    type="email"
-                    value={newInstEmail}
-                    onChange={(e) => setNewInstEmail(e.target.value)}
-                    placeholder="e.g. registrar@institute.edu"
-                    className="admin-input"
-                  />
-                </div>
-              </div>
-
-              <div className="admin-form-modal-actions">
-                <button
-                  type="button"
-                  className="modal-cancel-btn"
-                  onClick={() => setShowAddInstituteModal(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="modal-submit-btn">
-                  <FaUniversity /> Provision Institute
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Modal: Generated QR Code for Zone */}
       {activeQRZone && generatedQRUrl && (
