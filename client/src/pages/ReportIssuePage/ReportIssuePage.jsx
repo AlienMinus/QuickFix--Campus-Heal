@@ -896,14 +896,69 @@ export default function ReportIssuePage() {
             </div>
 
             {/* Active Recognition Bar (Read-only pills, not dropboxes) */}
-            {(zone || category || severity) && (
+            {(zone || category || severity || detectedCategories.length > 0) && (
               <div className="active-detected-tags-strip">
                 <span className="strip-title">Recognized:</span>
-                <span className="detected-pill zone"><FaMapMarkerAlt className="mini-icon" /> {zone}</span>
-                <span className="detected-pill category"><FaTags className="mini-icon" /> {category}</span>
-                <span className={`detected-pill severity ${severity.toLowerCase()}`}>
-                  <FaExclamationTriangle className="mini-icon" /> {severity}
-                </span>
+
+                {/* ZONE: Single Zone Allowed */}
+                {hasMultipleZones ? (
+                  <span className="detected-pill error zone" title="Only 1 zone allowed per report">
+                    <FaExclamationTriangle className="mini-icon" /> Multiple Zones ({detectedZones.map(z => '@' + z).join(', ')}) — 1 allowed!
+                  </span>
+                ) : (
+                  <span className="detected-pill zone" title="Campus Zone">
+                    <FaMapMarkerAlt className="mini-icon" /> @{zone}
+                  </span>
+                )}
+
+                {/* CATEGORIES: Multiple Categories Allowed */}
+                {detectedCategories.length > 0 ? (
+                  detectedCategories.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`detected-pill category clickable-cat-pill ${cat === category ? 'primary' : ''}`}
+                      onClick={() => setCategory(cat)}
+                      title={cat === category ? 'Primary ticket category' : 'Click to set as primary category'}
+                    >
+                      <FaTags className="mini-icon" /> #{cat} {detectedCategories.length > 1 && cat === category ? '★ Primary' : ''}
+                    </button>
+                  ))
+                ) : (
+                  <span className="detected-pill category" title="Facility Category">
+                    <FaTags className="mini-icon" /> #{category}
+                  </span>
+                )}
+
+                {/* SEVERITY: Single Severity Allowed */}
+                {hasMultipleSeverities ? (
+                  <span className="detected-pill error severity" title="Only 1 severity allowed per report">
+                    <FaExclamationTriangle className="mini-icon" /> Multiple Severities ({detectedSeverities.map(s => '$' + s).join(', ')}) — 1 allowed!
+                  </span>
+                ) : (
+                  <span className={`detected-pill severity ${severity.toLowerCase()}`} title="Urgency Severity">
+                    <FaExclamationTriangle className="mini-icon" /> ${severity}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Validation Callout if multiple single-value tags detected */}
+            {hasMultipleSingleTags && (
+              <div className="tag-validation-callout">
+                <FaExclamationTriangle className="tag-callout-icon" />
+                <div className="tag-callout-text">
+                  {hasMultipleZones && (
+                    <p>
+                      <strong>Multiple zones detected:</strong> Please keep only one <code>@zone</code> (found: {detectedZones.map(z => '@' + z).join(', ')}). Multiple categories (<code>#</code>) are permitted, but a ticket can only be located in one physical zone.
+                    </p>
+                  )}
+                  {hasMultipleSeverities && (
+                    <p>
+                      <strong>Multiple severities detected:</strong> Please keep only one <code>$severity</code> (found: {detectedSeverities.map(s => '$' + s).join(', ')}).
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1055,7 +1110,8 @@ export default function ReportIssuePage() {
               <button
                 type="submit"
                 className="post-submit-btn"
-                disabled={submitting || !description.trim() || !locationName.trim()}
+                disabled={submitting || !description.trim() || !locationName.trim() || hasMultipleSingleTags}
+                title={hasMultipleSingleTags ? 'Please keep only a single zone and single severity' : 'Post Ticket'}
               >
                 {submitting ? (
                   <>
