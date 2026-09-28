@@ -1,0 +1,7 @@
+name,email,password,role,institute,department,identifier,phone,avatar
+Chief Super Admin (HQ),superadmin@quickfix.org,quickfix2026,superadmin,Apex Multi-Campus Authority,Higher Education Governance & Audits,SUPER-CHIEF-01,+91 99999 00000,
+Prof. S. K. Patnaik,admin.campus@gift.ac.in,quickfix2026,admin,BPUT Tech Campus,Central Campus Administration,ADMIN-001,+91 94370 12345,
+Dr. Rajesh Mohanty,admin.gift@gift.ac.in,quickfix2026,admin,GIFT Autonomous College,Estate & Campus Infrastructure,ADMIN-GIFT-02,+91 94371 98765,
+Er. Sunita Behera,admin.silicon@silicon.ac.in,quickfix2026,admin,Silicon Institute of Technology,Facility Management Directorate,ADMIN-SIL-03,+91 98612 34567,
+Bikash Mohapatra,maintenance.staff@gift.ac.in,quickfix2026,staff,BPUT Tech Campus,Electrical & Facilities Maintenance,STAFF-EM-108,+91 98610 54321,
+Rohan Sharma,student.demo@gift.ac.in,quickfix2026,student,BPUT Tech Campus,Computer Science & Engineering,GIFT-2022-CSE-042,+91 70081 99887,
