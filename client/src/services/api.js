@@ -65,6 +65,7 @@ export const adminAPI = {
 
 export const instituteAPI = {
   getAll: () => api.get('/institutes'),
+  getWithAdmins: () => api.get('/institutes/with-admins'),
   create: (data) => api.post('/institutes', data),
   update: (id, data) => api.put(`/institutes/${id}`, data),
   delete: (id) => api.delete(`/institutes/${id}`),

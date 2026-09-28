@@ -157,6 +157,9 @@ exports.getIssues = async (req, res) => {
       if (institute && institute !== 'All') {
         filter.institute = institute;
       }
+    } else if (req.user?.role === 'admin') {
+      // Normal admin manages ONLY their own institute's data
+      filter.institute = req.user.institute || 'None';
     } else if (req.user?.institute) {
       filter.institute = req.user.institute;
     } else if (institute && institute !== 'All') {
@@ -231,6 +234,13 @@ exports.updateIssueStatus = async (req, res) => {
 
     if (!issue) {
       return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    // Normal admin can only address issues belonging to their institute
+    if (req.user && req.user.role !== 'superadmin') {
+      if (req.user.institute && issue.institute && req.user.institute !== issue.institute) {
+        return res.status(403).json({ success: false, message: 'Not authorized to modify issues from another institute' });
+      }
     }
 
     if (!['Submitted', 'In Progress', 'Resolved'].includes(status)) {
@@ -353,6 +363,12 @@ exports.assignIssue = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
+    if (req.user && req.user.role !== 'superadmin') {
+      if (req.user.institute && issue.institute && req.user.institute !== issue.institute) {
+        return res.status(403).json({ success: false, message: 'Not authorized to assign issues from another institute' });
+      }
+    }
+
     issue.assignedTo = staffId;
     issue.assignedToName = staffName || 'Assigned Staff';
     if (issue.status === 'Submitted') {
@@ -393,10 +409,15 @@ exports.checkDuplicates = async (req, res) => {
     const lat = parseFloat(latitude) || 20.2195;
     const lng = parseFloat(longitude) || 85.7360;
 
-    const activeIssues = await Issue.find({
+    const activeFilter = {
       category: category,
       status: { $ne: 'Resolved' },
-    }).limit(15);
+    };
+    if (req.user && req.user.role !== 'superadmin' && req.user.institute) {
+      activeFilter.institute = req.user.institute;
+    }
+
+    const activeIssues = await Issue.find(activeFilter).limit(15);
 
     const matches = activeIssues.map((item) => {
       let distance = 9999;
