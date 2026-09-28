@@ -321,7 +321,7 @@ exports.updateIssueStatus = async (req, res) => {
       await Notification.create({
         recipient: issue.reportedBy,
         title: `Issue Status Update: ${issue.title}`,
-        message: `Your reported issue status has been updated to "${status}".`,
+        message: `Reported issue status has been updated to "${status}".`,
         type: 'issue_status',
         issueId: issue._id,
       });
@@ -424,7 +424,7 @@ exports.assignIssue = async (req, res) => {
       await Notification.create({
         recipient: staffId,
         title: `Task Assigned: ${issue.title}`,
-        message: `You have been assigned to resolve an issue at ${issue.location.building} (${issue.severity} severity).`,
+        message: `Technician has been assigned to resolve the issue at ${issue.location.building} (${issue.severity} severity).`,
         type: 'assignment',
         issueId: issue._id,
       });
