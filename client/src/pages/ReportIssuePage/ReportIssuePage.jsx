@@ -321,8 +321,16 @@ export default function ReportIssuePage() {
       boundedLeft = Math.max(8, boundedLeft);
     }
 
+    // Check if dropdown would benefit from flipping above cursor (e.g. typing near bottom of tall input)
+    const popoverHeight = 220;
+    const spaceBelow = (element.clientHeight || 140) - rawTop;
+    let popoverTop = rawTop + lineHeight + 4;
+    if (spaceBelow < 50 && rawTop > popoverHeight + 10) {
+      popoverTop = Math.max(8, rawTop - popoverHeight - 6);
+    }
+
     return {
-      top: rawTop + lineHeight + 4,
+      top: popoverTop,
       left: boundedLeft,
     };
   };
@@ -379,22 +387,69 @@ export default function ReportIssuePage() {
     if (!autocomplete) return;
     const { startIndex, endIndex } = autocomplete;
 
+    let currentText = description;
+    let newStartIndex = startIndex;
+    let newEndIndex = endIndex;
+
+    // For single-value tags (@zone and $severity), replace any previously typed tag
+    // so using the dropdown naturally maintains a single zone and single severity without duplicate errors!
+    if (type === '@') {
+      for (const z of availableZones) {
+        const shortName = z.split(' ')[0];
+        const cleanZ = z.replace(/[^a-zA-Z0-9]/g, '');
+        const escapedZ = z.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const reg = new RegExp(`@${escapedZ}\\b|@${cleanZ}\\b|@${shortName}\\b`, 'gi');
+        let m;
+        while ((m = reg.exec(currentText)) !== null) {
+          if (m.index < startIndex || m.index >= endIndex) {
+            const matchLen = m[0].length;
+            currentText = currentText.slice(0, m.index) + currentText.slice(m.index + matchLen).replace(/^\s+/, ' ');
+            if (m.index < startIndex) {
+              newStartIndex -= matchLen;
+              newEndIndex -= matchLen;
+            }
+            break;
+          }
+        }
+      }
+    } else if (type === '$') {
+      for (const s of SEVERITIES) {
+        const reg = new RegExp(`\\$${s}\\b`, 'gi');
+        let m;
+        while ((m = reg.exec(currentText)) !== null) {
+          if (m.index < startIndex || m.index >= endIndex) {
+            const matchLen = m[0].length;
+            currentText = currentText.slice(0, m.index) + currentText.slice(m.index + matchLen).replace(/^\s+/, ' ');
+            if (m.index < startIndex) {
+              newStartIndex -= matchLen;
+              newEndIndex -= matchLen;
+            }
+            break;
+          }
+        }
+      }
+    }
+
     const formatted = `${type}${value} `;
-    const updated = description.slice(0, startIndex) + formatted + description.slice(endIndex);
+    const updated = currentText.slice(0, newStartIndex) + formatted + currentText.slice(newEndIndex);
 
     setDescription(updated);
     setAutocomplete(null);
+    parseTagsFromText(updated);
 
     // Update corresponding form states
     if (type === '@') setZone(value);
-    if (type === '#') setCategory(value);
+    if (type === '#') {
+      setCategory(value);
+      setDetectedCategories(prev => prev.includes(value) ? prev : [...prev, value]);
+    }
     if (type === '$') setSeverity(value);
 
     // Refocus textarea and place cursor right after inserted tag
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
-        const nextPos = startIndex + formatted.length;
+        const nextPos = newStartIndex + formatted.length;
         textareaRef.current.setSelectionRange(nextPos, nextPos);
       }
     }, 15);
@@ -568,6 +623,11 @@ export default function ReportIssuePage() {
     if (voiceReport.locationName && !locationName) setLocationName(voiceReport.locationName);
   };
 
+  // Single-value tag validation flags
+  const hasMultipleZones = detectedZones.length > 1;
+  const hasMultipleSeverities = detectedSeverities.length > 1;
+  const hasMultipleSingleTags = hasMultipleZones || hasMultipleSeverities;
+
   // Submit Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -582,6 +642,17 @@ export default function ReportIssuePage() {
       setErrorMessage('Please specify the specific room, lab, or spot.');
       return;
     }
+    if (hasMultipleZones) {
+      setErrorMessage(`Only a single zone is allowed per report. Please keep only one @zone in your description (found: ${detectedZones.map(z => '@' + z).join(', ')}).`);
+      return;
+    }
+    if (hasMultipleSeverities) {
+      setErrorMessage(`Only a single severity is allowed per report. Please keep only one $severity in your description (found: ${detectedSeverities.map(s => '$' + s).join(', ')}).`);
+      return;
+    }
+
+    const activeCategories = detectedCategories.length > 0 ? detectedCategories : [category];
+    const primaryCategory = activeCategories[0] || category;
 
     // Auto-generate title if not manually given
     let finalTitle = title.trim();
@@ -590,7 +661,7 @@ export default function ReportIssuePage() {
         .split('\n')[0]
         .replace(/[@#$][\w\s-]+/g, '')
         .trim();
-      finalTitle = cleanFirstLine.slice(0, 80) || `${category} issue in ${locationName}`;
+      finalTitle = cleanFirstLine.slice(0, 80) || `${primaryCategory} issue in ${locationName}`;
     }
 
     try {
@@ -598,7 +669,8 @@ export default function ReportIssuePage() {
       const submitData = new FormData();
       submitData.append('title', finalTitle);
       submitData.append('description', description.trim());
-      submitData.append('category', category);
+      submitData.append('category', primaryCategory);
+      submitData.append('categories', JSON.stringify(activeCategories));
       submitData.append('severity', severity);
       submitData.append('locationName', locationName.trim());
       submitData.append('zone', zone);
