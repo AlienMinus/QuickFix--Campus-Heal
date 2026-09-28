@@ -62,7 +62,7 @@ const getCategoryShortTag = (category) => {
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
-  const { orgConfig, updateOrgInfo, zones, addZone, deleteZone } = useOrg();
+  const { instituteHeader, updateInstituteHeader, zones, addZone, deleteZone } = useOrg();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState(null);
@@ -72,7 +72,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Table filters & active section dropdown state (issues | zones | users | patrol)
+  // Table filters & active section dropdown state (issues | zones | branches | users | patrol)
   const [tableFilter, setTableFilter] = useState('all');
   const [tableSearch, setTableSearch] = useState('');
   const [activeTab, setActiveTab] = useState('issues');
@@ -81,10 +81,20 @@ export default function AdminDashboardPage() {
   const [showAddZoneModal, setShowAddZoneModal] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
 
-  // Organization branding form state
-  const [orgName, setOrgName] = useState(orgConfig.name);
-  const [orgSubtitle, setOrgSubtitle] = useState(orgConfig.subtitle);
+  // Institute header branding form state (Normal admin manages only their institute header)
+  const [instName, setInstName] = useState(instituteHeader?.name || user?.institute || '');
+  const [instSubtitle, setInstSubtitle] = useState(instituteHeader?.subtitle || '');
   const [orgSavedToast, setOrgSavedToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Branches & Streams Registry State (Console section for Normal Admin)
+  const [branchesList, setBranchesList] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+  const [showBranchModal, setShowBranchModal] = useState(false);
+  const [editingBranch, setEditingBranch] = useState(null);
+  const [branchInput, setBranchInput] = useState('');
+  const [deletingBranch, setDeletingBranch] = useState(null);
+  const [branchSaving, setBranchSaving] = useState(false);
 
   // New Zone Form state
   const [newZoneName, setNewZoneName] = useState('');
@@ -98,6 +108,20 @@ export default function AdminDashboardPage() {
   // QR Modal preview state
   const [activeQRZone, setActiveQRZone] = useState(null);
   const [generatedQRUrl, setGeneratedQRUrl] = useState('');
+
+  const fetchBranches = async () => {
+    try {
+      setLoadingBranches(true);
+      const res = await instituteAPI.getMyInstituteBranches();
+      if (res.data?.branches) {
+        setBranchesList(res.data.branches);
+      }
+    } catch (err) {
+      console.warn('Could not fetch institute branches:', err);
+    } finally {
+      setLoadingBranches(false);
+    }
+  };
 
   const fetchAdminData = async () => {
     try {
@@ -132,11 +156,142 @@ export default function AdminDashboardPage() {
     fetchAdminData();
   }, [user]);
 
-  const handleSaveOrgInfo = (e) => {
+  useEffect(() => {
+    if (user?.institute) {
+      fetchBranches();
+      if (instituteHeader) {
+        setInstName(instituteHeader.name || user.institute || '');
+        setInstSubtitle(instituteHeader.subtitle || '');
+      }
+    }
+  }, [user, instituteHeader]);
+
+  const handleOpenInstHeaderModal = () => {
+    setInstName(instituteHeader?.name || user?.institute || '');
+    setInstSubtitle(instituteHeader?.subtitle || '');
+    setShowOrgModal(true);
+  };
+
+  const handleSaveOrgInfo = async (e) => {
     e.preventDefault();
-    updateOrgInfo(orgName.trim(), orgSubtitle.trim());
-    setOrgSavedToast(true);
-    setTimeout(() => setOrgSavedToast(false), 3500);
+    try {
+      await updateInstituteHeader({
+        name: instName.trim() || user?.institute,
+        subtitle: instSubtitle.trim(),
+      });
+      setToastMessage(`Header customized for ${user?.institute || 'your institute'} members!`);
+      setOrgSavedToast(true);
+      setTimeout(() => setOrgSavedToast(false), 3500);
+      setShowOrgModal(false);
+    } catch (err) {
+      alert('Failed to save institute header: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleOpenAddBranch = () => {
+    setEditingBranch(null);
+    setBranchInput('');
+    setShowBranchModal(true);
+  };
+
+  const handleOpenEditBranch = (branch) => {
+    setEditingBranch(branch);
+    setBranchInput(branch);
+    setShowBranchModal(true);
+  };
+
+  const handleSaveBranch = async (e) => {
+    e.preventDefault();
+    const val = branchInput.trim();
+    if (!val) return;
+
+    let updatedList;
+    if (editingBranch) {
+      updatedList = branchesList.map((b) => (b === editingBranch ? val : b));
+    } else {
+      if (branchesList.some((b) => b.toLowerCase() === val.toLowerCase())) {
+        alert('This branch or department already exists.');
+        return;
+      }
+      updatedList = [...branchesList, val];
+    }
+
+    try {
+      setBranchSaving(true);
+      const res = await instituteAPI.updateMyInstituteBranches(updatedList);
+      if (res.data?.branches) {
+        setBranchesList(res.data.branches);
+      } else {
+        setBranchesList(updatedList);
+      }
+      setShowBranchModal(false);
+      setToastMessage(editingBranch ? 'Branch updated successfully!' : 'New branch added to registration dropdown!');
+      setOrgSavedToast(true);
+      setTimeout(() => setOrgSavedToast(false), 3500);
+    } catch (err) {
+      alert('Failed to save branch: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setBranchSaving(false);
+    }
+  };
+
+  const handleConfirmDeleteBranch = async () => {
+    if (!deletingBranch) return;
+    const updatedList = branchesList.filter((b) => b !== deletingBranch);
+    if (updatedList.length === 0) {
+      alert('At least one branch/stream must remain configured for student/staff registration.');
+      return;
+    }
+
+    try {
+      setBranchSaving(true);
+      const res = await instituteAPI.updateMyInstituteBranches(updatedList);
+      if (res.data?.branches) {
+        setBranchesList(res.data.branches);
+      } else {
+        setBranchesList(updatedList);
+      }
+      setDeletingBranch(null);
+      setToastMessage('Branch removed from registration options.');
+      setOrgSavedToast(true);
+      setTimeout(() => setOrgSavedToast(false), 3500);
+    } catch (err) {
+      alert('Failed to delete branch: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setBranchSaving(false);
+    }
+  };
+
+  const handleResetBranches = async () => {
+    if (!window.confirm('Reset branches to the standard default engineering & management streams?')) return;
+    const DEFAULT_STANDARD = [
+      'Computer Science & Engineering (CSE)',
+      'Artificial Intelligence & Data Science (AI&DS)',
+      'Mechanical Engineering (ME)',
+      'Electrical & Electronics Engineering (EEE)',
+      'Electronics & Comm Engineering (ECE)',
+      'Civil Engineering (CE)',
+      'Master of Computer Applications (MCA)',
+      'MBA / Management Studies',
+      'Campus Estate & Facility Maintenance',
+      'Hostel Administration & Mess',
+    ];
+    try {
+      setBranchSaving(true);
+      const res = await instituteAPI.updateMyInstituteBranches(DEFAULT_STANDARD);
+      if (res.data?.branches) {
+        setBranchesList(res.data.branches);
+      } else {
+        setBranchesList(DEFAULT_STANDARD);
+      }
+      setToastMessage('Branches reset to standard campus defaults!');
+      setOrgSavedToast(true);
+      setTimeout(() => setOrgSavedToast(false), 3500);
+    } catch (err) {
+      alert('Failed to reset branches: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setBranchSaving(false);
+    }
   };
 
   const handleAddZone = (e) => {
