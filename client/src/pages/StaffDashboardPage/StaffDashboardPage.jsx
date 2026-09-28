@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLocationContext } from '../../context/LocationContext';
+import { useOrg } from '../../context/OrgContext';
 import { issueAPI } from '../../services/api';
 import SeverityBadge from '../../components/SeverityBadge/SeverityBadge';
 import {
@@ -21,6 +22,7 @@ import './StaffDashboardPage.css';
 export default function StaffDashboardPage() {
   const { user } = useAuth();
   const { isTracking, location } = useLocationContext();
+  const { orgConfig } = useOrg();
   const navigate = useNavigate();
 
   const [assignedIssues, setAssignedIssues] = useState([]);

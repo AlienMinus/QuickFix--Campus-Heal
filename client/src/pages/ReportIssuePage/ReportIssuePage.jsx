@@ -377,7 +377,7 @@ export default function ReportIssuePage() {
               onChange={handleChange}
               className="form-select"
             >
-              {CAMPUS_ZONES.map(z => (
+              {(zones && zones.length > 0 ? zones.map(z => z.name) : CAMPUS_ZONES).map(z => (
                 <option key={z} value={z}>{z}</option>
               ))}
             </select>
