@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
 import { useOrg } from '../../context/OrgContext';
-import { adminAPI, issueAPI, locationAPI } from '../../services/api';
+import { adminAPI, issueAPI, locationAPI, instituteAPI } from '../../services/api';
 import SeverityBadge from '../../components/SeverityBadge/SeverityBadge';
 import {
   FaChartLine,
@@ -24,6 +24,8 @@ import {
   FaTimes,
   FaBuilding,
   FaThList,
+  FaGraduationCap,
+  FaEdit,
 } from 'react-icons/fa';
 import './AdminDashboardPage.css';
 
