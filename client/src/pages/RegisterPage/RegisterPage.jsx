@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useOrg } from '../../context/OrgContext';
 import {
   FaUserPlus,
   FaShieldAlt,
@@ -26,6 +27,7 @@ const DEPARTMENTS = [
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const { orgConfig } = useOrg();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -78,8 +80,8 @@ export default function RegisterPage() {
           <div className="brand-icon-circle">
             <FaUserPlus />
           </div>
-          <h2>Create Campus Account</h2>
-          <p>Join GIFT Autonomous Bhubaneswar Civic Maintenance Network</p>
+          <h2>Create Account</h2>
+          <p>Join {orgConfig.name} Civic & Maintenance Network</p>
           <div className="jwt-badge">
             <FaShieldAlt /> 7-Day Authenticated Access
           </div>

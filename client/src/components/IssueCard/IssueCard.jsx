@@ -17,6 +17,7 @@ import {
   FaShieldAlt,
   FaQuestionCircle,
 } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
 const getCategoryIcon = (cat) => {
@@ -34,25 +35,49 @@ const getCategoryIcon = (cat) => {
 
 const IssueCard = ({ issue, onUpvoteChange }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [upvotes, setUpvotes] = useState(issue.upvotesCount || 0);
-  const [isUpvoted, setIsUpvoted] = useState(false);
+  
+  const checkInitialVoted = () => {
+    try {
+      const localVoted = localStorage.getItem(`quickfix_reacted_${issue._id}`);
+      if (localVoted === 'true') return true;
+      if (user && issue.upvotes && Array.isArray(issue.upvotes)) {
+        return issue.upvotes.some(id => (id._id || id).toString() === (user._id || user.id)?.toString());
+      }
+    } catch {
+      // fallback
+    }
+    return false;
+  };
+
+  const [isUpvoted, setIsUpvoted] = useState(checkInitialVoted);
   const [upvoting, setUpvoting] = useState(false);
 
   const handleUpvote = async (e) => {
     e.stopPropagation();
-    if (upvoting) return;
+    // Allow reacting ONLY ONCE
+    if (isUpvoted || upvoting) return;
     setUpvoting(true);
 
     try {
       const res = await api.post(`/issues/${issue._id}/upvote`);
+      setIsUpvoted(true);
+      try {
+        localStorage.setItem(`quickfix_reacted_${issue._id}`, 'true');
+      } catch {}
       if (res.data && res.data.upvotesCount !== undefined) {
         setUpvotes(res.data.upvotesCount);
-        setIsUpvoted(!isUpvoted);
         if (onUpvoteChange) onUpvoteChange(issue._id, res.data.upvotesCount);
+      } else {
+        setUpvotes((prev) => prev + 1);
       }
     } catch (err) {
-      setUpvotes((prev) => (isUpvoted ? prev - 1 : prev + 1));
-      setIsUpvoted(!isUpvoted);
+      setIsUpvoted(true);
+      try {
+        localStorage.setItem(`quickfix_reacted_${issue._id}`, 'true');
+      } catch {}
+      setUpvotes((prev) => prev + 1);
     } finally {
       setUpvoting(false);
     }
@@ -148,12 +173,14 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
           </div>
 
           <button
-            className={`upvote-action-btn ${isUpvoted ? 'active' : ''}`}
+            className={`upvote-action-btn ${isUpvoted ? 'active reacted' : ''}`}
             onClick={handleUpvote}
-            title="Upvote issue priority / I experience this too"
+            disabled={isUpvoted}
+            title={isUpvoted ? 'You have already reacted to this issue' : 'Upvote issue priority / I experience this too'}
           >
             <FaThumbsUp />
             <span>{upvotes}</span>
+            {isUpvoted && <span className="reacted-badge">Reacted</span>}
           </button>
         </div>
       </div>

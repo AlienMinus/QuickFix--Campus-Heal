@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './HomePage.css';
 import { useNavigate } from 'react-router-dom';
-import LocationTracker from '../../components/LocationTracker/LocationTracker';
 import IssueCard from '../../components/IssueCard/IssueCard';
-import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import {
   FaPlusCircle,
-  FaMapMarkedAlt,
   FaCheckCircle,
-  FaSpinner,
-  FaClock,
   FaSearch,
-  FaUniversity,
+  FaFilter,
+  FaSortAmountDown,
 } from 'react-icons/fa';
 
 const CATEGORIES = [
@@ -26,23 +22,26 @@ const CATEGORIES = [
   'Safety & Security Hazard',
 ];
 
+const STATUSES = ['All', 'Submitted', 'In Progress', 'Resolved'];
+
+const SORT_OPTIONS = [
+  { value: 'priority', label: 'Highest Priority' },
+  { value: 'newest', label: 'Latest First' },
+  { value: 'upvotes', label: 'Most Upvoted' },
+];
+
 const HomePage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedStatus, setSelectedStatus] = useState('All');
+  const [selectedSort, setSelectedSort] = useState('priority');
   const [searchQuery, setSearchQuery] = useState('');
-  const [stats, setStats] = useState({
-    total: 0,
-    submitted: 0,
-    inProgress: 0,
-    resolved: 0,
-  });
 
   useEffect(() => {
     fetchIssues();
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedStatus, selectedSort]);
 
   const fetchIssues = async () => {
     setLoading(true);
@@ -50,19 +49,14 @@ const HomePage = () => {
       const res = await api.get('/issues', {
         params: {
           category: selectedCategory !== 'All' ? selectedCategory : undefined,
-          search: searchQuery || undefined,
+          status: selectedStatus !== 'All' ? selectedStatus : undefined,
+          sort: selectedSort,
+          search: searchQuery.trim() || undefined,
         },
       });
 
       if (res.data && res.data.issues) {
         setIssues(res.data.issues);
-        const all = res.data.issues;
-        setStats({
-          total: all.length,
-          submitted: all.filter((i) => i.status === 'Submitted').length,
-          inProgress: all.filter((i) => i.status === 'In Progress').length,
-          resolved: all.filter((i) => i.status === 'Resolved').length,
-        });
       }
     } catch (err) {
       console.warn('Issues fetch warning:', err.message);
@@ -78,66 +72,8 @@ const HomePage = () => {
 
   return (
     <div className="home-page-container">
-      <div className="campus-hero-banner">
-        <div className="hero-top">
-          <div className="event-pill">
-            <FaUniversity /> BPUT Tech Carnival 2026 • GIFT Autonomous
-          </div>
-          <span className="live-status-pill">Active QuickFix</span>
-        </div>
-        <h1 className="hero-title">Smart Campus QuickFix</h1>
-        <p className="hero-subtitle">
-          Hello, {user?.name || 'Campus Member'}! Identify, report, and track campus maintenance concerns in real-time.
-        </p>
-
-        <div className="hero-action-tiles">
-          <button className="action-tile report" onClick={() => navigate('/report')}>
-            <FaPlusCircle className="tile-icon" />
-            <div className="tile-text">
-              <span className="tile-title">Report Issue</span>
-              <span className="tile-sub">Photo, GPS & QR auto-fill</span>
-            </div>
-          </button>
-
-          <button className="action-tile map" onClick={() => navigate('/map')}>
-            <FaMapMarkedAlt className="tile-icon" />
-            <div className="tile-text">
-              <span className="tile-title">Live Campus Map</span>
-              <span className="tile-sub">1s GPS patrol & pins</span>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <LocationTracker />
-
-      <div className="kpi-summary-row">
-        <div className="kpi-card submitted" onClick={() => navigate('/track?status=Submitted')}>
-          <div className="kpi-icon"><FaClock /></div>
-          <div className="kpi-data">
-            <span className="kpi-num">{stats.submitted}</span>
-            <span className="kpi-lbl">Submitted</span>
-          </div>
-        </div>
-
-        <div className="kpi-card in-progress" onClick={() => navigate('/track?status=In Progress')}>
-          <div className="kpi-icon"><FaSpinner className="spin-slow" /></div>
-          <div className="kpi-data">
-            <span className="kpi-num">{stats.inProgress}</span>
-            <span className="kpi-lbl">In Progress</span>
-          </div>
-        </div>
-
-        <div className="kpi-card resolved" onClick={() => navigate('/track?status=Resolved')}>
-          <div className="kpi-icon"><FaCheckCircle /></div>
-          <div className="kpi-data">
-            <span className="kpi-num">{stats.resolved}</span>
-            <span className="kpi-lbl">Resolved</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="feed-controls">
+      {/* 1. Search Bar */}
+      <div className="home-search-section">
         <form className="feed-search-form" onSubmit={handleSearchSubmit}>
           <FaSearch className="search-icon" />
           <input
@@ -153,33 +89,77 @@ const HomePage = () => {
               className="clear-search-btn"
               onClick={() => {
                 setSearchQuery('');
-                fetchIssues();
+                setTimeout(fetchIssues, 0);
               }}
             >
               ×
             </button>
           )}
+          <button type="submit" className="search-submit-btn">
+            Find
+          </button>
         </form>
 
-        <div className="categories-scroll-row">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              className={`cat-pill ${selectedCategory === cat ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(cat)}
+        {/* 2. Unscrollable Dropdown Filters */}
+        <div className="unscrollable-filters-row">
+          <div className="filter-select-wrapper">
+            <FaFilter className="filter-icon" />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="filter-select"
+              title="Filter by Category"
             >
-              {cat}
-            </button>
-          ))}
+              <option value="All">All Categories</option>
+              {CATEGORIES.filter((c) => c !== 'All').map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-select-wrapper">
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="filter-select"
+              title="Filter by Status"
+            >
+              <option value="All">All Statuses</option>
+              {STATUSES.filter((s) => s !== 'All').map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-select-wrapper">
+            <FaSortAmountDown className="filter-icon" />
+            <select
+              value={selectedSort}
+              onChange={(e) => setSelectedSort(e.target.value)}
+              className="filter-select"
+              title="Sort Order"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
+      {/* 3. Issues Feed Section */}
       <div className="issues-feed-section">
         <div className="feed-header">
           <h2 className="feed-title">
             {selectedCategory === 'All' ? 'Campus Issues Feed' : selectedCategory}
           </h2>
-          <span className="feed-count">{issues.length} reported</span>
+          <span className="feed-count">{issues.length} tickets</span>
         </div>
 
         {loading ? (
@@ -190,8 +170,8 @@ const HomePage = () => {
         ) : issues.length === 0 ? (
           <div className="empty-feed-card">
             <FaCheckCircle className="empty-icon" />
-            <h3>No issues found in this category</h3>
-            <p>Everything looks great! Or report a new campus concern to get it resolved quickly.</p>
+            <h3>No issues found</h3>
+            <p>No active campus concerns matching your filters.</p>
             <button className="primary-report-btn" onClick={() => navigate('/report')}>
               <FaPlusCircle /> Report New Issue
             </button>

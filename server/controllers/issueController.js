@@ -279,12 +279,15 @@ exports.upvoteIssue = async (req, res) => {
     } else {
       const hasUpvoted = issue.upvotes.some((id) => id.toString() === userId.toString());
       if (hasUpvoted) {
-        issue.upvotes = issue.upvotes.filter((id) => id.toString() !== userId.toString());
-        issue.upvotesCount = Math.max(0, (issue.upvotesCount || 1) - 1);
-      } else {
-        issue.upvotes.push(userId);
-        issue.upvotesCount = (issue.upvotesCount || 0) + 1;
+        return res.status(200).json({
+          success: true,
+          message: 'Already reacted to this issue',
+          alreadyUpvoted: true,
+          upvotesCount: issue.upvotesCount,
+        });
       }
+      issue.upvotes.push(userId);
+      issue.upvotesCount = (issue.upvotesCount || 0) + 1;
     }
 
     await issue.save();
