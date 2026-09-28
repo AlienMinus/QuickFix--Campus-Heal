@@ -13,7 +13,7 @@ services:
       - key: PORT
         value: 10000
       - key: CLIENT_URL
-        value: https://smart-campus-quickfix.vercel.app
+        value: "*"
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
@@ -23,6 +23,4 @@ services:
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
-        sync: false
-      - key: GOOGLE_CLIENT_ID
         sync: false
