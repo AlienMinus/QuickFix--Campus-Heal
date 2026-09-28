@@ -93,8 +93,9 @@ exports.createIssue = async (req, res) => {
       },
       media: mediaData,
       reportedBy: req.user ? req.user._id : null,
-      reportedByName: req.user ? req.user.name : (req.body.reporterName || 'Anonymous Student'),
+      reportedByName: req.user ? req.user.name : (req.body.reporterName || 'Campus Resident'),
       reportedByEmail: req.user ? req.user.email : '',
+      institute: req.user?.institute || req.body.institute || 'BPUT Tech Campus',
       isDuplicate: Boolean(potentialDuplicate),
       duplicateOf: potentialDuplicate ? potentialDuplicate._id : null,
       statusHistory: [

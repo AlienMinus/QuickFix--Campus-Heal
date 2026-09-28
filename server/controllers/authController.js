@@ -9,6 +9,7 @@ const generateToken = (user) => {
       role: user.role,
       email: user.email,
       name: user.name,
+      institute: user.institute || 'BPUT Tech Campus',
     },
     process.env.JWT_SECRET || 'bput_tech_carnival_2026_jwt_secret_7days',
     {
@@ -19,7 +20,7 @@ const generateToken = (user) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, department, identifier, phone } = req.body;
+    const { name, email, password, role, department, identifier, phone, institute } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Please provide name, email and password' });
@@ -33,11 +34,15 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Prevent direct self-registration as superadmin for security
+    const assignedRole = role === 'superadmin' ? 'student' : (role || 'student');
+
     const user = await User.create({
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
-      role: role || 'student',
+      role: assignedRole,
+      institute: institute?.trim() || 'BPUT Tech Campus',
       department: department || 'General Campus',
       identifier: identifier || '',
       phone: phone || '',
@@ -54,6 +59,7 @@ exports.register = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        institute: user.institute,
         department: user.department,
         identifier: user.identifier,
         avatar: user.avatar,
@@ -96,6 +102,7 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        institute: user.institute || 'BPUT Tech Campus',
         department: user.department,
         identifier: user.identifier,
         avatar: user.avatar,
@@ -119,13 +126,14 @@ exports.getMe = async (req, res) => {
 exports.demoLogin = async (req, res) => {
   try {
     const { role } = req.body;
-    const targetRole = ['student', 'staff', 'admin'].includes(role) ? role : 'student';
+    const targetRole = ['student', 'staff', 'admin', 'superadmin'].includes(role) ? role : 'student';
 
     const demoProfiles = {
       student: {
         email: 'student.demo@gift.ac.in',
         name: 'Rohan Sharma (Student)',
         role: 'student',
+        institute: 'BPUT Tech Campus',
         department: 'Computer Science & Engineering (7th Sem)',
         identifier: 'GIFT-2022-CSE-042',
         avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=200&q=80',
@@ -134,17 +142,28 @@ exports.demoLogin = async (req, res) => {
         email: 'maintenance.staff@gift.ac.in',
         name: 'Bikash Mohapatra (Staff)',
         role: 'staff',
+        institute: 'BPUT Tech Campus',
         department: 'Campus Electrical & Facilities Maintenance',
         identifier: 'STAFF-EM-108',
         avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
       },
       admin: {
         email: 'admin.campus@gift.ac.in',
-        name: 'Prof. S. K. Patnaik (Campus Administrator)',
+        name: 'Prof. S. K. Patnaik (Campus Admin)',
         role: 'admin',
+        institute: 'BPUT Tech Campus',
         department: 'BPUT / GIFT Central Administration',
         identifier: 'ADMIN-CENTRAL-001',
         avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+      },
+      superadmin: {
+        email: 'superadmin@quickfix.org',
+        name: 'Chief Super Admin (HQ)',
+        role: 'superadmin',
+        institute: 'Apex Multi-Campus Authority',
+        department: 'Higher Education Governance & Audits',
+        identifier: 'SUPER-CHIEF-01',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
       },
     };
 
@@ -171,6 +190,7 @@ exports.demoLogin = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        institute: user.institute || 'BPUT Tech Campus',
         department: user.department,
         identifier: user.identifier,
         avatar: user.avatar,
