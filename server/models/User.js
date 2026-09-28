@@ -20,8 +20,20 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['student', 'staff', 'admin'],
+      enum: ['student', 'staff', 'admin', 'superadmin'],
       default: 'student',
+    },
+    institute: {
+      type: String,
+      required: true,
+      default: 'BPUT Tech Campus',
+      trim: true,
+      index: true,
+    },
+    instituteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Institute',
+      default: null,
     },
     department: {
       type: String,

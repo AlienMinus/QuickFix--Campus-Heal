@@ -87,6 +87,17 @@ const issueSchema = new mongoose.Schema(
       ref: 'User',
       required: false,
     },
+    institute: {
+      type: String,
+      default: 'BPUT Tech Campus',
+      trim: true,
+      index: true,
+    },
+    instituteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Institute',
+      default: null,
+    },
     reportedByName: {
       type: String,
       default: 'Campus Resident',
