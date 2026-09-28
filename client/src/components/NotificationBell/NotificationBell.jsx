@@ -42,7 +42,7 @@ const NotificationBell = () => {
         if (res === 'granted') {
           try {
             new Notification('Campus Alerts Activated', {
-              body: 'You will now receive live ticket and dispatch notifications.',
+              body: 'Live ticket and dispatch notifications are now activated.',
               icon: '/favicon.svg',
             });
           } catch (e) {
@@ -55,11 +55,25 @@ const NotificationBell = () => {
     }
   };
 
+  const toPassiveSentence = (msg) => {
+    if (!msg || typeof msg !== 'string') return msg;
+    return msg
+      .replace(/You have been assigned to resolve an issue/gi, 'Technician has been assigned to resolve the issue')
+      .replace(/You have been assigned to resolve/gi, 'Task has been assigned for resolution')
+      .replace(/You have been assigned/gi, 'Task has been assigned')
+      .replace(/Your reported issue status has been updated to/gi, 'Reported issue status has been updated to')
+      .replace(/\bYour reported issue\b/gi, 'Reported issue')
+      .replace(/\bYour issue\b/gi, 'Issue');
+  };
+
   const fetchNotifications = async () => {
     try {
       const res = await api.get('/notifications');
       if (res.data && res.data.notifications) {
-        const items = res.data.notifications;
+        const items = res.data.notifications.map((n) => ({
+          ...n,
+          message: toPassiveSentence(n.message),
+        }));
         setNotifications(items);
         const unread = items.filter((n) => !n.read).length;
         setUnreadCount(unread);
