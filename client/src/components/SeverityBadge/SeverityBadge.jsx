@@ -7,33 +7,37 @@ import {
   FaFire,
 } from 'react-icons/fa';
 
-const SeverityBadge = ({ severity = 'Medium', size = 'normal' }) => {
+const SeverityBadge = ({ severity = 'Medium', size = 'normal', compact = false, iconOnly = false }) => {
   const getSeverityConfig = (level) => {
     switch (level?.toLowerCase()) {
       case 'critical':
         return {
           icon: <FaFire />,
-          label: 'Critical',
+          label: compact ? 'CRIT' : 'Critical',
           className: 'severity-critical',
+          title: 'Critical Severity',
         };
       case 'high':
         return {
           icon: <FaExclamationTriangle />,
-          label: 'High',
+          label: compact ? 'HIGH' : 'High',
           className: 'severity-high',
+          title: 'High Severity',
         };
       case 'low':
         return {
           icon: <FaInfoCircle />,
-          label: 'Low',
+          label: compact ? 'LOW' : 'Low',
           className: 'severity-low',
+          title: 'Low Severity',
         };
       case 'medium':
       default:
         return {
           icon: <FaExclamationCircle />,
-          label: 'Medium',
+          label: compact ? 'MED' : 'Medium',
           className: 'severity-medium',
+          title: 'Medium Severity',
         };
     }
   };
@@ -41,9 +45,12 @@ const SeverityBadge = ({ severity = 'Medium', size = 'normal' }) => {
   const config = getSeverityConfig(severity);
 
   return (
-    <span className={`severity-badge ${config.className} size-${size}`}>
+    <span
+      className={`severity-badge ${config.className} size-${size} ${compact ? 'is-compact' : ''} ${iconOnly ? 'icon-only' : ''}`}
+      title={config.title}
+    >
       <span className="badge-icon">{config.icon}</span>
-      <span className="badge-text">{config.label}</span>
+      {!iconOnly && <span className="badge-text">{config.label}</span>}
     </span>
   );
 };

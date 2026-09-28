@@ -176,11 +176,10 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
             className={`upvote-action-btn ${isUpvoted ? 'active reacted' : ''}`}
             onClick={handleUpvote}
             disabled={isUpvoted}
-            title={isUpvoted ? 'You have already reacted to this issue' : 'Upvote issue priority / I experience this too'}
+            title={isUpvoted ? 'You upvoted this ticket' : 'Upvote issue priority'}
           >
             <FaThumbsUp />
             <span>{upvotes}</span>
-            {isUpvoted && <span className="reacted-badge">Reacted</span>}
           </button>
         </div>
       </div>
