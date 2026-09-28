@@ -155,7 +155,8 @@ export default function ReportIssuePage() {
 
     // 1. Explicit hyphen (-) heading syntax: - <Heading>
     // e.g. "- Broken fan switchboard @Main Academic Block" or "- Water Leakage"
-    const hyphenMatch = text.match(/(?:^|\n|\s)-\s*([^@#$\n\r]+)/);
+    // Requires (?:^|\n)\s*-\s+ to ensure it's at start of line and not within a word like Wi-Fi or air-conditioner
+    const hyphenMatch = text.match(/(?:^|\n)\s*-\s+([^\n\r@#$]+)/);
     if (hyphenMatch && hyphenMatch[1]) {
       let cleanHyphenHeading = hyphenMatch[1]
         // Strip any embedded bracket notes [Check: ...]
@@ -208,61 +209,146 @@ export default function ReportIssuePage() {
     return `${safeCat} issue at ${safeLoc}`;
   };
 
-  // Match category in text (supports full hashtag, clean name, or individual keywords like #Plumbing, #Electrical)
-  const matchCategoryInText = (cat, text) => {
-    const cleanFull = cat.replace(/[^a-zA-Z0-9]/g, '');
-    const escapedFull = cat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const fullRegex = new RegExp(`#${escapedFull}\\b|#${cleanFull}\\b`, 'i');
-    const fullMatch = fullRegex.exec(text);
-    if (fullMatch) return { index: fullMatch.index, matchText: fullMatch[0] };
+  // Score how well a text chunk after an '@' tag matches a campus zone name
+  // Prevents false positives like '@Main Academic Block' matching 'Campus Main Gate'
+  const scoreZoneMatch = (zoneName, chunk) => {
+    if (!zoneName || !chunk) return 0;
+    const lowerChunk = chunk.trim().toLowerCase();
+    const lowerZone = zoneName.trim().toLowerCase();
 
-    // Match individual significant words (e.g. #Plumbing for Water Leakage & Plumbing)
-    const words = cat.split(/[\s&/\\-]+/).filter(w => w.length >= 4);
-    for (const word of words) {
-      const wordRegex = new RegExp(`#${word}\\b`, 'i');
-      const wordMatch = wordRegex.exec(text);
-      if (wordMatch) {
-        return { index: wordMatch.index, matchText: wordMatch[0] };
+    // 1. Exact full name match at start of chunk
+    // e.g. "@Main Academic Block (MAB)"
+    if (lowerChunk.startsWith(lowerZone)) {
+      return 1000 + lowerZone.length;
+    }
+
+    // 2. Zone without parenthesized part
+    // e.g. zone is "Main Academic Block (MAB)", base is "main academic block"
+    const baseZone = lowerZone.replace(/\s*\([^)]*\)/g, '').trim();
+    if (baseZone.length >= 3 && lowerChunk.startsWith(baseZone)) {
+      return 900 + baseZone.length;
+    }
+
+    // 3. Clean full name match (ignoring spaces & punctuation)
+    // e.g. "@MainAcademicBlock"
+    const cleanChunk = lowerChunk.replace(/[^a-z0-9]/g, '');
+    const cleanZone = lowerZone.replace(/[^a-z0-9]/g, '');
+    if (cleanZone.length >= 3 && cleanChunk.startsWith(cleanZone)) {
+      return 850 + cleanZone.length;
+    }
+
+    // 4. Parenthesized acronym / alias match
+    // e.g. "(MAB)" -> match "@MAB", or "(Bhabha Bhawan)" -> match "@Bhabha Bhawan"
+    const parenMatch = zoneName.match(/\(([^)]+)\)/);
+    if (parenMatch && parenMatch[1]) {
+      const parenContent = parenMatch[1].trim().toLowerCase();
+      const parenRegex = new RegExp(`^${parenContent.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^a-z0-9]|$)`, 'i');
+      if (parenRegex.test(lowerChunk)) {
+        return 800 + parenContent.length;
       }
     }
-    return null;
-  };
 
-  // Match zone in text (supports full zone, clean name, or main acronym/keyword)
-  const matchZoneInText = (z, text) => {
-    const cleanFull = z.replace(/[^a-zA-Z0-9]/g, '');
-    const escapedFull = z.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const fullRegex = new RegExp(`@${escapedFull}\\b|@${cleanFull}\\b`, 'i');
-    const fullMatch = fullRegex.exec(text);
-    if (fullMatch) return { index: fullMatch.index, matchText: fullMatch[0] };
-
-    const words = z.split(/[\s&/\\()-]+/).filter(w => w.length >= 3);
-    for (const word of words) {
-      const wordRegex = new RegExp(`@${word}\\b`, 'i');
-      const wordMatch = wordRegex.exec(text);
-      if (wordMatch) {
-        return { index: wordMatch.index, matchText: wordMatch[0] };
+    // 5. Acronym formed by capital letters (e.g. "Student Activity Center" -> "SAC")
+    const capitalLetters = zoneName.match(/\b[A-Z]/g)?.join('').toLowerCase() || '';
+    if (capitalLetters.length >= 2) {
+      const capRegex = new RegExp(`^${capitalLetters}(?:[^a-z0-9]|$)`, 'i');
+      if (capRegex.test(lowerChunk)) {
+        return 750 + capitalLetters.length;
       }
     }
-    return null;
+
+    // 6. Distinctive subparts separated by '&' or '/'
+    // e.g. "Campus Main Gate & Security Post" -> ["campus main gate", "security post"]
+    const subParts = lowerZone.split(/[\s*&/\s*]+/).map(p => p.trim()).filter(p => p.length >= 4);
+    for (const part of subParts) {
+      if (lowerChunk.startsWith(part)) {
+        return 700 + part.length;
+      }
+    }
+
+    // 7. Distinctive leading words: exclude common generic stop words
+    const ZONE_STOP_WORDS = new Set([
+      'main', 'academic', 'block', 'complex', 'hub', 'center', 'centre',
+      'gate', 'post', 'hall', 'room', 'hostel', 'labs', 'lab', 'workshop',
+      'court', 'food', 'campus', 'digital', 'tech', 'building', 'ground',
+      'area', 'and', 'the', 'for', 'sec', 'bhawan'
+    ]);
+
+    const zoneWords = lowerZone.split(/[\s&/\\()-]+/).filter(w => w.length >= 2);
+    // If first word is NOT a generic stop word (e.g. "visvesvaraya", "aryabhatta", "kalam", "ramanujan")
+    if (zoneWords.length > 0 && !ZONE_STOP_WORDS.has(zoneWords[0])) {
+      const firstWord = zoneWords[0];
+      const wordRegex = new RegExp(`^${firstWord}(?:[^a-z0-9]|$)`, 'i');
+      if (wordRegex.test(lowerChunk)) {
+        return 600 + firstWord.length;
+      }
+    }
+
+    // If first 2 words match together (e.g. "main academic" vs "campus main")
+    if (zoneWords.length >= 2) {
+      const firstTwoWords = `${zoneWords[0]} ${zoneWords[1]}`;
+      if (lowerChunk.startsWith(firstTwoWords)) {
+        return 550 + firstTwoWords.length;
+      }
+    }
+
+    return 0;
   };
 
-  // Match severity in text ($Critical, $High, $Medium, $Low)
-  const matchSeverityInText = (sev, text) => {
-    const regex = new RegExp(`\\$${sev}\\b`, 'i');
-    const match = regex.exec(text);
-    if (match) return { index: match.index, matchText: match[0] };
+  // Match category tag word against registered categories
+  // Filters out generic hashtags like #urgent, #help, #broken, #1, #test
+  const matchCategoryTag = (tagWord, categories) => {
+    if (!tagWord || tagWord.length < 2) return null;
+    const cleanTag = tagWord.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    if (!cleanTag || cleanTag.length < 2) return null;
+
+    const IGNORED_TAGS = new Set([
+      'urgent', 'help', 'fix', 'broken', 'issue', 'ticket', 'problem',
+      'test', 'demo', 'today', 'asap', 'hazard', 'danger', 'safe',
+      'room', 'floor', 'hall', 'block', 'gate', 'campus', 'zone',
+      'heading', 'severity', 'category', 'status', 'title', 'note'
+    ]);
+    if (IGNORED_TAGS.has(cleanTag)) return null;
+    if (/^\d+$/.test(cleanTag)) return null;
+
+    // 1. Exact or clean match
+    for (const cat of categories) {
+      const cleanCat = cat.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      if (cleanTag === cleanCat || cat.toLowerCase() === tagWord.toLowerCase()) {
+        return cat;
+      }
+    }
+
+    // 2. Distinctive keyword in category name (>= 4 chars)
+    for (const cat of categories) {
+      const words = cat.split(/[\s&/\\-]+/).filter(w => w.length >= 4);
+      for (const word of words) {
+        const cleanWord = word.toLowerCase();
+        if (cleanTag === cleanWord || (cleanTag.length >= 4 && cleanWord.startsWith(cleanTag))) {
+          return cat;
+        }
+      }
+    }
+
     return null;
   };
 
   // Intelligent parser: parse -heading, @zone, #category, $severity from description text in real time
-  // Hyphen (-) designated Heading
-  // Multiple categories (#) ALLOWED
-  // Single zone (@) and Single severity ($) ENFORCED
+  // Rejects all false positives (emails, currency $100, generic #hashtags, hyphenated words Wi-Fi, etc.)
+  // Token count invariant: 1 @ token can NEVER produce >1 zone!
   const parseTagsFromText = (text) => {
+    if (!text || typeof text !== 'string') {
+      setDetectedHeading('');
+      setDetectedCategories([]);
+      setDetectedSeverities([]);
+      setDetectedZones([]);
+      return;
+    }
+
     // 0. Detect Heading (-)
-    const hasHyphen = /(?:^|\n|\s)-\s*([^@#$\n\r]+)/.test(text);
-    if (hasHyphen) {
+    // Must be at start of a line/string with space: (?:^|\n)\s*-\s+([^\n\r@#$]+)
+    const explicitHeadingMatch = text.match(/(?:^|\n)\s*-\s+([^\n\r@#$]+)/);
+    if (explicitHeadingMatch) {
       const explicitHeading = extractHeadingFromText(text);
       setDetectedHeading(explicitHeading);
     } else {
@@ -270,48 +356,69 @@ export default function ReportIssuePage() {
     }
 
     // 1. Detect Category #... (Multiple allowed)
+    // Must be preceded by start of string or whitespace/bracket, NOT part of an alphanumeric string or URL
+    const catRegex = /(?:^|[\s(\["'])#([a-zA-Z0-9_\-/]+)/g;
     const foundCategories = [];
-    for (const cat of categoriesList) {
-      const match = matchCategoryInText(cat, text);
-      if (match) {
-        foundCategories.push({ cat, index: match.index });
+    let catMatch;
+    while ((catMatch = catRegex.exec(text)) !== null) {
+      const tagWord = catMatch[1];
+      const matchedCat = matchCategoryTag(tagWord, categoriesList);
+      if (matchedCat && !foundCategories.includes(matchedCat)) {
+        foundCategories.push(matchedCat);
       }
     }
-    foundCategories.sort((a, b) => a.index - b.index);
-    const catNames = [...new Set(foundCategories.map(item => item.cat))];
-    setDetectedCategories(catNames);
-    if (catNames.length > 0) {
-      setCategory(prev => (catNames.includes(prev) ? prev : catNames[0]));
+    setDetectedCategories(foundCategories);
+    if (foundCategories.length > 0) {
+      setCategory(prev => (foundCategories.includes(prev) ? prev : foundCategories[0]));
     }
 
     // 2. Detect Severity $... (Only 1 allowed)
+    // Must be preceded by start of string or whitespace/bracket, followed strictly by letters (never digits like $100)
+    const sevRegex = /(?:^|[\s(\["'])\$([a-zA-Z]+)\b/gi;
     const foundSeverities = [];
-    for (const sev of SEVERITIES) {
-      const match = matchSeverityInText(sev, text);
-      if (match) {
-        foundSeverities.push({ sev, index: match.index });
+    let sevMatch;
+    while ((sevMatch = sevRegex.exec(text)) !== null) {
+      const word = sevMatch[1].toLowerCase();
+      const matchedSev = SEVERITIES.find(s => s.toLowerCase() === word);
+      if (matchedSev && !foundSeverities.includes(matchedSev)) {
+        foundSeverities.push(matchedSev);
       }
     }
-    foundSeverities.sort((a, b) => a.index - b.index);
-    const sevNames = [...new Set(foundSeverities.map(item => item.sev))];
-    setDetectedSeverities(sevNames);
-    if (sevNames.length === 1) {
-      setSeverity(sevNames[0]);
+    setDetectedSeverities(foundSeverities);
+    if (foundSeverities.length === 1) {
+      setSeverity(foundSeverities[0]);
     }
 
     // 3. Detect Zone @... (Only 1 allowed)
+    // Must be preceded by start of string or whitespace/bracket (NOT preceded by alphanumeric -> rejects emails like name@domain.com)
+    const zoneRegex = /(?:^|[\s(\["'])@/g;
     const foundZones = [];
-    for (const z of availableZones) {
-      const match = matchZoneInText(z, text);
-      if (match) {
-        foundZones.push({ zone: z, index: match.index });
+    let zoneTokenMatch;
+    while ((zoneTokenMatch = zoneRegex.exec(text)) !== null) {
+      const atCharIndex = zoneTokenMatch.index + zoneTokenMatch[0].indexOf('@');
+      const textAfterAt = text.slice(atCharIndex + 1);
+
+      // Score against all available zones
+      let bestZone = null;
+      let highestScore = 0;
+      for (const z of availableZones) {
+        const score = scoreZoneMatch(z, textAfterAt);
+        if (score > highestScore) {
+          highestScore = score;
+          bestZone = z;
+        }
+      }
+
+      if (bestZone && highestScore > 0) {
+        if (!foundZones.includes(bestZone)) {
+          foundZones.push(bestZone);
+        }
       }
     }
-    foundZones.sort((a, b) => a.index - b.index);
-    const zoneNames = [...new Set(foundZones.map(item => item.zone))];
-    setDetectedZones(zoneNames);
-    if (zoneNames.length === 1) {
-      setZone(zoneNames[0]);
+
+    setDetectedZones(foundZones);
+    if (foundZones.length === 1) {
+      setZone(foundZones[0]);
     }
   };
 
