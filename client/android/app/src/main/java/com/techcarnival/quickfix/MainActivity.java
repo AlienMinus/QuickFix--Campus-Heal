@@ -31,5 +31,14 @@ public class MainActivity extends BridgeActivity {
             controller.setAppearanceLightStatusBars(false);
             controller.setAppearanceLightNavigationBars(false);
         }
+
+        // 4. Request runtime notification permissions on Android 13+
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                }, 101);
+            }
+        }
     }
 }

@@ -1,41 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './NotificationBell.css';
-import { FaBell, FaCheck, FaExclamationTriangle, FaInfoCircle, FaWrench } from 'react-icons/fa';
+import {
+  FaBell,
+  FaCheck,
+  FaExclamationTriangle,
+  FaInfoCircle,
+  FaWrench,
+  FaCheckCircle,
+  FaTimesCircle,
+} from 'react-icons/fa';
 import api from '../../services/api';
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [permStatus, setPermStatus] = useState(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
+  );
 
+  const containerRef = useRef(null);
+
+  // Close dropdown on outside click
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000);
-    return () => clearInterval(interval);
-  }, []);
+    const handleOutsideClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isOpen]);
+
+  const requestPermission = async () => {
+    if ('Notification' in window) {
+      try {
+        const res = await Notification.requestPermission();
+        setPermStatus(res);
+        if (res === 'granted') {
+          try {
+            new Notification('Campus Alerts Activated', {
+              body: 'You will now receive live ticket and dispatch notifications.',
+              icon: '/favicon.svg',
+            });
+          } catch (e) {
+            // Android webview silent fallback
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to request notification permission:', err);
+      }
+    }
+  };
 
   const fetchNotifications = async () => {
     try {
       const res = await api.get('/notifications');
       if (res.data && res.data.notifications) {
-        setNotifications(res.data.notifications);
-        const unread = res.data.notifications.filter((n) => !n.read).length;
+        const items = res.data.notifications;
+        setNotifications(items);
+        const unread = items.filter((n) => !n.read).length;
         setUnreadCount(unread);
       }
     } catch (err) {
+      // Fallback alerts for testing
       const mockNotifications = [
         {
           _id: 'n1',
-          title: 'Campus Issue Update',
-          message: 'Water leakage at MAB Ground Floor Restroom status changed to In Progress.',
+          title: 'Campus Ticket Update',
+          message: 'Facility maintenance status updated to In Progress.',
           type: 'issue_status',
           read: false,
           createdAt: new Date(),
         },
         {
           _id: 'n2',
-          title: 'Patrol Active',
-          message: 'Maintenance crew dispatched for BPUT Tech Carnival 2026 venue check.',
+          title: 'Technician Assigned',
+          message: 'Maintenance team dispatched to campus zone.',
           type: 'assignment',
           read: true,
           createdAt: new Date(Date.now() - 3600000),
@@ -45,6 +88,12 @@ const NotificationBell = () => {
       setUnreadCount(1);
     }
   };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const markRead = async (id) => {
     try {
@@ -68,11 +117,18 @@ const NotificationBell = () => {
   };
 
   return (
-    <div className="notification-bell-container">
+    <div className="notification-bell-container" ref={containerRef}>
       <button
         className="bell-button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          // If permission is default, ask when user clicks bell
+          if (permStatus === 'default') {
+            requestPermission();
+          }
+        }}
         aria-label="Notifications"
+        title="Live Campus Notifications"
       >
         <FaBell />
         {unreadCount > 0 && <span className="unread-badge">{unreadCount}</span>}
@@ -82,8 +138,35 @@ const NotificationBell = () => {
         <div className="notifications-dropdown">
           <div className="notif-header">
             <span className="notif-header-title">Live Campus Alerts</span>
-            <span className="notif-header-count">{unreadCount} new</span>
+            <div className="notif-header-badges">
+              {unreadCount > 0 && <span className="notif-header-count">{unreadCount} new</span>}
+            </div>
           </div>
+
+          {/* Permission Prompt Banner if not granted */}
+          {permStatus === 'default' && (
+            <div className="notif-permission-banner">
+              <div className="perm-info">
+                <strong>Enable Alerts</strong>
+                <p>Allow notifications to receive real-time ticket updates</p>
+              </div>
+              <button className="enable-perm-btn" onClick={requestPermission}>
+                Allow
+              </button>
+            </div>
+          )}
+
+          {permStatus === 'granted' && (
+            <div className="notif-perm-status-chip granted">
+              <FaCheckCircle /> Device Push Notifications Active
+            </div>
+          )}
+
+          {permStatus === 'denied' && (
+            <div className="notif-perm-status-chip denied">
+              <FaTimesCircle /> Push notifications blocked in device settings
+            </div>
+          )}
 
           <div className="notif-list">
             {notifications.length === 0 ? (
