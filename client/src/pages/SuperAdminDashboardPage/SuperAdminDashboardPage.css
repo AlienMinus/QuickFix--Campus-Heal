@@ -199,72 +199,100 @@
   color: #f87171;
 }
 
-/* Governance KPIs (Squared Responsive Grid) */
+/* Governance KPIs (Squared Responsive Grid - Executive Metrics) */
 .superadmin-kpi-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: clamp(8px, 1.5vw, 14px);
+  gap: clamp(12px, 1.8vw, 18px);
   width: 100%;
-  margin-bottom: clamp(1rem, 2vw, 1.5rem);
+  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
 
 .super-kpi-card {
-  background: #190f33;
-  border: 1px solid rgba(168, 85, 247, 0.25);
-  border-radius: clamp(12px, 2vw, 16px);
-  padding: clamp(8px, 1.2vw, 14px) clamp(4px, 1vw, 8px);
+  background: linear-gradient(145deg, #1b1037 0%, #14092b 100%);
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  border-radius: clamp(16px, 2vw, 20px);
+  padding: clamp(1.2rem, 2vw, 1.75rem) clamp(0.75rem, 1.5vw, 1.25rem);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  aspect-ratio: 1;
-  min-height: clamp(76px, 14vw, 115px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-height: clamp(140px, 18vw, 185px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
   overflow: hidden;
 }
 
+.super-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.6), transparent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
 .super-kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(168, 85, 247, 0.25);
+  transform: translateY(-4px);
+  border-color: rgba(168, 85, 247, 0.55);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45), 0 0 20px rgba(168, 85, 247, 0.2);
+}
+
+.super-kpi-card:hover::before {
+  opacity: 1;
 }
 
 .super-kpi-icon-box {
-  width: clamp(26px, 4.5vw, 36px);
-  height: clamp(26px, 4.5vw, 36px);
-  border-radius: clamp(6px, 1vw, 10px);
+  width: clamp(40px, 4.5vw, 54px);
+  height: clamp(40px, 4.5vw, 54px);
+  border-radius: clamp(12px, 1.2vw, 16px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.85rem, 1.5vw, 1.15rem);
-  margin-bottom: clamp(2px, 0.5vw, 6px);
+  font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+  margin-bottom: clamp(6px, 1vw, 12px);
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s ease;
+}
+
+.super-kpi-card:hover .super-kpi-icon-box {
+  transform: scale(1.08);
 }
 
 .institutes-card .super-kpi-icon-box {
   background: rgba(14, 165, 233, 0.2);
   color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.35);
 }
 
 .admins-card .super-kpi-icon-box {
   background: rgba(168, 85, 247, 0.2);
   color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
 }
 
 .categories-card .super-kpi-icon-box {
   background: rgba(16, 185, 129, 0.2);
   color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .users-card .super-kpi-icon-box {
   background: rgba(245, 158, 11, 0.2);
   color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 .security-card .super-kpi-icon-box {
   background: rgba(236, 72, 153, 0.2);
   color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.35);
 }
 
 .super-kpi-details {
@@ -275,50 +303,176 @@
 }
 
 .super-kpi-number {
-  font-size: clamp(0.95rem, 2.2vw, 1.5rem);
+  font-size: clamp(1.65rem, 2.8vw, 2.4rem);
   font-weight: 800;
   color: #ffffff;
   line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .super-kpi-number.active {
   color: #34d399;
-  font-size: clamp(0.85rem, 1.8vw, 1.25rem);
+  font-size: clamp(1.35rem, 2.2vw, 1.8rem);
 }
 
 .super-kpi-label {
-  font-size: clamp(0.55rem, 1.1vw, 0.72rem);
+  font-size: clamp(0.78rem, 1.2vw, 0.95rem);
   font-weight: 700;
-  color: #cbd5e1;
-  line-height: 1.1;
-  margin-top: clamp(2px, 0.4vw, 4px);
+  color: #e2e8f0;
+  line-height: 1.2;
+  margin-top: clamp(4px, 0.6vw, 6px);
   white-space: nowrap;
 }
 
 .super-kpi-sub {
-  font-size: clamp(0.46rem, 0.9vw, 0.6rem);
+  font-size: clamp(0.62rem, 0.95vw, 0.74rem);
   color: #94a3b8;
-  line-height: 1.1;
-  margin-top: 2px;
+  line-height: 1.2;
+  margin-top: 3px;
   white-space: nowrap;
 }
 
-@media (max-width: 860px) {
+/* Medium screen adjustments (tablets / mid viewports) */
+@media (max-width: 1024px) {
   .superadmin-kpi-grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 12px;
   }
 }
 
-@media (max-width: 540px) {
+/* Mobile & Small Screens (< 768px): clean 2-column balanced layout */
+@media (max-width: 768px) {
   .superadmin-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 1.25rem !important;
   }
+
   .super-kpi-card {
-    min-height: 84px;
-    aspect-ratio: 1.05;
+    min-height: 105px !important;
+    padding: 10px 8px !important;
+    border-radius: 14px !important;
   }
+
+  .super-kpi-icon-box {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 4px !important;
+    border-radius: 10px !important;
+  }
+
+  .super-kpi-number {
+    font-size: 1.45rem !important;
+  }
+
+  .super-kpi-number.active {
+    font-size: 1.2rem !important;
+  }
+
+  .super-kpi-label {
+    font-size: 0.76rem !important;
+    margin-top: 2px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    text-align: center !important;
+  }
+
+  .super-kpi-sub {
+    font-size: 0.64rem !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+
+  /* 5th card gracefully spans across 2 columns horizontally */
+  .super-kpi-card:nth-child(5):last-child {
+    grid-column: span 2;
+    flex-direction: row !important;
+    justify-content: center !important;
+    gap: 14px !important;
+    min-height: 64px !important;
+    padding: 8px 16px !important;
+  }
+
+  .super-kpi-card:nth-child(5):last-child .super-kpi-icon-box {
+    margin-bottom: 0 !important;
+  }
+
+  .super-kpi-card:nth-child(5):last-child .super-kpi-details {
+    align-items: flex-start !important;
+    width: auto !important;
+  }
+}
+
+/* Smartphone Prototype Shell Support (frame-mode active on desktop window) */
+.frame-mode-active .superadmin-kpi-grid,
+.device-frame .superadmin-kpi-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.frame-mode-active .super-kpi-card,
+.device-frame .super-kpi-card {
+  min-height: 105px !important;
+  padding: 10px 8px !important;
+  border-radius: 14px !important;
+}
+
+.frame-mode-active .super-kpi-icon-box,
+.device-frame .super-kpi-icon-box {
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 1.1rem !important;
+  margin-bottom: 4px !important;
+  border-radius: 10px !important;
+}
+
+.frame-mode-active .super-kpi-number,
+.device-frame .super-kpi-number {
+  font-size: 1.45rem !important;
+}
+
+.frame-mode-active .super-kpi-number.active,
+.device-frame .super-kpi-number.active {
+  font-size: 1.2rem !important;
+}
+
+.frame-mode-active .super-kpi-label,
+.device-frame .super-kpi-label {
+  font-size: 0.76rem !important;
+  margin-top: 2px !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  text-align: center !important;
+}
+
+.frame-mode-active .super-kpi-sub,
+.device-frame .super-kpi-sub {
+  font-size: 0.64rem !important;
+  white-space: normal !important;
+  text-align: center !important;
+}
+
+.frame-mode-active .super-kpi-card:nth-child(5):last-child,
+.device-frame .super-kpi-card:nth-child(5):last-child {
+  grid-column: span 2 !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  gap: 14px !important;
+  min-height: 64px !important;
+  padding: 8px 16px !important;
+}
+
+.frame-mode-active .super-kpi-card:nth-child(5):last-child .super-kpi-icon-box,
+.device-frame .super-kpi-card:nth-child(5):last-child .super-kpi-icon-box {
+  margin-bottom: 0 !important;
+}
+
+.frame-mode-active .super-kpi-card:nth-child(5):last-child .super-kpi-details,
+.device-frame .super-kpi-card:nth-child(5):last-child .super-kpi-details {
+  align-items: flex-start !important;
+  width: auto !important;
 }
 
 /* Section Navigation Dropdown (Strictly ZERO Horizontal Scrolling) */
