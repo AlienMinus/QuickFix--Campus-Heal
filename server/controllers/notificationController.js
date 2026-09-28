@@ -2,23 +2,66 @@ const Notification = require('../models/Notification');
 
 exports.getNotifications = async (req, res) => {
   try {
-    const userRole = req.user ? req.user.role : 'student';
-    const userId = req.user ? req.user._id : null;
+    const user = req.user;
+    const userRole = user ? user.role : 'student';
+    const userId = user ? user._id : null;
+    const userInstitute = (user?.institute || req.query.institute || '').trim();
 
-    const query = {
-      $or: [
-        { targetRole: 'all' },
-        { targetRole: userRole },
-        ...(userId ? [{ recipient: userId }] : []),
-      ],
-    };
+    let query = {};
+
+    if (userRole === 'superadmin') {
+      // Super admin can oversee all platform alerts or query-filtered institute
+      if (req.query.institute) {
+        query.institute = new RegExp(`^${req.query.institute.trim()}$`, 'i');
+      }
+    } else if (userInstitute) {
+      // Regular campus member (student, staff, admin):
+      // Confine strictly to user's institute
+      const instituteRegex = new RegExp(`^${userInstitute.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+
+      query = {
+        $and: [
+          { institute: instituteRegex },
+          {
+            $or: [
+              ...(userId ? [{ recipient: userId }] : []),
+              {
+                targetRole: { $in: ['all', userRole] },
+                recipient: { $in: [null, undefined] },
+              },
+            ],
+          },
+        ],
+      };
+    } else {
+      // Unauthenticated guest or unknown institute
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        notifications: [],
+      });
+    }
 
     const notifications = await Notification.find(query)
       .sort({ createdAt: -1 })
       .limit(30)
-      .populate('issueId', 'title category status severity');
+      .populate('issueId', 'title category status severity institute');
 
-    const formattedNotifications = notifications.map((n) => {
+    // Strict boundary enforcement against any edge cases
+    const filteredNotifications = notifications.filter((n) => {
+      if (userRole === 'superadmin') return true;
+      const notifInstitute = n.institute || n.issueId?.institute;
+      if (!notifInstitute || !userInstitute) return false;
+      if (notifInstitute.trim().toLowerCase() !== userInstitute.toLowerCase()) {
+        return false;
+      }
+      if (n.targetRole === 'personal' || n.recipient) {
+        return userId && n.recipient && n.recipient.toString() === userId.toString();
+      }
+      return n.targetRole === 'all' || n.targetRole === userRole;
+    });
+
+    const formattedNotifications = filteredNotifications.map((n) => {
       const item = n.toObject ? n.toObject() : { ...n };
       if (item.message) {
         item.message = item.message

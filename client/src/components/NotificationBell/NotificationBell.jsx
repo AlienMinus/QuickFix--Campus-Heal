@@ -10,8 +10,10 @@ import {
   FaTimesCircle,
 } from 'react-icons/fa';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const NotificationBell = () => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
