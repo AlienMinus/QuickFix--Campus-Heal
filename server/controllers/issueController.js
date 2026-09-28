@@ -495,8 +495,19 @@ exports.deleteIssue = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
-    // Role check: superadmin or admin/staff of same institute
-    if (req.user && req.user.role !== 'superadmin') {
+    const isOwner =
+      req.user &&
+      ((issue.reportedBy && issue.reportedBy.toString() === req.user._id.toString()) ||
+       (issue.reportedByEmail && req.user.email && issue.reportedByEmail.toLowerCase() === req.user.email.toLowerCase()));
+
+    const isAdmin = req.user && ['admin', 'superadmin'].includes(req.user.role);
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'Not authorized to delete this issue' });
+    }
+
+    // Cross-institute check for admins
+    if (req.user && req.user.role !== 'superadmin' && !isOwner) {
       if (req.user.institute && issue.institute && req.user.institute !== issue.institute) {
         return res.status(403).json({ success: false, message: 'Not authorized to delete issues from another institute' });
       }

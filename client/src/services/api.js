@@ -52,6 +52,7 @@ export const issueAPI = {
   },
   checkDuplicates: (params) => api.get('/issues/check-duplicate', { params }),
   getStats: () => api.get('/issues/stats/overview'),
+  delete: (id) => api.delete(`/issues/${id}`),
 };
 
 export const adminAPI = {

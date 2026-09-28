@@ -28,7 +28,7 @@ router.post('/check-duplicates', checkDuplicates);
 
 router.route('/:id')
   .get(getIssueById)
-  .delete(protect, authorize('admin', 'superadmin'), deleteIssue);
+  .delete(protect, deleteIssue);
 
 const uploadStatusMedia = upload.fields([
   { name: 'resolutionMedia', maxCount: 1 },
