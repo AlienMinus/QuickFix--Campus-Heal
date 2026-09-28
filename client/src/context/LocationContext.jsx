@@ -42,4 +42,5 @@ export const LocationProvider = ({ children }) => {
 };
 
 export const useLocation = () => useContext(LocationContext);
+export const useLocationContext = () => useContext(LocationContext);
 export default LocationContext;
