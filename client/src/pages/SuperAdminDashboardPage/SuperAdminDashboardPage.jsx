@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useOrg } from '../../context/OrgContext';
 import { adminAPI, instituteAPI, categoryAPI } from '../../services/api';
 import {
   FaCrown,
@@ -38,6 +39,7 @@ import {
   FaSnowflake,
   FaFire,
   FaTrashAlt,
+  FaGlobe,
 } from 'react-icons/fa';
 import './SuperAdminDashboardPage.css';
 
@@ -78,6 +80,40 @@ export default function SuperAdminDashboardPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [deletingCategory, setDeletingCategory] = useState(null);
+
+  // Global Platform Header Governance State (Super Admin ONLY)
+  const { globalHeader, updateGlobalHeader } = useOrg();
+  const [showGlobalHeaderModal, setShowGlobalHeaderModal] = useState(false);
+  const [globalHeaderForm, setGlobalHeaderForm] = useState({
+    name: globalHeader?.name || 'Smart Campus QuickFix',
+    subtitle: globalHeader?.subtitle || 'Civic & Facility Operations',
+    tagline: globalHeader?.tagline || 'Rapid Resolution Platform',
+  });
+  const [savingGlobalHeader, setSavingGlobalHeader] = useState(false);
+
+  const handleOpenGlobalHeaderModal = () => {
+    setGlobalHeaderForm({
+      name: globalHeader?.name || 'Smart Campus QuickFix',
+      subtitle: globalHeader?.subtitle || 'Civic & Facility Operations',
+      tagline: globalHeader?.tagline || 'Rapid Resolution Platform',
+    });
+    setShowGlobalHeaderModal(true);
+  };
+
+  const handleSaveGlobalHeader = async (e) => {
+    e.preventDefault();
+    try {
+      setSavingGlobalHeader(true);
+      await updateGlobalHeader(globalHeaderForm);
+      setActionSuccess('Global platform header updated successfully!');
+      setShowGlobalHeaderModal(false);
+      setTimeout(() => setActionSuccess(''), 4000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update global header.');
+    } finally {
+      setSavingGlobalHeader(false);
+    }
+  };
 
   const [categoryForm, setCategoryForm] = useState({
     name: '',
