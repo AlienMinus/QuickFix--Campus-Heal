@@ -238,3 +238,199 @@ exports.getSuperAdminOverview = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+const DEFAULT_BRANCHES = [
+  'Computer Science & Engineering (CSE)',
+  'Artificial Intelligence & Data Science (AI&DS)',
+  'Mechanical Engineering (ME)',
+  'Electrical & Electronics Engineering (EEE)',
+  'Electronics & Comm Engineering (ECE)',
+  'Civil Engineering (CE)',
+  'Master of Computer Applications (MCA)',
+  'MBA / Management Studies',
+  'Campus Estate & Facility Maintenance',
+  'Hostel Administration & Mess',
+];
+
+// Get current admin's institute profile (Admin & Super Admin)
+exports.getMyInstitute = async (req, res) => {
+  try {
+    const instituteName = req.user.institute;
+    if (!instituteName) {
+      return res.status(400).json({ success: false, message: 'User is not assigned to any institute' });
+    }
+
+    let institute = await Institute.findOne({ name: instituteName.trim() });
+    if (!institute) {
+      institute = await Institute.findOne({
+        name: { $regex: new RegExp(`^${instituteName.trim()}$`, 'i') },
+      });
+    }
+
+    if (!institute) {
+      return res.status(404).json({ success: false, message: `Institute "${instituteName}" not found` });
+    }
+
+    const branches = institute.branches && institute.branches.length > 0 ? institute.branches : DEFAULT_BRANCHES;
+
+    return res.status(200).json({
+      success: true,
+      institute: {
+        _id: institute._id,
+        name: institute.name,
+        code: institute.code,
+        location: institute.location,
+        city: institute.city,
+        state: institute.state,
+        headerConfig: institute.headerConfig || { name: institute.name, subtitle: '', tagline: '' },
+        branches,
+        zones: institute.zones || [],
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update header config for admin's own institute (Normal admin only)
+exports.updateMyInstituteHeader = async (req, res) => {
+  try {
+    const instituteName = req.user.institute;
+    if (!instituteName) {
+      return res.status(400).json({ success: false, message: 'User is not assigned to an institute' });
+    }
+
+    const { name, subtitle, tagline } = req.body;
+    let institute = await Institute.findOne({ name: instituteName.trim() });
+    if (!institute) {
+      institute = await Institute.findOne({
+        name: { $regex: new RegExp(`^${instituteName.trim()}$`, 'i') },
+      });
+    }
+
+    if (!institute) {
+      return res.status(404).json({ success: false, message: `Institute "${instituteName}" not found` });
+    }
+
+    institute.headerConfig = {
+      name: name?.trim() || institute.name,
+      subtitle: subtitle?.trim() || '',
+      tagline: tagline?.trim() || '',
+    };
+
+    await institute.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Header customization for ${institute.name} saved successfully`,
+      headerConfig: institute.headerConfig,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get branches for admin's own institute
+exports.getMyInstituteBranches = async (req, res) => {
+  try {
+    const instituteName = req.user.institute;
+    if (!instituteName) {
+      return res.status(400).json({ success: false, message: 'User is not assigned to an institute' });
+    }
+
+    let institute = await Institute.findOne({ name: instituteName.trim() });
+    if (!institute) {
+      institute = await Institute.findOne({
+        name: { $regex: new RegExp(`^${instituteName.trim()}$`, 'i') },
+      });
+    }
+
+    const branches = institute?.branches && institute.branches.length > 0 ? institute.branches : DEFAULT_BRANCHES;
+
+    return res.status(200).json({
+      success: true,
+      institute: institute?.name || instituteName,
+      branches,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update branches for admin's own institute (Normal admin only)
+exports.updateMyInstituteBranches = async (req, res) => {
+  try {
+    const instituteName = req.user.institute;
+    if (!instituteName) {
+      return res.status(400).json({ success: false, message: 'User is not assigned to an institute' });
+    }
+
+    const { branches } = req.body;
+    if (!Array.isArray(branches)) {
+      return res.status(400).json({ success: false, message: 'Branches must be an array of strings' });
+    }
+
+    const cleanBranches = [...new Set(branches.map(b => (typeof b === 'string' ? b.trim() : '')).filter(Boolean))];
+
+    if (cleanBranches.length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one branch/stream is required' });
+    }
+
+    let institute = await Institute.findOne({ name: instituteName.trim() });
+    if (!institute) {
+      institute = await Institute.findOne({
+        name: { $regex: new RegExp(`^${instituteName.trim()}$`, 'i') },
+      });
+    }
+
+    if (!institute) {
+      return res.status(404).json({ success: false, message: `Institute "${instituteName}" not found` });
+    }
+
+    institute.branches = cleanBranches;
+    await institute.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Branches for ${institute.name} updated successfully`,
+      branches: institute.branches,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Public endpoint: Get branches for a specific institute by name or ID (Used by RegisterPage)
+exports.getInstituteBranches = async (req, res) => {
+  try {
+    const { identifier } = req.params;
+    if (!identifier) {
+      return res.status(400).json({ success: false, message: 'Institute identifier required' });
+    }
+
+    let institute = null;
+    if (identifier.match(/^[0-9a-fA-F]{24}$/)) {
+      institute = await Institute.findById(identifier);
+    }
+    if (!institute) {
+      institute = await Institute.findOne({
+        $or: [
+          { name: identifier.trim() },
+          { name: { $regex: new RegExp(`^${identifier.trim()}$`, 'i') } },
+          { code: identifier.trim().toUpperCase() },
+        ],
+      });
+    }
+
+    const branches = institute?.branches && institute.branches.length > 0 ? institute.branches : DEFAULT_BRANCHES;
+
+    return res.status(200).json({
+      success: true,
+      institute: institute?.name || identifier,
+      branches,
+      headerConfig: institute?.headerConfig || null,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};

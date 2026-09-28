@@ -81,6 +81,16 @@ export const instituteAPI = {
   update: (id, data) => api.put(`/institutes/${id}`, data),
   delete: (id) => api.delete(`/institutes/${id}`),
   getSuperAdminOverview: () => api.get('/institutes/superadmin/overview'),
+  getMyInstitute: () => api.get('/institutes/my-institute'),
+  updateMyInstituteHeader: (data) => api.put('/institutes/my-institute/header', data),
+  getMyInstituteBranches: () => api.get('/institutes/my-institute/branches'),
+  updateMyInstituteBranches: (branches) => api.put('/institutes/my-institute/branches', { branches }),
+  getBranchesForInstitute: (identifier) => api.get(`/institutes/branches/${encodeURIComponent(identifier)}`),
+};
+
+export const settingsAPI = {
+  getGlobalHeader: () => api.get('/settings/global-header'),
+  updateGlobalHeader: (data) => api.put('/settings/global-header', data),
 };
 
 export const locationAPI = {
