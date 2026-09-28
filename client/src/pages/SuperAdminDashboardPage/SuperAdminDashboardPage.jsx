@@ -1654,6 +1654,78 @@ export default function SuperAdminDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* MODAL 7: Global Platform Header Customization */}
+      {showGlobalHeaderModal && (
+        <div className="modal-backdrop">
+          <div className="superadmin-modal-card">
+            <div className="modal-header">
+              <div className="modal-title-wrap">
+                <FaGlobe className="modal-icon" />
+                <h3>Global Platform Header Customization</h3>
+              </div>
+              <button className="modal-close-btn" onClick={() => setShowGlobalHeaderModal(false)}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveGlobalHeader} className="superadmin-form">
+              <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                Configure the central brand title and taglines displayed across the global platform header for guests, public landing views, and Apex Super Administrators. Respective college campus members see their own institutional branding.
+              </p>
+
+              <div className="form-group">
+                <label>Platform Name / Main Header Title *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Smart Campus QuickFix"
+                  value={globalHeaderForm.name}
+                  onChange={(e) => setGlobalHeaderForm({ ...globalHeaderForm, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Secondary Subtitle</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Civic & Facility Operations"
+                  value={globalHeaderForm.subtitle}
+                  onChange={(e) => setGlobalHeaderForm({ ...globalHeaderForm, subtitle: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Header Tagline / Mission</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Rapid Resolution Platform"
+                  value={globalHeaderForm.tagline}
+                  onChange={(e) => setGlobalHeaderForm({ ...globalHeaderForm, tagline: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-footer-btns">
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => setShowGlobalHeaderModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-confirm"
+                  disabled={savingGlobalHeader}
+                >
+                  {savingGlobalHeader ? <FaSpinner className="spin" /> : <FaCheckCircle />}
+                  {' Save Global Header'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
