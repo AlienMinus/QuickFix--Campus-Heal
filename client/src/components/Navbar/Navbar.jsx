@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './Navbar.css';
 import { useAuth } from '../../context/AuthContext';
 import { useOrg } from '../../context/OrgContext';
