@@ -85,11 +85,8 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #c084fc, transparent);
-  right: 0;
-  height: 2px;
-  background: #ef4444;
-  box-shadow: 0 0 8px #ef4444;
+  background: #a855f7;
+  box-shadow: 0 0 10px #c084fc;
   animation: laserScan 2s infinite ease-in-out alternate;
 }
 
