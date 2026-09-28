@@ -108,7 +108,7 @@ export default function StaffDashboardPage() {
             <FaTools /> On-Duty Field Technician Console
           </span>
           <h1>Welcome, {user?.name || 'Technician'}</h1>
-          <p>{user?.department || 'Maintenance & Operations Department'} • BPUT GIFT Campus</p>
+          <p>{user?.department || 'Maintenance & Operations'} • {orgConfig.name}</p>
         </div>
 
         <div className="patrol-status-pill">
@@ -157,7 +157,7 @@ export default function StaffDashboardPage() {
           <div className="staff-empty-tasks">
             <FaCheckCircle className="check-all-icon" />
             <h4>No Active Work Orders Assigned</h4>
-            <p>You have resolved all assigned maintenance tasks. Great job keeping GIFT Campus pristine!</p>
+            <p>You have resolved all assigned maintenance tasks. Great job keeping {orgConfig.name} in pristine condition!</p>
           </div>
         ) : (
           <div className="task-cards-list">
