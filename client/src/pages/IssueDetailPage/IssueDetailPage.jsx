@@ -98,11 +98,20 @@ export default function IssueDetailPage() {
 
     try {
       setCommenting(true);
-      const res = await issueAPI.addComment(issue._id, commentText.trim());
+      const res = await issueAPI.addComment(issue._id, {
+        text: commentText.trim(),
+        authorName: user?.name || 'Campus Member',
+        userName: user?.name || 'Campus Member',
+        userRole: user?.role || 'student',
+        userAvatar: user?.avatar || '',
+      });
       setIssue(prev => ({
         ...prev,
         comments: res.data.comments || [...(prev.comments || []), {
-          user: { name: user.name, role: user.role },
+          user: user || { name: user?.name, role: user?.role },
+          userName: user?.name || 'Campus Member',
+          userRole: user?.role || 'student',
+          userAvatar: user?.avatar || '',
           text: commentText.trim(),
           createdAt: new Date().toISOString()
         }]
@@ -514,22 +523,44 @@ export default function IssueDetailPage() {
           {(!issue.comments || issue.comments.length === 0) ? (
             <p className="no-comments-msg">No comments yet. Be the first to leave an update or note!</p>
           ) : (
-            issue.comments.map((c, idx) => (
-              <div key={idx} className="comment-bubble">
-                <div className="comment-header">
-                  <span className="comment-author">{c.user?.name || 'Campus Member'}</span>
-                  {c.user?.role && (
-                    <span className={`comment-role-pill ${c.user.role}`}>
-                      {c.user.role}
+            issue.comments.map((c, idx) => {
+              const authorName =
+                (c.userName && c.userName !== 'Campus Resident' && c.userName !== 'Campus Member' && c.userName) ||
+                c.user?.name ||
+                (c.user && typeof c.user === 'object' && c.user.name ? c.user.name : null) ||
+                (user && (c.user === user._id || c.user?._id === user._id) ? user.name : null) ||
+                c.userName ||
+                user?.name ||
+                'Campus Member';
+              const authorRole = c.userRole || c.user?.role || (c.user === user?._id ? user?.role : 'student');
+              const authorAvatar = c.userAvatar || c.user?.avatar || (c.user === user?._id ? user?.avatar : '');
+
+              return (
+                <div key={idx} className="comment-bubble">
+                  <div className="comment-header">
+                    <div className="comment-author-badge">
+                      {authorAvatar ? (
+                        <img src={authorAvatar} alt={authorName} className="comment-mini-avatar" />
+                      ) : (
+                        <div className="comment-avatar-circle">
+                          {authorName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="comment-author">{authorName}</span>
+                      {authorRole && (
+                        <span className={`comment-role-pill ${authorRole}`}>
+                          {authorRole}
+                        </span>
+                      )}
+                    </div>
+                    <span className="comment-time">
+                      {c.createdAt ? new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     </span>
-                  )}
-                  <span className="comment-time">
-                    {c.createdAt ? new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                  </span>
+                  </div>
+                  <p className="comment-body">{c.text}</p>
                 </div>
-                <p className="comment-body">{c.text}</p>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
