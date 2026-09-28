@@ -509,6 +509,7 @@ export default function AdminDashboardPage() {
             >
               <option value="issues">📋 Issues Dispatch ({issues.length} Tickets)</option>
               <option value="zones">🏷️ Campus Zones & QR Generator ({zones.length} Zones)</option>
+              <option value="branches">🎓 Academic Branches & Streams ({branchesList.length} Active)</option>
               <option value="users">👥 User Roles & Access ({usersList.length} Accounts)</option>
               <option value="patrol">📡 Maintenance Staff Patrol ({activeStaff.length} Active)</option>
             </select>
@@ -516,10 +517,10 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Global Toast when Org Info is updated */}
+      {/* Global Toast when info is updated */}
       {orgSavedToast && (
         <div className="admin-global-toast">
-          <FaCheckCircle /> Campus & organization details saved across the entire application!
+          <FaCheckCircle /> {toastMessage || 'Campus details saved successfully!'}
         </div>
       )}
 
