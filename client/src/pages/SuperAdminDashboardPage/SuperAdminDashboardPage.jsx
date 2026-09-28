@@ -959,6 +959,121 @@ export default function SuperAdminDashboardPage() {
         </div>
       )}
 
+      {/* TAB 3: Facility Categories Governance */}
+      {activeTab === 'categories' && (
+        <div className="categories-view-section">
+          <div className="section-search-row">
+            <div className="section-title-wrap">
+              <h2>Campus Facility Categories Governance ({filteredCategories.length})</h2>
+              <p>Define standard maintenance categories, target SLA resolution turnaround, default severities, and visual icons across all campuses.</p>
+            </div>
+
+            <div className="category-search-actions">
+              <div className="search-bar-wrap">
+                <FaSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search category name, code, severity..."
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  className="admin-search-input"
+                />
+                {categorySearch && (
+                  <button className="clear-search-btn" onClick={() => setCategorySearch('')}>
+                    <FaTimes />
+                  </button>
+                )}
+              </div>
+              <button className="btn-add-category-inline" onClick={handleOpenAddCategory}>
+                <FaPlus /> Define Category
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="loading-state">
+              <FaSpinner className="spin loading-spinner" />
+              <p>Loading facility categories...</p>
+            </div>
+          ) : filteredCategories.length === 0 ? (
+            <div className="empty-state-box">
+              <FaTags className="empty-icon" />
+              <h3>No Categories Found</h3>
+              <p>
+                {categorySearch
+                  ? `No facility categories match "${categorySearch}".`
+                  : 'No categories defined yet. Click "Define Category" to create one.'}
+              </p>
+            </div>
+          ) : (
+            <div className="categories-grid">
+              {filteredCategories.map((cat) => (
+                <div key={cat._id} className="category-governance-card">
+                  <div className="cat-card-header">
+                    <div className="cat-icon-name-wrap">
+                      <div className="cat-symbol-box">
+                        {getCategoryIcon(cat.icon)}
+                      </div>
+                      <div>
+                        <div className="cat-header-title-row">
+                          <h3 className="cat-name">{cat.name}</h3>
+                          <span className="cat-code-badge">#{cat.code}</span>
+                        </div>
+                        <span className={`cat-status-pill ${cat.status?.toLowerCase() || 'active'}`}>
+                          ● {cat.status || 'Active'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="cat-card-actions">
+                      <button
+                        className="btn-edit-cat"
+                        onClick={() => handleOpenEditCategory(cat)}
+                        title="Edit facility category"
+                      >
+                        <FaEdit /> Edit
+                      </button>
+                      <button
+                        className="btn-del-cat"
+                        onClick={() => setDeletingCategory(cat)}
+                        title="Delete facility category"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="cat-description">
+                    {cat.description || 'General campus maintenance and infrastructure upkeep.'}
+                  </p>
+
+                  <div className="cat-meta-footer">
+                    <div className="cat-meta-chip severity">
+                      <span className="chip-label">Default Severity:</span>
+                      <span className={`severity-indicator ${cat.defaultSeverity?.toLowerCase() || 'medium'}`}>
+                        {cat.defaultSeverity || 'Medium'}
+                      </span>
+                    </div>
+
+                    <div className="cat-meta-chip sla">
+                      <span className="chip-label">Target SLA:</span>
+                      <span className="sla-indicator">
+                        <FaClock className="chip-icon" /> {cat.slaHours || 24} Hours
+                      </span>
+                    </div>
+
+                    <div className="cat-meta-chip icon-key">
+                      <span className="chip-label">Icon Symbol:</span>
+                      <span className="icon-name-indicator">{cat.icon || 'wrench'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* MODAL 1: Create / Edit Institute */}
       {showInstituteModal && (
         <div className="modal-backdrop">
@@ -1305,6 +1420,189 @@ export default function SuperAdminDashboardPage() {
                 type="button"
                 className="btn-danger"
                 onClick={handleDeleteAdmin}
+                disabled={submitting}
+              >
+                {submitting ? <FaSpinner className="spin" /> : <FaTrash />} Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: Create / Edit Facility Category */}
+      {showCategoryModal && (
+        <div className="modal-backdrop">
+          <div className="superadmin-modal-card">
+            <div className="modal-header">
+              <div className="modal-title-wrap">
+                <FaTags className="modal-icon" />
+                <h3>{editingCategory ? `Edit Category: ${editingCategory.name}` : 'Define New Facility Category'}</h3>
+              </div>
+              <button className="modal-close-btn" onClick={() => setShowCategoryModal(false)}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitCategory} className="superadmin-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Category Name *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., HVAC & Air Conditioning"
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Category Code *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., HVAC"
+                    value={categoryForm.code}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, code: e.target.value.toUpperCase() })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Default Severity Level</label>
+                  <select
+                    value={categoryForm.defaultSeverity}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, defaultSeverity: e.target.value })}
+                    className="role-select"
+                  >
+                    <option value="Low">Low (Informational / Minor)</option>
+                    <option value="Medium">Medium (Standard Maintenance)</option>
+                    <option value="High">High (Disrupts Living / Lab Area)</option>
+                    <option value="Critical">Critical (Hazard / Total Outage)</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Target SLA (Hours) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="720"
+                    placeholder="e.g., 24"
+                    value={categoryForm.slaHours}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, slaHours: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Icon Symbol</label>
+                  <select
+                    value={categoryForm.icon}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
+                    className="role-select"
+                  >
+                    <option value="bolt">⚡ Bolt (Electrical & Lighting)</option>
+                    <option value="tint">💧 Water Drop (Plumbing & Sanitation)</option>
+                    <option value="wrench">🔧 Wrench (General Infrastructure)</option>
+                    <option value="broom">🧹 Broom (Cleaning & Sanitation)</option>
+                    <option value="wifi">📶 Wi-Fi (IT & Network)</option>
+                    <option value="shield-alt">🛡️ Shield (Safety & Security)</option>
+                    <option value="laptop">💻 Laptop (Smart Classrooms & Labs)</option>
+                    <option value="snowflake">❄️ Snowflake (HVAC & Air Conditioning)</option>
+                    <option value="fire">🔥 Fire (Fire Protection & Hazard)</option>
+                    <option value="trash">🗑️ Trash (Waste Management)</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Governance Status</label>
+                  <select
+                    value={categoryForm.status}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, status: e.target.value })}
+                    className="role-select"
+                  >
+                    <option value="Active">Active (Available for Reporting)</option>
+                    <option value="Inactive">Inactive (Deprecated / Hidden)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Description & Maintenance Scope</label>
+                <textarea
+                  rows="3"
+                  placeholder="Describe the items or scope covered under this category..."
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-footer-btns">
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => setShowCategoryModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-confirm"
+                  disabled={submitting}
+                >
+                  {submitting ? <FaSpinner className="spin" /> : <FaCheckCircle />}
+                  {editingCategory ? ' Save Changes' : ' Define Category'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 6: Delete Facility Category Confirmation */}
+      {deletingCategory && (
+        <div className="modal-backdrop">
+          <div className="superadmin-modal-card delete-modal">
+            <div className="modal-header">
+              <div className="modal-title-wrap danger">
+                <FaExclamationTriangle className="modal-icon danger" />
+                <h3>Delete Facility Category</h3>
+              </div>
+              <button className="modal-close-btn" onClick={() => setDeletingCategory(null)}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="delete-modal-body">
+              <p>
+                Are you sure you want to permanently delete this facility category from platform governance?
+              </p>
+              <div className="deleting-target-card">
+                <strong>{deletingCategory.name} (#{deletingCategory.code})</strong>
+                <span>Default Severity: {deletingCategory.defaultSeverity} • SLA: {deletingCategory.slaHours}h</span>
+                <small>{deletingCategory.description || 'Standard facility maintenance'}</small>
+              </div>
+              <p className="danger-warning">
+                Existing tickets and reports referencing this category will retain their historical textual records.
+              </p>
+            </div>
+
+            <div className="modal-footer-btns">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setDeletingCategory(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={handleDeleteCategory}
                 disabled={submitting}
               >
                 {submitting ? <FaSpinner className="spin" /> : <FaTrash />} Confirm Delete
