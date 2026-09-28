@@ -655,9 +655,10 @@ export default function AdminDashboardPage() {
               <button
                 type="button"
                 className="open-modal-action-btn secondary"
-                onClick={() => setShowOrgModal(true)}
+                onClick={handleOpenInstHeaderModal}
+                title="Customize header branding for your institute members"
               >
-                <FaBuilding /> Customize
+                <FaBuilding /> Header Branding
               </button>
             </div>
           </div>
@@ -704,6 +705,104 @@ export default function AdminDashboardPage() {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Section 3: Academic Branches & Streams Management Console */}
+      {activeTab === 'branches' && (
+        <div className="branches-management-container">
+          <div className="zones-header-actions-card">
+            <div className="zones-header-info">
+              <h3>
+                <FaGraduationCap className="section-title-icon" /> College Branches & Academic Streams ({branchesList.length})
+              </h3>
+              <p>
+                Configure the active departments, engineering branches, and academic streams for <strong>{user?.institute || 'your college'}</strong>.
+                New students and staff registering for this campus will select from these options.
+              </p>
+            </div>
+            <div className="zones-action-buttons">
+              <button
+                type="button"
+                className="open-modal-action-btn primary"
+                onClick={handleOpenAddBranch}
+              >
+                <FaPlus /> Add Branch / Stream
+              </button>
+              <button
+                type="button"
+                className="open-modal-action-btn secondary"
+                onClick={handleResetBranches}
+                title="Reset to 10 standard engineering & management departments"
+              >
+                <FaSync /> Reset Defaults
+              </button>
+            </div>
+          </div>
+
+          <div className="admin-table-card">
+            <div className="responsive-table-wrapper">
+              <table className="admin-data-table branches-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '8%' }}>#</th>
+                    <th style={{ width: '68%' }}>Branch / Academic Stream Name</th>
+                    <th style={{ width: '24%', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingBranches ? (
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: 'center', padding: '24px' }}>
+                        Loading academic streams...
+                      </td>
+                    </tr>
+                  ) : branchesList.length === 0 ? (
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: 'center', padding: '24px' }}>
+                        No branches configured. Click "Add Branch / Stream" or "Reset Defaults".
+                      </td>
+                    </tr>
+                  ) : (
+                    branchesList.map((branch, idx) => (
+                      <tr key={branch}>
+                        <td>
+                          <span className="branch-index-pill">{idx + 1}</span>
+                        </td>
+                        <td>
+                          <strong className="table-highlight-name">{branch}</strong>
+                          <div className="table-sub-row">
+                            <span className="table-sub">🏛️ {user?.institute || 'Campus'}</span>
+                            <span className="branch-active-badge">Active for Registration</span>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div className="zone-action-btn-group">
+                            <button
+                              type="button"
+                              className="generate-qr-btn icon-only"
+                              onClick={() => handleOpenEditBranch(branch)}
+                              title="Edit branch name"
+                            >
+                              <FaEdit /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="delete-icon-btn"
+                              onClick={() => setDeletingBranch(branch)}
+                              title="Remove branch"
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -927,14 +1026,14 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* FORM MODAL 2: Organization / Campus Customization */}
+      {/* FORM MODAL 2: Institute Header Customization (For Normal Admin's own college members) */}
       {showOrgModal && (
         <div className="admin-form-modal-backdrop" onClick={() => setShowOrgModal(false)}>
           <div className="admin-form-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="admin-form-modal-header">
               <div className="admin-modal-title">
                 <FaBuilding className="modal-title-icon" />
-                <h4>Organization / Campus Customization</h4>
+                <h4>Institute Header Customization</h4>
               </div>
               <button
                 type="button"
@@ -946,34 +1045,31 @@ export default function AdminDashboardPage() {
             </div>
 
             <form
-              onSubmit={(e) => {
-                handleSaveOrgInfo(e);
-                setShowOrgModal(false);
-              }}
+              onSubmit={handleSaveOrgInfo}
               className="admin-modal-form-content"
             >
               <p className="modal-intro-text">
-                Generalize the application so that any college, university, or corporate facility can use this portal.
+                Customize the portal header branding visible to all students, staff, and technicians belonging to <strong>{user?.institute || 'your college'}</strong>. Global platform header remains safely isolated and managed by Super Admin.
               </p>
 
               <div className="admin-form-group">
-                <label>Campus / Organization Name *</label>
+                <label>Institute / Campus Header Title *</label>
                 <input
                   type="text"
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  placeholder="e.g. Apex University, City Tech Park"
+                  value={instName}
+                  onChange={(e) => setInstName(e.target.value)}
+                  placeholder={`e.g. ${user?.institute || 'College Campus Name'}`}
                   className="admin-input"
                   required
                 />
               </div>
 
               <div className="admin-form-group">
-                <label>Tagline / Subtitle</label>
+                <label>Header Tagline / Subtitle</label>
                 <input
                   type="text"
-                  value={orgSubtitle}
-                  onChange={(e) => setOrgSubtitle(e.target.value)}
+                  value={instSubtitle}
+                  onChange={(e) => setInstSubtitle(e.target.value)}
                   placeholder="e.g. Facility & Operations Portal"
                   className="admin-input"
                 />
@@ -988,10 +1084,110 @@ export default function AdminDashboardPage() {
                   Cancel
                 </button>
                 <button type="submit" className="modal-submit-btn">
-                  <FaCheckCircle /> Save Organization Settings
+                  <FaCheckCircle /> Save Institute Header
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Add / Edit Branch Modal */}
+      {showBranchModal && (
+        <div className="admin-form-modal-backdrop" onClick={() => setShowBranchModal(false)}>
+          <div className="admin-form-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-form-modal-header">
+              <div className="admin-modal-title">
+                <FaGraduationCap className="modal-title-icon" />
+                <h4>{editingBranch ? 'Edit Academic Stream' : 'Add New Branch / Stream'}</h4>
+              </div>
+              <button
+                type="button"
+                className="admin-form-modal-close"
+                onClick={() => setShowBranchModal(false)}
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBranch} className="admin-modal-form-content">
+              <p className="modal-intro-text">
+                Specify the department or academic stream for <strong>{user?.institute || 'your college'}</strong>.
+                Students and staff registering under this college will select from this list.
+              </p>
+
+              <div className="admin-form-group">
+                <label>Branch / Academic Stream Name *</label>
+                <input
+                  type="text"
+                  value={branchInput}
+                  onChange={(e) => setBranchInput(e.target.value)}
+                  placeholder="e.g. Computer Science & Engineering (CSE) or MBA"
+                  className="admin-input"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="admin-form-modal-actions">
+                <button
+                  type="button"
+                  className="modal-cancel-btn"
+                  onClick={() => setShowBranchModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="modal-submit-btn" disabled={branchSaving || !branchInput.trim()}>
+                  {branchSaving ? 'Saving...' : editingBranch ? 'Update Stream' : 'Add Stream'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: Delete Branch Confirmation */}
+      {deletingBranch && (
+        <div className="admin-form-modal-backdrop" onClick={() => setDeletingBranch(null)}>
+          <div className="admin-form-modal-card confirm-delete-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-form-modal-header">
+              <div className="admin-modal-title">
+                <FaExclamationTriangle className="modal-title-icon danger" />
+                <h4>Remove Branch Option</h4>
+              </div>
+              <button
+                type="button"
+                className="admin-form-modal-close"
+                onClick={() => setDeletingBranch(null)}
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="admin-modal-form-content">
+              <p className="modal-intro-text">
+                Are you sure you want to remove <strong>"{deletingBranch}"</strong> from registration options?
+                Existing registered users will retain their records, but new users will no longer see this option.
+              </p>
+
+              <div className="admin-form-modal-actions">
+                <button
+                  type="button"
+                  className="modal-cancel-btn"
+                  onClick={() => setDeletingBranch(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="modal-submit-btn delete-confirm-btn"
+                  onClick={handleConfirmDeleteBranch}
+                  disabled={branchSaving}
+                >
+                  {branchSaving ? 'Removing...' : 'Confirm Remove'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
