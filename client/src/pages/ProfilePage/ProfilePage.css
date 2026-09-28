@@ -1,0 +1,330 @@
+.profile-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 820px;
+  margin: 0 auto;
+  padding-bottom: 3.5rem;
+}
+
+.profile-hero-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.profile-avatar-wrap {
+  position: relative;
+}
+
+.user-avatar-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary);
+}
+
+.avatar-placeholder {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.role-badge {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.role-badge.admin { background: #ef4444; color: white; }
+.role-badge.staff { background: #10b981; color: white; }
+.role-badge.student { background: var(--primary); color: white; }
+
+.profile-user-info {
+  flex: 1;
+}
+
+.profile-user-info h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.info-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* Specs 2-col Grid */
+.specs-two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.1rem;
+}
+
+.spec-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.spec-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.spec-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.spec-icon.jwt { color: #10b981; }
+.spec-icon.gps { color: #38bdf8; }
+
+.spec-card-header h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.spec-card-header p {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.spec-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.spec-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.spec-k {
+  color: var(--text-muted);
+}
+
+.spec-v {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.monospace {
+  font-family: monospace;
+}
+
+.highlight-green {
+  color: #34d399;
+}
+
+.badge-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #34d399;
+  font-weight: 700;
+}
+
+.badge-active .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+}
+
+.badge-idle {
+  color: var(--text-muted);
+}
+
+/* User tickets card */
+.user-tickets-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tickets-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tickets-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary-light);
+}
+
+.tickets-title-wrap h3 {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.file-more-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tickets-loading {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.empty-user-tickets {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.primary-action-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.55rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.user-tickets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.user-ticket-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-ticket-row:hover {
+  border-color: var(--primary);
+  transform: translateX(3px);
+}
+
+.row-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ticket-cat {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--primary-light);
+  text-transform: uppercase;
+}
+
+.ticket-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ticket-location {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.row-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.status-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.status-pill.submitted { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.status-pill.in-progress { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.status-pill.resolved { background: rgba(16, 185, 129, 0.15); color: #34d399; }
