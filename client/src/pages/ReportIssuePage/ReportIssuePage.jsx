@@ -94,10 +94,9 @@ export default function ReportIssuePage() {
   const [mediaPreview, setMediaPreview] = useState(null);
   const [mediaType, setMediaType] = useState('image'); // 'image' | 'video'
 
-  // Tag helper pickers dropdown states
-  const [showZonePicker, setShowZonePicker] = useState(false);
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-  const [showSeverityPicker, setShowSeverityPicker] = useState(false);
+  // Dynamic Instagram-style Autocomplete Dropdown State
+  // { type: '@' | '#' | '$', query: string, startIndex: number, endIndex: number, activeIndex: number } | null
+  const [autocomplete, setAutocomplete] = useState(null);
 
   // Status & Duplicate states
   const [submitting, setSubmitting] = useState(false);
@@ -164,7 +163,6 @@ export default function ReportIssuePage() {
 
     // 3. Detect Zone @...
     for (const z of availableZones) {
-      // Short key or full name match
       const shortName = z.split(' ')[0];
       const regex = new RegExp(`@${shortName}\\b|@${z.replace(/\s+/g, '')}\\b`, 'i');
       if (regex.test(text)) {
@@ -174,21 +172,138 @@ export default function ReportIssuePage() {
     }
   };
 
+  // Detect whether cursor is currently at a special character tag (@, #, $)
+  const detectAutocomplete = (text, cursorPos) => {
+    if (cursorPos === undefined || cursorPos === null) {
+      cursorPos = text.length;
+    }
+    const textBeforeCursor = text.slice(0, cursorPos);
+    // Matches trigger character @, #, or $ preceded by start of string or whitespace, followed by non-space chars
+    const match = textBeforeCursor.match(/(?:^|\s)([@#$])([a-zA-Z0-9_\-/]*)$/);
+
+    if (match) {
+      const trigger = match[1]; // '@' | '#' | '$'
+      const query = match[2] || '';
+      const triggerIndex = textBeforeCursor.lastIndexOf(trigger);
+
+      setAutocomplete({
+        type: trigger,
+        query: query.trim(),
+        startIndex: triggerIndex,
+        endIndex: cursorPos,
+        activeIndex: 0,
+      });
+    } else {
+      setAutocomplete(null);
+    }
+  };
+
+  // Autocomplete Suggestions Filtering
+  const filteredZones = useMemo(() => {
+    if (!autocomplete || autocomplete.type !== '@') return [];
+    const q = autocomplete.query.toLowerCase();
+    return availableZones.filter(z => z.toLowerCase().includes(q));
+  }, [autocomplete, availableZones]);
+
+  const filteredCategories = useMemo(() => {
+    if (!autocomplete || autocomplete.type !== '#') return [];
+    const q = autocomplete.query.toLowerCase();
+    return categoriesList.filter(c => c.toLowerCase().includes(q));
+  }, [autocomplete, categoriesList]);
+
+  const filteredSeverities = useMemo(() => {
+    if (!autocomplete || autocomplete.type !== '$') return [];
+    const q = autocomplete.query.toLowerCase();
+    return SEVERITIES.filter(s => s.toLowerCase().includes(q));
+  }, [autocomplete]);
+
+  // Handle selecting a tag suggestion from Instagram-style dropdown
+  const handleSelectSuggestion = (value, type) => {
+    if (!autocomplete) return;
+    const { startIndex, endIndex } = autocomplete;
+
+    const formatted = `${type}${value} `;
+    const updated = description.slice(0, startIndex) + formatted + description.slice(endIndex);
+
+    setDescription(updated);
+    setAutocomplete(null);
+
+    // Update corresponding form states
+    if (type === '@') setZone(value);
+    if (type === '#') setCategory(value);
+    if (type === '$') setSeverity(value);
+
+    // Refocus textarea and place cursor right after inserted tag
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const nextPos = startIndex + formatted.length;
+        textareaRef.current.setSelectionRange(nextPos, nextPos);
+      }
+    }, 15);
+  };
+
+  // Helper to insert trigger character (@, #, $) at cursor or append
+  const insertTriggerChar = (char) => {
+    const cursorPos = textareaRef.current?.selectionStart ?? description.length;
+    const needsLeadingSpace = cursorPos > 0 && description[cursorPos - 1] !== ' ' && description[cursorPos - 1] !== '\n';
+    const prefix = needsLeadingSpace ? ' ' : '';
+    const updated = description.slice(0, cursorPos) + prefix + char + description.slice(cursorPos);
+
+    setDescription(updated);
+    const newCursor = cursorPos + prefix.length + 1;
+
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newCursor, newCursor);
+        detectAutocomplete(updated, newCursor);
+      }
+    }, 15);
+  };
+
+  // Keyboard navigation inside autocomplete dropdown (Up/Down arrow, Enter, Escape)
+  const handleTextareaKeyDown = (e) => {
+    if (!autocomplete) return;
+
+    let items = [];
+    if (autocomplete.type === '@') items = filteredZones;
+    else if (autocomplete.type === '#') items = filteredCategories;
+    else if (autocomplete.type === '$') items = filteredSeverities;
+
+    if (items.length === 0) {
+      if (e.key === 'Escape') setAutocomplete(null);
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setAutocomplete(prev => ({
+        ...prev,
+        activeIndex: (prev.activeIndex + 1) % items.length
+      }));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setAutocomplete(prev => ({
+        ...prev,
+        activeIndex: (prev.activeIndex - 1 + items.length) % items.length
+      }));
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      if (autocomplete.activeIndex >= 0 && autocomplete.activeIndex < items.length) {
+        e.preventDefault();
+        handleSelectSuggestion(items[autocomplete.activeIndex], autocomplete.type);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setAutocomplete(null);
+    }
+  };
+
   const handleDescriptionChange = (e) => {
     const val = e.target.value;
     setDescription(val);
     parseTagsFromText(val);
-  };
-
-  // Helper chip appenders: quickly insert @zone, #category, $severity into description
-  const insertTagToText = (tagText) => {
-    setDescription(prev => {
-      const spacer = prev && !prev.endsWith(' ') && !prev.endsWith('\n') ? ' ' : '';
-      return `${prev}${spacer}${tagText} `;
-    });
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-    }
+    detectAutocomplete(val, e.target.selectionStart);
   };
 
   // Check for duplicate issues
@@ -421,113 +536,154 @@ export default function ReportIssuePage() {
         )}
 
         <form onSubmit={handleSubmit} className="post-modal-form">
-          {/* 1. UNBOUND DESCRIPTION TEXTAREA FIRST */}
+          {/* 1. UNBOUND DESCRIPTION TEXTAREA WITH INSTAGRAM-STYLE FLOATING AUTOCOMPLETE */}
           <div className="unbound-textarea-section">
-            <textarea
-              ref={textareaRef}
-              rows={4}
-              value={description}
-              onChange={handleDescriptionChange}
-              placeholder="What needs maintenance or fixing? Describe freely...&#10;Tip: Use @zone, #category, and $severity in your post!&#10;e.g. Broken exhaust fan in @Visvesvaraya Labs #Electrical $High"
-              className="unbound-description-input"
-              autoFocus
-              required
-            />
+            <div className="unbound-textarea-container">
+              <textarea
+                ref={textareaRef}
+                rows={4}
+                value={description}
+                onChange={handleDescriptionChange}
+                onKeyDown={handleTextareaKeyDown}
+                onClick={(e) => detectAutocomplete(e.target.value, e.target.selectionStart)}
+                onKeyUp={(e) => {
+                  if (!['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape'].includes(e.key)) {
+                    detectAutocomplete(e.target.value, e.target.selectionStart);
+                  }
+                }}
+                placeholder="What needs maintenance or fixing? Describe freely...&#10;Type @ for Campus Zone, # for Category, $ for Severity&#10;e.g. Broken exhaust fan in @Visvesvaraya Labs #Electrical $High"
+                className="unbound-description-input"
+                autoFocus
+                required
+              />
 
-            {/* Smart Tag Helper Chips Toolbar */}
-            <div className="tag-helpers-bar">
-              {/* @ Zone Picker Chip */}
-              <div className="tag-chip-dropdown-wrapper">
-                <button
-                  type="button"
-                  className="tag-chip-btn zone-chip"
-                  onClick={() => setShowZonePicker(!showZonePicker)}
-                  title="Select or Insert Campus Zone (@)"
-                >
-                  <span className="chip-prefix">@</span> {zone.split(' ')[0]} <FaChevronDown className="chip-arrow" />
-                </button>
-                {showZonePicker && (
-                  <div className="chip-dropdown-menu">
-                    <div className="dropdown-menu-header">Select Campus Zone (@)</div>
-                    {availableZones.map(z => (
-                      <button
-                        key={z}
-                        type="button"
-                        className={`dropdown-option ${zone === z ? 'selected' : ''}`}
-                        onClick={() => {
-                          setZone(z);
-                          insertTagToText(`@${z.split(' ')[0]}`);
-                          setShowZonePicker(false);
-                        }}
-                      >
-                        @{z}
-                      </button>
-                    ))}
+              {/* INSTAGRAM-STYLE AUTOCOMPLETE DROPDOWN */}
+              {autocomplete && (
+                <div className="insta-autocomplete-popover">
+                  <div className="insta-popover-header">
+                    <span className={`popover-trigger-badge trigger-${autocomplete.type === '@' ? 'zone' : autocomplete.type === '#' ? 'category' : 'severity'}`}>
+                      {autocomplete.type}
+                    </span>
+                    <span className="popover-heading">
+                      {autocomplete.type === '@' && 'Campus Zones (@)'}
+                      {autocomplete.type === '#' && 'Facility Categories (#)'}
+                      {autocomplete.type === '$' && 'Urgency Severity ($)'}
+                    </span>
+                    <span className="popover-hint">↑↓ navigate • ↵ select</span>
                   </div>
-                )}
-              </div>
 
-              {/* # Category Picker Chip */}
-              <div className="tag-chip-dropdown-wrapper">
-                <button
-                  type="button"
-                  className="tag-chip-btn category-chip"
-                  onClick={() => setShowCategoryPicker(!showCategoryPicker)}
-                  title="Select or Insert Category (#)"
-                >
-                  <span className="chip-prefix">#</span> {category} <FaChevronDown className="chip-arrow" />
-                </button>
-                {showCategoryPicker && (
-                  <div className="chip-dropdown-menu">
-                    <div className="dropdown-menu-header">Select Category (#)</div>
-                    {categoriesList.map(c => (
-                      <button
-                        key={c}
-                        type="button"
-                        className={`dropdown-option ${category === c ? 'selected' : ''}`}
-                        onClick={() => {
-                          setCategory(c);
-                          insertTagToText(`#${c.replace(/[^a-zA-Z0-9]/g, '')}`);
-                          setShowCategoryPicker(false);
-                        }}
-                      >
-                        #{c}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  <div className="insta-popover-list">
+                    {autocomplete.type === '@' && (
+                      filteredZones.length === 0 ? (
+                        <div className="insta-no-match">No zones match "@{autocomplete.query}"</div>
+                      ) : (
+                        filteredZones.map((z, idx) => (
+                          <button
+                            key={z}
+                            type="button"
+                            className={`insta-suggestion-item ${autocomplete.activeIndex === idx ? 'focused' : ''}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSelectSuggestion(z, '@');
+                            }}
+                          >
+                            <div className="item-prefix-icon zone">
+                              <FaMapMarkerAlt />
+                            </div>
+                            <div className="item-text-wrap">
+                              <span className="item-main-title">@{z}</span>
+                              <span className="item-subtitle">Campus Zone</span>
+                            </div>
+                          </button>
+                        ))
+                      )
+                    )}
 
-              {/* $ Severity Picker Chip */}
-              <div className="tag-chip-dropdown-wrapper">
-                <button
-                  type="button"
-                  className={`tag-chip-btn severity-chip ${severity.toLowerCase()}`}
-                  onClick={() => setShowSeverityPicker(!showSeverityPicker)}
-                  title="Select or Insert Severity ($)"
-                >
-                  <span className="chip-prefix">$</span> {severity} <FaChevronDown className="chip-arrow" />
-                </button>
-                {showSeverityPicker && (
-                  <div className="chip-dropdown-menu">
-                    <div className="dropdown-menu-header">Select Severity ($)</div>
-                    {SEVERITIES.map(s => (
-                      <button
-                        key={s}
-                        type="button"
-                        className={`dropdown-option severity-${s.toLowerCase()} ${severity === s ? 'selected' : ''}`}
-                        onClick={() => {
-                          setSeverity(s);
-                          insertTagToText(`$${s}`);
-                          setShowSeverityPicker(false);
-                        }}
-                      >
-                        ${s}
-                      </button>
-                    ))}
+                    {autocomplete.type === '#' && (
+                      filteredCategories.length === 0 ? (
+                        <div className="insta-no-match">No categories match "#{autocomplete.query}"</div>
+                      ) : (
+                        filteredCategories.map((c, idx) => (
+                          <button
+                            key={c}
+                            type="button"
+                            className={`insta-suggestion-item ${autocomplete.activeIndex === idx ? 'focused' : ''}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSelectSuggestion(c, '#');
+                            }}
+                          >
+                            <div className="item-prefix-icon category">
+                              <FaTags />
+                            </div>
+                            <div className="item-text-wrap">
+                              <span className="item-main-title">#{c}</span>
+                              <span className="item-subtitle">Facility Category</span>
+                            </div>
+                          </button>
+                        ))
+                      )
+                    )}
+
+                    {autocomplete.type === '$' && (
+                      filteredSeverities.length === 0 ? (
+                        <div className="insta-no-match">No severity matches "${autocomplete.query}"</div>
+                      ) : (
+                        filteredSeverities.map((s, idx) => (
+                          <button
+                            key={s}
+                            type="button"
+                            className={`insta-suggestion-item severity-${s.toLowerCase()} ${autocomplete.activeIndex === idx ? 'focused' : ''}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSelectSuggestion(s, '$');
+                            }}
+                          >
+                            <div className={`item-prefix-icon severity ${s.toLowerCase()}`}>
+                              <FaExclamationTriangle />
+                            </div>
+                            <div className="item-text-wrap">
+                              <span className="item-main-title">${s}</span>
+                              <span className="item-subtitle">
+                                {s === 'Critical' && 'Immediate hazard / Total facility shutdown'}
+                                {s === 'High' && 'High disruption to classes or hostels'}
+                                {s === 'Medium' && 'Standard routine maintenance repair'}
+                                {s === 'Low' && 'Minor or informational issue'}
+                              </span>
+                            </div>
+                          </button>
+                        ))
+                      )
+                    )}
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+
+            {/* Active Recognition Bar (Read-only pills, not dropboxes) */}
+            {(zone || category || severity) && (
+              <div className="active-detected-tags-strip">
+                <span className="strip-title">Recognized:</span>
+                <span className="detected-pill zone"><FaMapMarkerAlt className="mini-icon" /> {zone}</span>
+                <span className="detected-pill category"><FaTags className="mini-icon" /> {category}</span>
+                <span className={`detected-pill severity ${severity.toLowerCase()}`}>
+                  <FaExclamationTriangle className="mini-icon" /> {severity}
+                </span>
               </div>
+            )}
+
+            {/* Quick Insert Trigger Shortcuts (Type @ # $, or tap below - NO permanent dropboxes) */}
+            <div className="insta-typing-guide">
+              <span className="guide-label">Special characters:</span>
+              <button type="button" className="quick-tag-trigger-btn zone" onClick={() => insertTriggerChar('@')}>
+                <span className="sym">@</span> Zone
+              </button>
+              <button type="button" className="quick-tag-trigger-btn category" onClick={() => insertTriggerChar('#')}>
+                <span className="sym">#</span> Category
+              </button>
+              <button type="button" className="quick-tag-trigger-btn severity" onClick={() => insertTriggerChar('$')}>
+                <span className="sym">$</span> Severity
+              </button>
             </div>
           </div>
 
