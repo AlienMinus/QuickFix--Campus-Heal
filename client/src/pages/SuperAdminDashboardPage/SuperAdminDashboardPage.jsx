@@ -541,6 +541,13 @@ export default function SuperAdminDashboardPage() {
             <FaTags /> Define Category
           </button>
           <button
+            className="btn-global-header"
+            onClick={handleOpenGlobalHeaderModal}
+            title="Configure global platform header"
+          >
+            <FaGlobe /> Global Header
+          </button>
+          <button
             className="btn-refresh"
             onClick={fetchData}
             title="Refresh records"
