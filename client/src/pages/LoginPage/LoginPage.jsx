@@ -56,7 +56,7 @@ export default function LoginPage() {
           </div>
           <h2>{orgConfig.name} Portal</h2>
           <p>Sign in to report civic issues & track maintenance dispatch</p>
-          <div className="jwt-badge">
+          <div className="secure-badge">
             <FaShieldAlt /> Secure Account Access
           </div>
         </div>
@@ -94,6 +94,53 @@ export default function LoginPage() {
               className="login-input"
               required
             />
+          </div>
+
+          {/* Quick Demo Credential Autofill Chips */}
+          <div className="demo-credentials-wrap">
+            <span className="demo-chips-label">Quick Fill Roles:</span>
+            <div className="demo-chips-row">
+              <button
+                type="button"
+                className="demo-chip-btn super"
+                onClick={() => {
+                  setEmail('superadmin@quickfix.org');
+                  setPassword('quickfix2026');
+                }}
+              >
+                👑 Super Admin
+              </button>
+              <button
+                type="button"
+                className="demo-chip-btn admin"
+                onClick={() => {
+                  setEmail('admin.campus@gift.ac.in');
+                  setPassword('quickfix2026');
+                }}
+              >
+                🛡️ Admin
+              </button>
+              <button
+                type="button"
+                className="demo-chip-btn staff"
+                onClick={() => {
+                  setEmail('maintenance.staff@gift.ac.in');
+                  setPassword('quickfix2026');
+                }}
+              >
+                🛠️ Staff
+              </button>
+              <button
+                type="button"
+                className="demo-chip-btn student"
+                onClick={() => {
+                  setEmail('student.demo@gift.ac.in');
+                  setPassword('quickfix2026');
+                }}
+              >
+                🎓 Student
+              </button>
+            </div>
           </div>
 
           <button

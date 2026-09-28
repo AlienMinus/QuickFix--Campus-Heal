@@ -52,7 +52,7 @@
   color: var(--text-secondary);
 }
 
-.jwt-badge {
+.secure-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -64,6 +64,47 @@
   padding: 0.2rem 0.6rem;
   border-radius: var(--radius-full);
   margin-top: 0.2rem;
+}
+
+.institute-form-group {
+  background: rgba(123, 44, 191, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.institute-field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #e9d5ff !important;
+  font-weight: 700 !important;
+}
+
+.institute-label-icon {
+  color: #c084fc;
+}
+
+.institute-select-highlight {
+  background: rgba(14, 7, 32, 0.95) !important;
+  border-color: #a855f7 !important;
+  font-weight: 700;
+  color: #f8fafc !important;
+}
+
+.institute-help-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 0.66rem;
+  color: #a7f3d0;
+  margin-top: 4px;
+  line-height: 1.25;
+}
+
+.institute-help-text svg {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .register-error-alert {
