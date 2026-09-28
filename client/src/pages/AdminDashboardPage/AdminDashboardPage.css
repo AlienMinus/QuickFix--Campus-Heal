@@ -1210,3 +1210,45 @@
   }
 }
 
+/* Academic Branches Management Console Styles */
+.branch-index-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.branch-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+.confirm-delete-modal {
+  border-color: rgba(239, 68, 68, 0.5) !important;
+}
+
+.delete-confirm-btn {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+.delete-confirm-btn:hover {
+  background: #dc2626 !important;
+}
+
