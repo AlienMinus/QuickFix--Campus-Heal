@@ -61,25 +61,169 @@ export default function ProfilePage() {
     navigate('/login');
   };
 
+  const handleTriggerUpload = () => {
+    setAvatarMessage({ type: '', text: '' });
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleAvatarFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setAvatarMessage({ type: 'error', text: 'Please select an image file (JPG, PNG, WebP).' });
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      setAvatarMessage({ type: 'error', text: 'Image size must be less than 8MB.' });
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+      setAvatarMessage({ type: '', text: '' });
+
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const res = await authAPI.updateAvatar(formData);
+      if (res.data?.success) {
+        updateUser(res.data.user);
+        setAvatarMessage({ type: 'success', text: 'Profile picture updated successfully!' });
+        setTimeout(() => setAvatarMessage({ type: '', text: '' }), 4000);
+      } else {
+        setAvatarMessage({ type: 'error', text: res.data?.message || 'Failed to update photo.' });
+      }
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+      setAvatarMessage({
+        type: 'error',
+        text: err.response?.data?.message || 'Failed to upload photo. Please try again.',
+      });
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!window.confirm('Remove profile picture and use initials avatar?')) return;
+
+    try {
+      setUploadingAvatar(true);
+      setAvatarMessage({ type: '', text: '' });
+
+      const res = await authAPI.removeAvatar();
+      if (res.data?.success) {
+        updateUser(res.data.user);
+        setAvatarMessage({ type: 'success', text: 'Profile picture removed.' });
+        setTimeout(() => setAvatarMessage({ type: '', text: '' }), 4000);
+      } else {
+        setAvatarMessage({ type: 'error', text: res.data?.message || 'Failed to remove photo.' });
+      }
+    } catch (err) {
+      console.error('Avatar removal failed:', err);
+      setAvatarMessage({
+        type: 'error',
+        text: err.response?.data?.message || 'Failed to remove photo.',
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const totalCount = myIssues.length;
   const inProgressCount = myIssues.filter((i) => i.status === 'In Progress').length;
   const resolvedCount = myIssues.filter((i) => i.status === 'Resolved').length;
 
   return (
     <div className="profile-page-container">
+      {avatarMessage.text && (
+        <div className={`avatar-status-toast ${avatarMessage.type}`}>
+          {avatarMessage.type === 'success' ? <FaCheckCircle /> : <FaExclamationCircle />}
+          <span>{avatarMessage.text}</span>
+          <button
+            type="button"
+            className="toast-dismiss-btn"
+            onClick={() => setAvatarMessage({ type: '', text: '' })}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* User Identity Card */}
       <div className="profile-hero-card">
-        <div className="profile-avatar-wrap">
-          {user?.avatar ? (
-            <img src={user.avatar} alt={user.name} className="user-avatar-img" />
-          ) : (
-            <div className="avatar-placeholder">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-            </div>
-          )}
-          <span className={`role-badge ${user?.role || 'student'}`}>
-            {user?.role ? user.role.toUpperCase() : 'STUDENT'}
-          </span>
+        <div className="profile-avatar-column">
+          <div
+            className="profile-avatar-wrap"
+            onClick={handleTriggerUpload}
+            title="Click to change profile picture"
+          >
+            {uploadingAvatar ? (
+              <div className="avatar-loading-overlay">
+                <FaSpinner className="avatar-spinner-icon" />
+              </div>
+            ) : user?.avatar ? (
+              <img src={user.avatar} alt={user.name} className="user-avatar-img" />
+            ) : (
+              <div className="avatar-placeholder">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="avatar-camera-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleTriggerUpload();
+              }}
+              title="Upload new profile picture"
+              disabled={uploadingAvatar}
+            >
+              <FaCamera />
+            </button>
+
+            <span className={`role-badge ${user?.role || 'student'}`}>
+              {user?.role ? user.role.toUpperCase() : 'STUDENT'}
+            </span>
+          </div>
+
+          <div className="avatar-actions-row">
+            <button
+              type="button"
+              className="avatar-change-btn"
+              onClick={handleTriggerUpload}
+              disabled={uploadingAvatar}
+            >
+              <FaCamera /> {user?.avatar ? 'Change' : 'Upload'}
+            </button>
+            {user?.avatar && (
+              <button
+                type="button"
+                className="avatar-remove-btn"
+                onClick={handleRemoveAvatar}
+                disabled={uploadingAvatar}
+                title="Remove photo and use initials"
+              >
+                <FaTrash /> Remove
+              </button>
+            )}
+          </div>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleAvatarFileSelect}
+          />
         </div>
 
         <div className="profile-user-info">
