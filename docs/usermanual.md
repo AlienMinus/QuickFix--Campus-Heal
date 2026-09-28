@@ -75,17 +75,20 @@ Tap the central **"Report"** tab in the bottom navigation bar or the floating ac
 * **AI Voice Dictation:** Tap the **"Voice Assistant"** button and speak naturally (e.g., *"Leaking tap overflowing on 2nd floor Aryabhatta washroom"*). The app converts speech to text and intelligently pre-populates category, severity, and title.
 * **Category & Severity:** Select from 8 campus categories and choose severity level (*Low*, *Medium*, *High*, or *Critical*).
 
-#### Step 4: Attach Photographic Evidence
-* Tap the camera area to snap a live photo or select an image from your device gallery (supports JPG, PNG, WebP up to 8MB).
-* An instant thumbnail preview is displayed with a remove/replace option.
+#### Step 4: Attach Photographic or Video Evidence
+* Tap the media upload area to snap a live photo, record a short video clip, or select from your gallery.
+* **Supported Formats:**
+  * **Photos:** JPG, PNG, WebP, HEIC up to 10MB.
+  * **Videos:** MP4, WebM, MOV, MKV up to 50MB (ideal for showing dynamic issues like sparking wires, running water leaks, or rattling machinery).
+* An instant interactive preview (image thumbnail or inline HTML5 video player) appears with a remove/replace option.
 
 #### Step 5: Real-Time Duplicate Warning Advisory
 * As you type the location and category, the built-in AI duplicate detection engine evaluates open tickets within 50 meters.
-* If a similar issue is detected, an **Amber Duplicate Advisory Banner** appears showing the existing ticket's photo, title, distance, and current status, inviting you to upvote that ticket instead.
+* If a similar issue is detected, an **Amber Duplicate Advisory Banner** appears showing the existing ticket's photo/video, title, distance, and current status, inviting you to upvote that ticket instead.
 
 #### Step 6: Submit Ticket
 * Tap **"Submit Ticket"**.
-* The image is compressed and securely uploaded to Cloudinary CDN, the algorithmic priority score is computed, and campus technicians receive an automated alert notification.
+* The image or video is compressed and securely uploaded to Cloudinary CDN (or local fallback storage), the algorithmic priority score is computed, and campus technicians receive an automated alert notification.
 * You are immediately redirected to the ticket's SLA timeline page.
 
 ---
@@ -94,7 +97,7 @@ Tap the central **"Report"** tab in the bottom navigation bar or the floating ac
 Every ticket features a dedicated real-time progress page:
 1. **Visual SLA Progression Stepper:** Shows chronological milestones: *Submitted* $\rightarrow$ *Under Review* $\rightarrow$ *Assigned* $\rightarrow$ *In Progress* $\rightarrow$ *Resolved*.
 2. **Interactive Campus Pin:** Displays the exact location coordinates on an embedded mini-map.
-3. **Before & After Photo Proof:** Once resolved, shows the reporter's original evidence photo alongside the technician's verified completion photo.
+3. **Before & After Media Proof:** Displays the reporter's original evidence (photo or playable video) alongside the technician's verified completion proof (photo or video).
 4. **Discussion Thread:** Post contextual comments or query updates from the maintenance crew.
 
 ---
@@ -114,13 +117,13 @@ At the top of the Staff Dashboard, the **Patrol Telemetry Bar** shows:
 2. **Starting Work:** Tap **"Start Work"**. The ticket status transitions immediately to `In Progress`, recording a timestamp and updating the reporter's feed.
 3. **Navigating to Defect:** Tap the location pin to inspect room details, building landmarks, and GPS coordinates.
 
-### 4.3 Resolving Issues & Submitting Photo Proof
+### 4.3 Resolving Issues & Submitting Photo or Video Proof
 When maintenance work is physically completed:
-1. Tap **"Mark Resolved"** on the work order card.
+1. Tap **"Mark Resolved & Upload Proof"** on the work order card.
 2. The **Resolution Proof Modal** appears.
-3. **Attach Proof Photo:** Snap a photo of the repaired equipment (mandatory for high-accountability audits).
+3. **Attach Proof Photo or Video:** Snap a photo or record a short video clip proving the repair was completed (e.g., demonstrating that the fan spins silently or the tap stops leaking). An interactive media preview appears immediately.
 4. **Enter Resolution Notes:** Provide details of the repair (e.g., *"Replaced 36W LED ballast and tightened socket terminals"*).
-5. Tap **"Complete & Submit Proof"**.
+5. Tap **"Confirm & Close Ticket"**.
 6. The ticket is marked `Resolved`, resolution timestamp is locked, and the student reporter receives a resolution notification.
 
 ---

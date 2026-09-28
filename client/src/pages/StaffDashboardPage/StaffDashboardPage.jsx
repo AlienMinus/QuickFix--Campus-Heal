@@ -15,7 +15,8 @@ import {
   FaClock,
   FaArrowRight,
   FaSpinner,
-  FaCheck
+  FaCheck,
+  FaVideo,
 } from 'react-icons/fa';
 import './StaffDashboardPage.css';
 
@@ -33,6 +34,8 @@ export default function StaffDashboardPage() {
   const [resolvingIssue, setResolvingIssue] = useState(null);
   const [notes, setNotes] = useState('');
   const [proofFile, setProofFile] = useState(null);
+  const [proofPreview, setProofPreview] = useState(null);
+  const [proofType, setProofType] = useState('image');
   const [submittingProof, setSubmittingProof] = useState(false);
 
   const fetchAssignedTasks = async () => {
@@ -72,6 +75,30 @@ export default function StaffDashboardPage() {
     }
   };
 
+  const handleProofChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const isVid = file.type?.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi)$/i.test(file.name);
+      setProofFile(file);
+      setProofType(isVid ? 'video' : 'image');
+      const reader = new FileReader();
+      reader.onloadend = () => setProofPreview(reader.result);
+      reader.readAsDataURL(file);
+    } else {
+      setProofFile(null);
+      setProofPreview(null);
+      setProofType('image');
+    }
+  };
+
+  const resetModal = () => {
+    setResolvingIssue(null);
+    setNotes('');
+    setProofFile(null);
+    setProofPreview(null);
+    setProofType('image');
+  };
+
   const handleCompleteWork = async (e) => {
     e.preventDefault();
     if (!resolvingIssue) return;
@@ -83,8 +110,12 @@ export default function StaffDashboardPage() {
       formData.append('resolutionNotes', notes || 'Issue resolved by staff.');
       formData.append('remarks', notes || 'Issue resolved by staff.');
       if (proofFile) {
+        const isVid = proofFile.type?.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi)$/i.test(proofFile.name);
         formData.append('resolutionMedia', proofFile);
         formData.append('resolutionProofImage', proofFile);
+        if (isVid) {
+          formData.append('resolutionVideo', proofFile);
+        }
       }
 
       const res = await issueAPI.updateStatus(resolvingIssue._id, formData);
@@ -92,17 +123,13 @@ export default function StaffDashboardPage() {
       setAssignedIssues(prev =>
         prev.map(i => (i._id === resolvingIssue._id ? (updated || { ...i, status: 'Resolved' }) : i))
       );
-      setResolvingIssue(null);
-      setNotes('');
-      setProofFile(null);
+      resetModal();
     } catch (err) {
       console.error('Failed to submit resolution proof:', err);
       setAssignedIssues(prev =>
         prev.map(i => (i._id === resolvingIssue._id ? { ...i, status: 'Resolved' } : i))
       );
-      setResolvingIssue(null);
-      setNotes('');
-      setProofFile(null);
+      resetModal();
     } finally {
       setSubmittingProof(false);
     }
@@ -195,11 +222,28 @@ export default function StaffDashboardPage() {
                   <span>{task.locationName} ({task.zone})</span>
                 </div>
 
-                {task.imageUrl && (
-                  <div className="task-thumb-wrap">
-                    <img src={task.imageUrl} alt="Issue thumbnail" className="task-thumb" />
-                  </div>
-                )}
+                {(() => {
+                  const mediaUrl = task.media?.url || task.imageUrl;
+                  if (!mediaUrl) return null;
+                  const isTaskVid =
+                    task.media?.mediaType === 'video' ||
+                    task.mediaType === 'video' ||
+                    /\.(mp4|mov|webm|mkv|avi)$/i.test(mediaUrl);
+                  return (
+                    <div className="task-thumb-wrap">
+                      {isTaskVid ? (
+                        <div className="task-thumb-video-box">
+                          <video src={mediaUrl} muted playsInline className="task-thumb" />
+                          <span className="task-video-pill">
+                            <FaVideo /> Video
+                          </span>
+                        </div>
+                      ) : (
+                        <img src={mediaUrl} alt="Issue thumbnail" className="task-thumb" />
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="task-actions-row">
                   {task.status !== 'In Progress' && task.status !== 'Resolved' && (
@@ -239,7 +283,7 @@ export default function StaffDashboardPage() {
           <div className="proof-modal-card">
             <div className="modal-top">
               <h3>Resolve Ticket: {resolvingIssue.title}</h3>
-              <button className="close-btn" onClick={() => setResolvingIssue(null)}>×</button>
+              <button className="close-btn" onClick={resetModal}>×</button>
             </div>
 
             <form onSubmit={handleCompleteWork}>
@@ -256,20 +300,30 @@ export default function StaffDashboardPage() {
               </div>
 
               <div className="form-group">
-                <label>Resolution Proof Photo (optional):</label>
+                <label>Resolution Proof Photo or Video (optional):</label>
                 <input
                   type="file"
-                  accept="image/*"
-                  onChange={(e) => setProofFile(e.target.files?.[0])}
+                  accept="image/*,video/*"
+                  onChange={handleProofChange}
                   className="modal-file-input"
                 />
+                {proofPreview && (
+                  <div className="staff-proof-preview">
+                    {proofType === 'video' ? (
+                      <video src={proofPreview} controls playsInline className="proof-preview-media" />
+                    ) : (
+                      <img src={proofPreview} alt="Resolution proof preview" className="proof-preview-media" />
+                    )}
+                    <span className="proof-file-name">{proofFile?.name}</span>
+                  </div>
+                )}
               </div>
 
               <div className="modal-actions">
                 <button
                   type="button"
                   className="cancel-btn"
-                  onClick={() => setResolvingIssue(null)}
+                  onClick={resetModal}
                 >
                   Cancel
                 </button>
