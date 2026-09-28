@@ -527,7 +527,7 @@ export default function ReportIssuePage() {
     }, 15);
   };
 
-  // Helper to insert trigger character (@, #, $) at cursor or append
+  // Helper to insert trigger character (-, @, #, $) at cursor or append
   const insertTriggerChar = (char) => {
     const cursorPos = textareaRef.current?.selectionStart ?? description.length;
     const needsLeadingSpace = cursorPos > 0 && description[cursorPos - 1] !== ' ' && description[cursorPos - 1] !== '\n';
@@ -535,7 +535,8 @@ export default function ReportIssuePage() {
     const updated = description.slice(0, cursorPos) + prefix + char + description.slice(cursorPos);
 
     setDescription(updated);
-    const newCursor = cursorPos + prefix.length + 1;
+    parseTagsFromText(updated);
+    const newCursor = cursorPos + prefix.length + char.length;
 
     setTimeout(() => {
       if (textareaRef.current) {
@@ -726,15 +727,10 @@ export default function ReportIssuePage() {
     const activeCategories = detectedCategories.length > 0 ? detectedCategories : [category];
     const primaryCategory = activeCategories[0] || category;
 
-    // Auto-generate title if not manually given
-    let finalTitle = title.trim();
-    if (!finalTitle) {
-      const cleanFirstLine = description
-        .split('\n')[0]
-        .replace(/[@#$][\w\s-]+/g, '')
-        .trim();
-      finalTitle = cleanFirstLine.slice(0, 80) || `${primaryCategory} issue in ${locationName}`;
-    }
+    // Determine issue heading:
+    // 1. Explicit hyphen (-) syntax if typed by user (e.g. - Broken fan switchboard)
+    // 2. Or fallback to clean title strictly excluding MAB / zone acronyms / bracketed notes
+    const finalTitle = title.trim() || detectedHeading || extractHeadingFromText(description, primaryCategory, locationName, zone);
 
     try {
       setSubmitting(true);
