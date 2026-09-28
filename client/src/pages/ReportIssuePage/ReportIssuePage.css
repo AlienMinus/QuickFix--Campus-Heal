@@ -205,7 +205,7 @@
 
 .unbound-description-input {
   width: 100%;
-  min-height: 120px;
+  min-height: 135px;
   background: transparent;
   border: none;
   color: #ffffff;
@@ -215,6 +215,27 @@
   outline: none;
   font-family: inherit;
   box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.45) rgba(14, 7, 32, 0.5);
+}
+
+.unbound-description-input::-webkit-scrollbar {
+  width: 5px;
+}
+
+.unbound-description-input::-webkit-scrollbar-track {
+  background: rgba(14, 7, 32, 0.5);
+  border-radius: 9999px;
+}
+
+.unbound-description-input::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.45);
+  border-radius: 9999px;
+}
+
+.unbound-description-input::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.75);
 }
 
 .unbound-description-input::placeholder {
@@ -550,6 +571,32 @@
   0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
   70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
   100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Post Submit & Cancel Actions Group */
+.post-submit-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.post-cancel-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.post-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+  transform: translateY(-1px);
 }
 
 /* Post Submit Button (like LinkedIn's Post button) */

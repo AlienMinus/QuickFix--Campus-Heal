@@ -86,10 +86,12 @@
   position: relative;
   padding-bottom: calc(88px + env(safe-area-inset-bottom, 20px));
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
 }
 
 .main-content-scrollable::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 
 .main-content-scrollable::-webkit-scrollbar-track {
@@ -97,6 +99,10 @@
 }
 
 .main-content-scrollable::-webkit-scrollbar-thumb {
-  background: rgba(168, 85, 247, 0.25);
+  background: rgba(168, 85, 247, 0.35);
   border-radius: 9999px;
+}
+
+.main-content-scrollable::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.65);
 }
