@@ -58,6 +58,7 @@ const CAMPUS_ZONES = [
 export default function ReportIssuePage() {
   const { user } = useAuth();
   const { location, locationError, isTracking } = useLocationContext();
+  const { orgConfig, zones } = useOrg();
   const navigate = useNavigate();
   const routerLocation = useLocation();
 
@@ -67,7 +68,7 @@ export default function ReportIssuePage() {
     category: 'Electrical',
     severity: 'Medium',
     locationName: '',
-    zone: CAMPUS_ZONES[0],
+    zone: zones?.[0]?.name || CAMPUS_ZONES[0],
     latitude: location?.latitude || 20.2185,
     longitude: location?.longitude || 85.7368,
     isUrgent: false
@@ -256,8 +257,8 @@ export default function ReportIssuePage() {
     <div className="report-page-container">
       <div className="report-header-banner">
         <div className="header-text-group">
-          <h1>Report Campus Problem</h1>
-          <p>QuickFix Smart Dispatch • Auto Geo-Tagged to BPUT GIFT Campus</p>
+          <h1>Report Facility Problem</h1>
+          <p>QuickFix Smart Dispatch • Auto Geo-Tagged to {orgConfig.name}</p>
         </div>
         <div className="quick-actions-bar">
           <button
