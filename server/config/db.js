@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart_campus_quickfix';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smart_campus_quickfix';
     console.log(`Connecting to MongoDB... (${mongoUri.includes('mongodb+srv') ? 'MongoDB Atlas' : 'Local MongoDB'})`);
     
     const conn = await mongoose.connect(mongoUri, {
