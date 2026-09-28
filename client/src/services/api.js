@@ -54,6 +54,10 @@ export const issueAPI = {
 export const adminAPI = {
   getStats: (params) => api.get('/admin/stats', { params }),
   getUsers: (params) => api.get('/admin/users', { params }),
+  getAdmins: () => api.get('/admin/admins'),
+  createAdmin: (data) => api.post('/admin/admins', data),
+  updateAdmin: (id, data) => api.put(`/admin/admins/${id}`, data),
+  deleteAdmin: (id) => api.delete(`/admin/admins/${id}`),
   updateUserRole: (userId, data) => api.put(`/admin/users/${userId}/role`, typeof data === 'object' ? data : { role: data }),
   assignTechnician: (issueId, staffId) => api.put(`/issues/${issueId}/assign`, { staffId }),
   deleteIssue: (issueId) => api.delete(`/issues/${issueId}`),

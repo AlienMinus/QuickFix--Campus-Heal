@@ -7,11 +7,21 @@ const {
   assignTechnician,
   deleteIssue,
   mergeDuplicates,
+  getAdmins,
+  createAdmin,
+  updateAdmin,
+  deleteAdmin,
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.use(protect);
 router.use(authorize('admin', 'superadmin'));
+
+// Superadmin-only Normal Admin Management (governance without exposing private student data)
+router.get('/admins', authorize('superadmin'), getAdmins);
+router.post('/admins', authorize('superadmin'), createAdmin);
+router.put('/admins/:id', authorize('superadmin'), updateAdmin);
+router.delete('/admins/:id', authorize('superadmin'), deleteAdmin);
 
 // Stats endpoints (supports both /dashboard-stats and /stats)
 router.get('/dashboard-stats', getDashboardStats);

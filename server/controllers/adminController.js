@@ -5,11 +5,7 @@ const LocationLog = require('../models/LocationLog');
 exports.getDashboardStats = async (req, res) => {
   try {
     const issueFilter = {};
-    if (req.user?.role === 'superadmin') {
-      if (req.query.institute && req.query.institute !== 'All') {
-        issueFilter.institute = req.query.institute;
-      }
-    } else if (req.user?.institute) {
+    if (req.user?.role !== 'superadmin' && req.user?.institute) {
       issueFilter.institute = req.user.institute;
     }
 
@@ -96,17 +92,167 @@ exports.getDashboardStats = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const userFilter = {};
-    if (req.user?.role === 'superadmin') {
-      if (req.query.institute && req.query.institute !== 'All') {
-        userFilter.institute = req.query.institute;
-      }
-    } else if (req.user?.institute) {
+    if (req.user?.role !== 'superadmin' && req.user?.institute) {
       userFilter.institute = req.user.institute;
     }
 
     const users = await User.find(userFilter).select('-password').sort({ createdAt: -1 });
     return res.status(200).json({ success: true, count: users.length, users });
   } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getAdmins = async (req, res) => {
+  try {
+    // Only return admins - do NOT expose private user/student data
+    const admins = await User.find({ role: 'admin' })
+      .select('name email role institute department identifier phone createdAt')
+      .sort({ createdAt: -1 });
+
+    const totalAdmins = admins.length;
+    const totalStaff = await User.countDocuments({ role: 'staff' });
+    const totalStudents = await User.countDocuments({ role: 'student' });
+    const totalUsers = await User.countDocuments();
+
+    return res.status(200).json({
+      success: true,
+      admins,
+      counts: {
+        totalAdmins,
+        totalStaff,
+        totalStudents,
+        totalUsers,
+      },
+    });
+  } catch (error) {
+    console.error('Get Admins Error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.createAdmin = async (req, res) => {
+  try {
+    const { name, email, password, institute, department, identifier, phone } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Please provide name, email, and password' });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'User with this email already exists' });
+    }
+
+    const bcrypt = require('bcryptjs');
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newAdmin = await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password: hashedPassword,
+      role: 'admin',
+      institute: institute?.trim() || 'BPUT Tech Campus',
+      department: department?.trim() || 'Campus Administration',
+      identifier: identifier?.trim() || `ADMIN-${Date.now().toString().slice(-4)}`,
+      phone: phone?.trim() || '',
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'New campus admin created successfully',
+      admin: {
+        _id: newAdmin._id,
+        name: newAdmin.name,
+        email: newAdmin.email,
+        role: newAdmin.role,
+        institute: newAdmin.institute,
+        department: newAdmin.department,
+        identifier: newAdmin.identifier,
+        phone: newAdmin.phone,
+        createdAt: newAdmin.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Create Admin Error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateAdmin = async (req, res) => {
+  try {
+    const { name, department, institute, phone, identifier, role, password } = req.body;
+    const admin = await User.findById(req.params.id);
+
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    if (admin.role === 'superadmin' && req.user._id.toString() !== admin._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Cannot modify another superadmin' });
+    }
+
+    if (name) admin.name = name.trim();
+    if (department) admin.department = department.trim();
+    if (institute) admin.institute = institute.trim();
+    if (phone !== undefined) admin.phone = phone.trim();
+    if (identifier !== undefined) admin.identifier = identifier.trim();
+    if (role && ['admin', 'staff', 'student'].includes(role)) {
+      admin.role = role;
+    }
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      const salt = await bcrypt.genSalt(10);
+      admin.password = await bcrypt.hash(password, salt);
+    }
+
+    await admin.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Admin updated successfully',
+      admin: {
+        _id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+        institute: admin.institute,
+        department: admin.department,
+        identifier: admin.identifier,
+        phone: admin.phone,
+        createdAt: admin.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Update Admin Error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteAdmin = async (req, res) => {
+  try {
+    const admin = await User.findById(req.params.id);
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    if (admin.role === 'superadmin') {
+      return res.status(403).json({ success: false, message: 'Cannot delete superadmin accounts' });
+    }
+
+    if (admin._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'Cannot delete your own account' });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    return res.status(200).json({
+      success: true,
+      message: `Admin ${admin.name} deleted successfully`,
+    });
+  } catch (error) {
+    console.error('Delete Admin Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
