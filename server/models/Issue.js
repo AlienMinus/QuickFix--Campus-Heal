@@ -38,7 +38,7 @@ const issueSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Submitted', 'In Progress', 'Resolved'],
+      enum: ['Submitted', 'Under Review', 'Assigned', 'In Progress', 'Resolved', 'Closed'],
       default: 'Submitted',
     },
     location: {
@@ -173,6 +173,19 @@ const issueSchema = new mongoose.Schema(
         changedAt: { type: Date, default: Date.now },
         changedBy: { type: String, default: 'System' },
         remarks: { type: String, default: '' },
+      },
+    ],
+    comments: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        userName: { type: String, default: 'Campus Resident' },
+        userRole: { type: String, default: 'student' },
+        userAvatar: { type: String, default: '' },
+        text: { type: String, required: true, trim: true },
+        createdAt: { type: Date, default: Date.now },
       },
     ],
   },

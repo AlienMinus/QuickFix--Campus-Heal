@@ -243,7 +243,8 @@ exports.updateIssueStatus = async (req, res) => {
       }
     }
 
-    if (!['Submitted', 'In Progress', 'Resolved'].includes(status)) {
+    const validStatuses = ['Submitted', 'Under Review', 'Assigned', 'In Progress', 'Resolved', 'Closed'];
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status value' });
     }
 
@@ -276,14 +277,14 @@ exports.updateIssueStatus = async (req, res) => {
       }
     }
 
-    if (status === 'Resolved') {
+    if (status === 'Resolved' || status === 'Closed') {
       issue.resolutionDetails = {
         resolvedAt: new Date(),
         resolvedBy: req.user ? req.user._id : null,
-        resolvedByName: req.user ? req.user.name : 'Campus Staff',
+        resolvedByName: req.user ? req.user.name : (req.body.resolvedByName || 'Campus Staff'),
         resolutionNotes: resolutionNotes || remarks || 'Issue resolved successfully.',
-        resolutionMediaUrl,
-        resolutionMediaType,
+        resolutionMediaUrl: resolutionMediaUrl || (issue.resolutionDetails?.resolutionMediaUrl || ''),
+        resolutionMediaType: resolutionMediaType || (issue.resolutionDetails?.resolutionMediaType || 'image'),
       };
     }
 
@@ -291,7 +292,7 @@ exports.updateIssueStatus = async (req, res) => {
       status,
       changedAt: new Date(),
       changedBy: req.user ? req.user.name : 'Authorized Staff',
-      remarks: remarks || `Status changed from ${previousStatus} to ${status}`,
+      remarks: remarks || resolutionNotes || `Status changed from ${previousStatus} to ${status}`,
     });
 
     await issue.save();
@@ -324,32 +325,44 @@ exports.upvoteIssue = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
-    const userId = req.user ? req.user._id : null;
+    const userId = req.user ? req.user._id : (req.body.userId || null);
+    let hasUpvoted = false;
+
     if (!userId) {
+      // Anonymous reaction
       issue.upvotesCount = (issue.upvotesCount || 0) + 1;
+      hasUpvoted = true;
     } else {
-      const hasUpvoted = issue.upvotes.some((id) => id.toString() === userId.toString());
-      if (hasUpvoted) {
-        return res.status(200).json({
-          success: true,
-          message: 'Already reacted to this issue',
-          alreadyUpvoted: true,
-          upvotesCount: issue.upvotesCount,
-        });
+      if (!issue.upvotes) issue.upvotes = [];
+      const existingIdx = issue.upvotes.findIndex(
+        (id) => id.toString() === userId.toString()
+      );
+
+      if (existingIdx > -1) {
+        // Toggle OFF: remove user's upvote
+        issue.upvotes.splice(existingIdx, 1);
+        issue.upvotesCount = Math.max(0, (issue.upvotesCount || 1) - 1);
+        hasUpvoted = false;
+      } else {
+        // Toggle ON: add user's upvote
+        issue.upvotes.push(userId);
+        issue.upvotesCount = (issue.upvotesCount || 0) + 1;
+        hasUpvoted = true;
       }
-      issue.upvotes.push(userId);
-      issue.upvotesCount = (issue.upvotesCount || 0) + 1;
     }
 
+    // Dynamic smart priority score update
+    issue.priorityScore = Math.min(100, Math.max(10, (issue.priorityScore || 50) + (hasUpvoted ? 2 : -2)));
     await issue.save();
 
     return res.status(200).json({
       success: true,
-      message: 'Vote updated successfully',
+      hasUpvoted,
       upvotesCount: issue.upvotesCount,
       priorityScore: issue.priorityScore,
     });
   } catch (error) {
+    console.error('Upvote Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -468,6 +481,43 @@ exports.deleteIssue = async (req, res) => {
     await Issue.findByIdAndDelete(req.params.id);
     return res.status(200).json({ success: true, message: 'Issue deleted successfully' });
   } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.addComment = async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ success: false, message: 'Comment text cannot be empty' });
+    }
+
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    const newComment = {
+      user: req.user ? req.user._id : null,
+      userName: req.user ? req.user.name : (req.body.authorName || 'Campus Resident'),
+      userRole: req.user ? req.user.role : 'student',
+      userAvatar: req.user?.avatar || '',
+      text: text.trim(),
+      createdAt: new Date(),
+    };
+
+    if (!issue.comments) issue.comments = [];
+    issue.comments.push(newComment);
+    await issue.save();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Comment posted successfully',
+      comments: issue.comments,
+      comment: newComment,
+    });
+  } catch (error) {
+    console.error('Add Comment Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
