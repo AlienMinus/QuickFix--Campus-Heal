@@ -1,245 +1,413 @@
-.issue-card {
-  background: #1d1138;
-  border: 1px solid rgba(168, 85, 247, 0.16);
-  border-radius: 14px;
+.social-post-card {
+  background: #180e2e;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
 }
 
-.issue-card:hover {
+.social-post-card:hover {
   transform: translateY(-2px);
   border-color: rgba(168, 85, 247, 0.45);
-  box-shadow: 0 8px 24px rgba(95, 37, 159, 0.25);
+  box-shadow: 0 8px 28px rgba(124, 58, 237, 0.22);
 }
 
-.card-media-wrapper {
-  position: relative;
-  height: 135px;
-  width: 100%;
-  overflow: hidden;
-  background: #0e0720;
+.social-post-card:focus-visible {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
 }
 
-.card-media-img {
-  width: 100%;
-  height: 100%;
+/* 1. Header (LinkedIn Author Row) */
+.post-header {
+  padding: 12px 14px 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.author-avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  border: 2px solid rgba(168, 85, 247, 0.5);
+  flex-shrink: 0;
 }
 
-.card-video-wrap {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  background: #000000;
+.author-avatar-fallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.05rem;
+  font-weight: 800;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+  text-transform: uppercase;
 }
 
-.card-media-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none;
+.author-text-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.video-play-indicator {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: rgba(14, 7, 32, 0.88);
-  backdrop-filter: blur(6px);
-  color: #ffffff;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
+.author-name-row {
   display: flex;
   align-items: center;
-  gap: 5px;
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  z-index: 1;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.video-play-indicator .play-icon {
-  font-size: 0.58rem;
-  color: #a855f7;
-}
-
-.issue-card:hover .card-media-img,
-.issue-card:hover .card-media-video {
-  transform: scale(1.03);
-}
-
-.card-media-overlay {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  pointer-events: none;
-}
-
-.category-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #ffffff;
-  background: rgba(14, 7, 32, 0.88);
-  backdrop-filter: blur(6px);
-  padding: 3px 7px;
-  border-radius: 6px;
-  border: 1px solid rgba(168, 85, 247, 0.2);
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.64rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 9999px;
-  backdrop-filter: blur(8px);
-}
-
-.status-pill.submitted { background: rgba(95, 37, 159, 0.9); color: #ffffff; }
-.status-pill.in-progress { background: rgba(245, 158, 11, 0.9); color: #ffffff; }
-.status-pill.resolved { background: rgba(16, 185, 129, 0.9); color: #ffffff; }
-
-.spin-icon {
-  animation: spin 2s linear infinite;
-}
-
-.card-body {
-  padding: 10px 12px;
-}
-
-.card-top-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.priority-meter {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.priority-text {
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: #a79bbf;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.priority-bar-bg {
-  width: 44px;
-  height: 4px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-}
-
-.priority-bar-fill {
-  height: 100%;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, #7b2cbf, #ef4444);
-}
-
-.card-title {
-  margin: 0 0 4px 0;
+.author-name {
   font-size: 0.88rem;
   font-weight: 700;
   color: #f8fafc;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
-.card-desc {
-  margin: 0 0 8px 0;
-  font-size: 0.74rem;
-  color: #a79bbf;
-  line-height: 1.4;
+.author-role-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #d8b4fe;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.post-timestamp-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.dot-sep {
+  color: #64748b;
+}
+
+.public-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #94a3b8;
+  font-size: 0.68rem;
+}
+
+/* Status Pills */
+.social-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.social-status-pill.submitted {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+}
+
+.social-status-pill.review {
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  color: #7dd3fc;
+}
+
+.social-status-pill.in-progress {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fcd34d;
+}
+
+.social-status-pill.resolved {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #6ee7b7;
+}
+
+/* 2. Special Characters Tags Row (@Zone, #Category, $Severity) */
+.post-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 4px 14px 8px 14px;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.tag-pill.zone-pill {
+  background: rgba(168, 85, 247, 0.16);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+}
+
+.tag-pill.category-pill {
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  color: #38bdf8;
+}
+
+.tag-pill.severity-pill.critical {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+.tag-pill.severity-pill.high {
+  background: rgba(249, 115, 22, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.5);
+  color: #fb923c;
+}
+
+.tag-pill.severity-pill.medium {
+  background: rgba(234, 179, 8, 0.18);
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  color: #fde047;
+}
+
+.tag-pill.severity-pill.low {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.tag-pill.location-pill {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  color: #cbd5e1;
+}
+
+.tag-pill .pin-icon {
+  color: #ef4444;
+  font-size: 0.65rem;
+}
+
+/* 3. Post Content */
+.post-body {
+  padding: 2px 14px 10px 14px;
+}
+
+.post-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.35;
+  margin: 0 0 5px 0;
+}
+
+.post-description {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.card-location {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+/* 4. Media Showcase */
+.post-media-container {
+  width: 100%;
+  max-height: 260px;
+  background: #090514;
+  overflow: hidden;
+  position: relative;
+  border-top: 1px solid rgba(168, 85, 247, 0.12);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.12);
+}
+
+.post-image-element {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.social-post-card:hover .post-image-element {
+  transform: scale(1.02);
+}
+
+.post-video-wrapper {
+  width: 100%;
+  height: 220px;
+  position: relative;
+  background: #000000;
+}
+
+.post-video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-overlay-pill {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(14, 7, 32, 0.85);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
   font-size: 0.7rem;
-  color: #cbd5e1;
-  background: rgba(39, 23, 75, 0.5);
-  padding: 4px 8px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-}
-
-.location-pin-icon {
-  color: #ef4444;
-  font-size: 0.75rem;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid rgba(168, 85, 247, 0.1);
-  padding-top: 8px;
-}
-
-.reporter-meta {
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.68rem;
+  border: 1px solid rgba(168, 85, 247, 0.4);
 }
 
-.reporter-name {
-  color: #e2e8f0;
+/* 5. Smart Priority Meter Bar */
+.post-priority-meter {
+  padding: 8px 14px 4px 14px;
+}
+
+.meter-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.68rem;
+  margin-bottom: 4px;
+}
+
+.meter-title {
+  color: #94a3b8;
   font-weight: 600;
 }
 
-.report-time {
-  color: #7d6e96;
+.meter-score {
+  font-family: monospace;
+  font-weight: 700;
+  color: #c084fc;
 }
 
-.upvote-action-btn {
+.meter-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.meter-fill.critical { background: linear-gradient(90deg, #f97316, #ef4444); }
+.meter-fill.high { background: linear-gradient(90deg, #eab308, #f97316); }
+.meter-fill.medium { background: linear-gradient(90deg, #a855f7, #6366f1); }
+.meter-fill.low { background: linear-gradient(90deg, #10b981, #06b6d4); }
+
+/* 6. LinkedIn Style Interactive Action Bar */
+.post-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  border-top: 1px solid rgba(168, 85, 247, 0.12);
+  padding: 6px 10px;
+  margin-top: 4px;
+}
+
+.action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: rgba(39, 23, 75, 0.8);
-  border: 1px solid rgba(168, 85, 247, 0.2);
-  color: #a79bbf;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 700;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex: 1;
 }
 
-.upvote-action-btn:hover {
-  background: rgba(95, 37, 159, 0.25);
-  color: #c084fc;
-  border-color: rgba(168, 85, 247, 0.4);
+.action-btn:hover {
+  background: rgba(168, 85, 247, 0.14);
+  color: #ffffff;
 }
 
-.upvote-action-btn.active {
-  background: rgba(95, 37, 159, 0.4);
-  color: #d8b4fe;
-  border-color: #a855f7;
+.action-btn.upvote-btn {
+  color: #cbd5e1;
+}
+
+.action-btn.upvote-btn.reacted {
+  color: #38bdf8;
+  background: rgba(14, 165, 233, 0.14);
+}
+
+.thumb-icon.thumb-active {
+  color: #38bdf8;
+  animation: pulseReaction 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pulseReaction {
+  0% { transform: scale(0.85); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.reaction-count-pill,
+.comment-count-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  margin-left: 2px;
+}
+
+.action-btn.upvote-btn.reacted .reaction-count-pill {
+  background: rgba(14, 165, 233, 0.25);
+  color: #e0f2fe;
+}
+
+.copied-icon {
+  color: #34d399;
 }

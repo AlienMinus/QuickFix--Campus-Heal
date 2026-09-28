@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLocationContext } from '../../context/LocationContext';
@@ -9,37 +9,32 @@ import VoiceReportModal from '../../components/VoiceReportModal/VoiceReportModal
 import {
   FaCamera,
   FaVideo,
-  FaPlay,
   FaQrcode,
   FaMicrophone,
   FaMapMarkerAlt,
-  FaExclamationTriangle,
   FaPaperPlane,
-  FaTrash,
+  FaTimes,
   FaSpinner,
   FaInfoCircle,
   FaCheckCircle,
-  FaShieldAlt
+  FaExclamationTriangle,
+  FaGlobeAmericas,
+  FaChevronDown,
 } from 'react-icons/fa';
 import './ReportIssuePage.css';
 
 const CATEGORIES = [
-  { value: 'Electrical', label: 'Electrical (Lights, Fans, Sockets, Wiring)' },
-  { value: 'Plumbing', label: 'Plumbing (Leaks, Taps, Drainage, Restrooms)' },
-  { value: 'Infrastructure', label: 'Infrastructure (Desks, Windows, Doors, Walls)' },
-  { value: 'Sanitation', label: 'Sanitation & Cleanliness (Garbage, Hygiene)' },
-  { value: 'IT/Network', label: 'IT & Wi-Fi Network (Routers, Projectors, Labs)' },
-  { value: 'Safety/Security', label: 'Safety & Security (Fire Extinguishers, Hazards)' },
-  { value: 'Academic Facilities', label: 'Academic Facilities (Smart Boards, Podium)' },
-  { value: 'Other', label: 'Other Campus Maintenance' }
+  'Electrical',
+  'Plumbing',
+  'Infrastructure',
+  'Sanitation',
+  'IT/Network',
+  'Safety/Security',
+  'Academic Facilities',
+  'Other'
 ];
 
-const SEVERITIES = [
-  { value: 'Low', label: 'Low', desc: 'Cosmetic or minor inconvenience' },
-  { value: 'Medium', label: 'Medium', desc: 'Standard repair, affects few' },
-  { value: 'High', label: 'High', desc: 'Disrupts class or daily routine' },
-  { value: 'Critical', label: 'Critical', desc: 'Hazardous / immediate campus danger' }
-];
+const SEVERITIES = ['Low', 'Medium', 'High', 'Critical'];
 
 const CAMPUS_ZONES = [
   'Aryabhatta Academic Block',
@@ -64,66 +59,121 @@ export default function ReportIssuePage() {
   const navigate = useNavigate();
   const routerLocation = useLocation();
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: 'Electrical',
-    severity: 'Medium',
-    locationName: '',
-    zone: zones?.[0]?.name || CAMPUS_ZONES[0],
-    latitude: location?.latitude || 20.2185,
-    longitude: location?.longitude || 85.7368,
-    isUrgent: false
-  });
+  const availableZones = zones && zones.length > 0 ? zones.map(z => z.name) : CAMPUS_ZONES;
 
+  // Form State
+  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState('');
+  const [zone, setZone] = useState(availableZones[0]);
+  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [severity, setSeverity] = useState('Medium');
+  const [locationName, setLocationName] = useState('');
+  
+  // Media State
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
-  const [mediaType, setMediaType] = useState('image');
+  const [mediaType, setMediaType] = useState('image'); // 'image' | 'video'
+
+  // Tag helper pickers dropdown states
+  const [showZonePicker, setShowZonePicker] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showSeverityPicker, setShowSeverityPicker] = useState(false);
+
+  // Status & Duplicate states
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
 
+  // Hidden file inputs
+  const photoInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const textareaRef = useRef(null);
+
   // Modals
   const [showQRModal, setShowQRModal] = useState(false);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
 
-  // Sync GPS updates
+  // Auto-resize description textarea like LinkedIn
   useEffect(() => {
-    if (location?.latitude && location?.longitude) {
-      setFormData(prev => ({
-        ...prev,
-        latitude: location.latitude,
-        longitude: location.longitude
-      }));
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.max(120, textareaRef.current.scrollHeight)}px`;
     }
-  }, [location]);
+  }, [description]);
 
-  // Check URL query parameters (e.g. from QR scan link)
+  // Synchronize URL parameters (e.g. from QR scan link)
   useEffect(() => {
     const params = new URLSearchParams(routerLocation.search);
     const qrLoc = params.get('location');
     const qrCat = params.get('category');
-    if (qrLoc) {
-      setFormData(prev => ({ ...prev, locationName: qrLoc }));
-    }
-    if (qrCat && CATEGORIES.some(c => c.value === qrCat)) {
-      setFormData(prev => ({ ...prev, category: qrCat }));
-    }
+    const qrZone = params.get('zone');
+    if (qrLoc) setLocationName(qrLoc);
+    if (qrZone && availableZones.includes(qrZone)) setZone(qrZone);
+    if (qrCat && CATEGORIES.includes(qrCat)) setCategory(qrCat);
   }, [routerLocation.search]);
 
-  // Check for duplicate issues when locationName and category change
+  // Intelligent parser: parse @zone, #category, $severity from description text in real time
+  const parseTagsFromText = (text) => {
+    // 1. Detect Category #...
+    for (const cat of CATEGORIES) {
+      const regex = new RegExp(`#${cat.replace(/[^a-zA-Z0-9]/g, '')}\\b|#${cat.replace('/', '')}\\b`, 'i');
+      if (regex.test(text)) {
+        setCategory(cat);
+        break;
+      }
+    }
+
+    // 2. Detect Severity $...
+    for (const sev of SEVERITIES) {
+      const regex = new RegExp(`\\$${sev}\\b`, 'i');
+      if (regex.test(text)) {
+        setSeverity(sev);
+        break;
+      }
+    }
+
+    // 3. Detect Zone @...
+    for (const z of availableZones) {
+      // Short key or full name match
+      const shortName = z.split(' ')[0];
+      const regex = new RegExp(`@${shortName}\\b|@${z.replace(/\s+/g, '')}\\b`, 'i');
+      if (regex.test(text)) {
+        setZone(z);
+        break;
+      }
+    }
+  };
+
+  const handleDescriptionChange = (e) => {
+    const val = e.target.value;
+    setDescription(val);
+    parseTagsFromText(val);
+  };
+
+  // Helper chip appenders: quickly insert @zone, #category, $severity into description
+  const insertTagToText = (tagText) => {
+    setDescription(prev => {
+      const spacer = prev && !prev.endsWith(' ') && !prev.endsWith('\n') ? ' ' : '';
+      return `${prev}${spacer}${tagText} `;
+    });
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
+  // Check for duplicate issues
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (formData.locationName && formData.category) {
+      if (locationName && category) {
         try {
           setCheckingDuplicates(true);
           const res = await issueAPI.checkDuplicates({
-            latitude: formData.latitude,
-            longitude: formData.longitude,
-            category: formData.category,
-            locationName: formData.locationName
+            latitude: location?.latitude || 20.2185,
+            longitude: location?.longitude || 85.7368,
+            category,
+            locationName
           });
           if (res.data?.hasDuplicates && res.data.duplicates.length > 0) {
             setDuplicateWarning(res.data.duplicates[0]);
@@ -139,33 +189,33 @@ export default function ReportIssuePage() {
     }, 700);
 
     return () => clearTimeout(timer);
-  }, [formData.locationName, formData.category, formData.latitude, formData.longitude]);
+  }, [locationName, category, location]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleMediaSelect = (e) => {
+  // Media Handlers
+  const handlePhotoSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi)$/i.test(file.name);
-      const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-      const label = isVideo ? '50MB' : '10MB';
-
-      if (file.size > maxSize) {
-        setErrorMessage(`File size must be less than ${label}`);
+      if (file.size > 15 * 1024 * 1024) {
+        setErrorMessage('Photo must be less than 15MB.');
         return;
       }
-
       setMediaFile(file);
-      setMediaType(isVideo ? 'video' : 'image');
+      setMediaType('image');
+      setMediaPreview(URL.createObjectURL(file));
+      setErrorMessage('');
+    }
+  };
 
-      const previewUrl = URL.createObjectURL(file);
-      setMediaPreview(previewUrl);
+  const handleVideoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 50 * 1024 * 1024) {
+        setErrorMessage('Video must be less than 50MB.');
+        return;
+      }
+      setMediaFile(file);
+      setMediaType('video');
+      setMediaPreview(URL.createObjectURL(file));
       setErrorMessage('');
     }
   };
@@ -177,8 +227,11 @@ export default function ReportIssuePage() {
     setMediaFile(null);
     setMediaPreview(null);
     setMediaType('image');
+    if (photoInputRef.current) photoInputRef.current.value = '';
+    if (videoInputRef.current) videoInputRef.current.value = '';
   };
 
+  // QR Scan Success Handler
   const handleQRScanSuccess = (decodedData) => {
     setShowQRModal(false);
     let parsed = typeof decodedData === 'object' && decodedData !== null ? decodedData : null;
@@ -194,56 +247,64 @@ export default function ReportIssuePage() {
       ? `${parsed.building ? parsed.building + ' • ' : ''}${parsed.room}`
       : (parsed.location || parsed.name || '');
 
-    setFormData(prev => ({
-      ...prev,
-      locationName: locName || prev.locationName,
-      category: parsed.category && CATEGORIES.some(c => c.value === parsed.category) ? parsed.category : prev.category,
-      zone: parsed.zone || parsed.name || prev.zone,
-      description: parsed.recommendation && !prev.description.includes(parsed.recommendation)
-        ? (prev.description ? `${prev.description}\n[Recommended Check: ${parsed.recommendation}]` : `[Recommended Check: ${parsed.recommendation}]`)
-        : prev.description,
-    }));
+    if (locName) setLocationName(locName);
+    if (parsed.zone) setZone(parsed.zone);
+    if (parsed.category && CATEGORIES.includes(parsed.category)) setCategory(parsed.category);
+
+    if (parsed.recommendation && !description.includes(parsed.recommendation)) {
+      setDescription(prev => prev ? `${prev}\n[Check: ${parsed.recommendation}]` : `[Check: ${parsed.recommendation}]`);
+    }
   };
 
+  // Voice Assistant Handler
   const handleVoiceData = (voiceReport) => {
     setShowVoiceModal(false);
-    setFormData(prev => ({
-      ...prev,
-      title: voiceReport.title || prev.title,
-      description: voiceReport.description || prev.description,
-      category: voiceReport.category || prev.category,
-      severity: voiceReport.severity || prev.severity,
-      locationName: voiceReport.locationName || prev.locationName
-    }));
+    if (voiceReport.description) {
+      setDescription(prev => prev ? `${prev}\n${voiceReport.description}` : voiceReport.description);
+    }
+    if (voiceReport.title && !title) setTitle(voiceReport.title);
+    if (voiceReport.category && CATEGORIES.includes(voiceReport.category)) setCategory(voiceReport.category);
+    if (voiceReport.severity && SEVERITIES.includes(voiceReport.severity)) setSeverity(voiceReport.severity);
+    if (voiceReport.locationName && !locationName) setLocationName(voiceReport.locationName);
   };
 
+  // Submit Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
-    if (!formData.title.trim()) {
-      setErrorMessage('Please provide a brief issue title.');
+    if (!description.trim()) {
+      setErrorMessage('Please describe the problem or issue in the post area.');
       return;
     }
-    if (!formData.locationName.trim()) {
-      setErrorMessage('Please specify the exact room, lab or landmark.');
+    if (!locationName.trim()) {
+      setErrorMessage('Please specify the specific room, lab, or spot.');
       return;
+    }
+
+    // Auto-generate title if not manually given
+    let finalTitle = title.trim();
+    if (!finalTitle) {
+      const cleanFirstLine = description
+        .split('\n')[0]
+        .replace(/[@#$][\w\s-]+/g, '')
+        .trim();
+      finalTitle = cleanFirstLine.slice(0, 80) || `${category} issue in ${locationName}`;
     }
 
     try {
       setSubmitting(true);
-
       const submitData = new FormData();
-      submitData.append('title', formData.title.trim());
-      submitData.append('description', formData.description.trim());
-      submitData.append('category', formData.category);
-      submitData.append('severity', formData.severity);
-      submitData.append('locationName', formData.locationName.trim());
-      submitData.append('zone', formData.zone);
-      submitData.append('latitude', formData.latitude);
-      submitData.append('longitude', formData.longitude);
-      submitData.append('isUrgent', formData.isUrgent);
+      submitData.append('title', finalTitle);
+      submitData.append('description', description.trim());
+      submitData.append('category', category);
+      submitData.append('severity', severity);
+      submitData.append('locationName', locationName.trim());
+      submitData.append('zone', zone);
+      submitData.append('latitude', location?.latitude || 20.2185);
+      submitData.append('longitude', location?.longitude || 85.7368);
+      submitData.append('isUrgent', severity === 'Critical');
 
       if (mediaFile) {
         submitData.append('media', mediaFile);
@@ -252,12 +313,10 @@ export default function ReportIssuePage() {
       }
 
       const res = await issueAPI.create(submitData);
-
-      setSuccessMessage('Ticket filed successfully! Maintenance crew notified.');
+      setSuccessMessage('Ticket posted successfully! Campus technicians notified.');
       setTimeout(() => {
         navigate(`/issues/${res.data.issue._id || res.data.issue.id}`);
-      }, 1200);
-
+      }, 1100);
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to submit report. Please check connection.';
       setErrorMessage(msg);
@@ -268,300 +327,335 @@ export default function ReportIssuePage() {
 
   return (
     <div className="report-page-container">
-      <div className="report-header-banner">
-        <div className="header-text-group">
-          <h1>Report Facility Problem</h1>
-          <p>QuickFix Smart Dispatch • Auto Geo-Tagged to {orgConfig.name}</p>
-        </div>
-        <div className="quick-actions-bar">
+      {/* LinkedIn Post Modal Card */}
+      <div className="linkedin-post-modal-card">
+        {/* Modal Top Header */}
+        <div className="post-modal-top">
+          <div className="modal-author-row">
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.name} className="modal-user-avatar" />
+            ) : (
+              <div className="modal-user-avatar-fallback">
+                {(user?.name || 'A').charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="modal-user-details">
+              <div className="modal-user-name">{user?.name || 'Campus Reporter'}</div>
+              <div className="modal-visibility-pill">
+                <FaGlobeAmericas className="globe-icon" />
+                <span>{orgConfig.name} Community</span>
+              </div>
+            </div>
+          </div>
+
           <button
             type="button"
-            className="action-pill-btn qr-btn"
-            onClick={() => setShowQRModal(true)}
-            title="Scan Campus Location QR"
+            className="modal-cancel-btn"
+            onClick={() => navigate(-1)}
+            title="Cancel"
           >
-            <FaQrcode /> Scan QR Code
-          </button>
-          <button
-            type="button"
-            className="action-pill-btn voice-btn"
-            onClick={() => setShowVoiceModal(true)}
-            title="Dictate with AI Voice Assistant"
-          >
-            <FaMicrophone /> Voice Dictation
+            <FaTimes />
           </button>
         </div>
-      </div>
 
-      {errorMessage && (
-        <div className="alert-banner error-banner">
-          <FaExclamationTriangle />
-          <span>{errorMessage}</span>
-        </div>
-      )}
+        {/* Alerts / Error Messages */}
+        {errorMessage && (
+          <div className="post-alert-banner error">
+            <FaExclamationTriangle />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
-      {successMessage && (
-        <div className="alert-banner success-banner">
-          <FaCheckCircle />
-          <span>{successMessage}</span>
-        </div>
-      )}
+        {successMessage && (
+          <div className="post-alert-banner success">
+            <FaCheckCircle />
+            <span>{successMessage}</span>
+          </div>
+        )}
 
-      {duplicateWarning && (
-        <div className="duplicate-alert-card">
-          <div className="dup-icon"><FaInfoCircle /></div>
-          <div className="dup-body">
-            <strong>Possible Existing Ticket Detected!</strong>
-            <p>
-              An issue matching <em>"{duplicateWarning.title}"</em> in <em>"{duplicateWarning.locationName}"</em> was already reported ({duplicateWarning.status}).
-            </p>
+        {/* Duplicate Warning Callout */}
+        {duplicateWarning && (
+          <div className="modal-duplicate-warning">
+            <FaInfoCircle className="dup-info-icon" />
+            <div className="dup-text">
+              <strong>Similar Issue Already Reported:</strong>
+              <p>"{duplicateWarning.title}" at {duplicateWarning.locationName} ({duplicateWarning.status})</p>
+            </div>
             <button
               type="button"
-              className="dup-view-btn"
+              className="dup-upvote-link-btn"
               onClick={() => navigate(`/issues/${duplicateWarning._id}`)}
             >
-              View Existing Ticket & Upvote Instead
+              Upvote Existing
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      <form className="report-form-card" onSubmit={handleSubmit}>
-        {/* Step 1: Visual Evidence (Photo / Video) */}
-        <div className="form-section">
-          <div className="section-title-row">
-            <label className="section-title">
-              <FaCamera /> Visual Evidence (Photo or Video)
-            </label>
-            <span className="optional-tag">Optional</span>
-          </div>
-          <div className="photo-upload-zone">
-            {mediaPreview ? (
-              <div className="image-preview-wrapper">
-                {mediaType === 'video' ? (
-                  <div className="video-preview-wrapper">
-                    <video
-                      src={mediaPreview}
-                      controls
-                      playsInline
-                      className="evidence-video-player"
-                    />
-                    <div className="video-pill-tag">
-                      <FaVideo /> Video Evidence
-                    </div>
-                  </div>
-                ) : (
-                  <img src={mediaPreview} alt="Evidence preview" className="evidence-img" />
-                )}
+        <form onSubmit={handleSubmit} className="post-modal-form">
+          {/* 1. UNBOUND DESCRIPTION TEXTAREA FIRST */}
+          <div className="unbound-textarea-section">
+            <textarea
+              ref={textareaRef}
+              rows={4}
+              value={description}
+              onChange={handleDescriptionChange}
+              placeholder="What needs maintenance or fixing? Describe freely...&#10;Tip: Use @zone, #category, and $severity in your post!&#10;e.g. Broken exhaust fan in @Visvesvaraya Labs #Electrical $High"
+              className="unbound-description-input"
+              autoFocus
+              required
+            />
+
+            {/* Smart Tag Helper Chips Toolbar */}
+            <div className="tag-helpers-bar">
+              {/* @ Zone Picker Chip */}
+              <div className="tag-chip-dropdown-wrapper">
                 <button
                   type="button"
-                  className="remove-photo-btn"
-                  onClick={handleRemoveMedia}
-                  title="Remove media"
+                  className="tag-chip-btn zone-chip"
+                  onClick={() => setShowZonePicker(!showZonePicker)}
+                  title="Select or Insert Campus Zone (@)"
                 >
-                  <FaTrash /> Remove {mediaType === 'video' ? 'Video' : 'Photo'}
+                  <span className="chip-prefix">@</span> {zone.split(' ')[0]} <FaChevronDown className="chip-arrow" />
                 </button>
+                {showZonePicker && (
+                  <div className="chip-dropdown-menu">
+                    <div className="dropdown-menu-header">Select Campus Zone (@)</div>
+                    {availableZones.map(z => (
+                      <button
+                        key={z}
+                        type="button"
+                        className={`dropdown-option ${zone === z ? 'selected' : ''}`}
+                        onClick={() => {
+                          setZone(z);
+                          insertTagToText(`@${z.split(' ')[0]}`);
+                          setShowZonePicker(false);
+                        }}
+                      >
+                        @{z}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              <label className="upload-placeholder">
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleMediaSelect}
-                  className="hidden-file-input"
-                />
-                <div className="upload-dual-icons">
-                  <FaCamera className="placeholder-icon" />
-                  <span className="icon-slash">/</span>
-                  <FaVideo className="placeholder-icon" />
-                </div>
-                <span className="placeholder-title">Tap to Take or Upload Photo / Video</span>
-                <span className="placeholder-hint">Supports Camera, Gallery, MP4, WebM, MOV (Max 50MB)</span>
-              </label>
-            )}
-          </div>
-        </div>
 
-        {/* Step 2: Location & GPS Geo-Logging */}
-        <div className="form-section">
-          <label className="section-title">
-            <FaMapMarkerAlt /> Precise Campus Location
-          </label>
-          
-          <div className="gps-live-telemetry">
-            <div className={`gps-indicator-dot ${isTracking ? 'pulsing' : ''}`} />
-            <div className="gps-telemetry-text">
-              <span className="gps-status-label">
-                {isTracking ? '1-Sec GeoLocation Stream Active' : 'GPS Coordinates Locked'}
-              </span>
-              <span className="coords-code">
-                {Number(formData.latitude).toFixed(5)}° N, {Number(formData.longitude).toFixed(5)}° E
-              </span>
+              {/* # Category Picker Chip */}
+              <div className="tag-chip-dropdown-wrapper">
+                <button
+                  type="button"
+                  className="tag-chip-btn category-chip"
+                  onClick={() => setShowCategoryPicker(!showCategoryPicker)}
+                  title="Select or Insert Category (#)"
+                >
+                  <span className="chip-prefix">#</span> {category} <FaChevronDown className="chip-arrow" />
+                </button>
+                {showCategoryPicker && (
+                  <div className="chip-dropdown-menu">
+                    <div className="dropdown-menu-header">Select Category (#)</div>
+                    {CATEGORIES.map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        className={`dropdown-option ${category === c ? 'selected' : ''}`}
+                        onClick={() => {
+                          setCategory(c);
+                          insertTagToText(`#${c.replace(/[^a-zA-Z0-9]/g, '')}`);
+                          setShowCategoryPicker(false);
+                        }}
+                      >
+                        #{c}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* $ Severity Picker Chip */}
+              <div className="tag-chip-dropdown-wrapper">
+                <button
+                  type="button"
+                  className={`tag-chip-btn severity-chip ${severity.toLowerCase()}`}
+                  onClick={() => setShowSeverityPicker(!showSeverityPicker)}
+                  title="Select or Insert Severity ($)"
+                >
+                  <span className="chip-prefix">$</span> {severity} <FaChevronDown className="chip-arrow" />
+                </button>
+                {showSeverityPicker && (
+                  <div className="chip-dropdown-menu">
+                    <div className="dropdown-menu-header">Select Severity ($)</div>
+                    {SEVERITIES.map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`dropdown-option severity-${s.toLowerCase()} ${severity === s ? 'selected' : ''}`}
+                        onClick={() => {
+                          setSeverity(s);
+                          insertTagToText(`$${s}`);
+                          setShowSeverityPicker(false);
+                        }}
+                      >
+                        ${s}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            {locationError && <span className="gps-warn-badge">Mock GPS</span>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="zone">Campus Zone / Block *</label>
-            <select
-              id="zone"
-              name="zone"
-              value={formData.zone}
-              onChange={handleChange}
-              className="form-select"
-            >
-              {(zones && zones.length > 0 ? zones.map(z => z.name) : CAMPUS_ZONES).map(z => (
-                <option key={z} value={z}>{z}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="locationName">Specific Room, Lab or Spot *</label>
-            <div className="input-with-button">
+          {/* 2. SPECIFIC ROOM / SPOT INPUT WITH QR CODE CAMERA ICON */}
+          <div className="room-input-container">
+            <div className="room-input-wrapper">
+              <FaMapMarkerAlt className="room-pin-icon" />
               <input
-                id="locationName"
                 type="text"
-                name="locationName"
-                placeholder="e.g., Computer Lab 3, 2nd Floor Staircase, Room 302"
-                value={formData.locationName}
-                onChange={handleChange}
-                className="form-input"
+                placeholder="Specific room, lab, floor or landmark (e.g. Room 302, Floor 2)*"
+                value={locationName}
+                onChange={(e) => setLocationName(e.target.value)}
+                className="room-text-input"
                 required
               />
               <button
                 type="button"
-                className="input-qr-trigger"
+                className="room-qr-autofill-btn"
                 onClick={() => setShowQRModal(true)}
-                title="Scan Room QR Code"
+                title="Scan QR Code sticker for instant room autofill"
+              >
+                <FaQrcode className="qr-btn-icon" />
+                <span className="qr-btn-text">QR Scan</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 3. MEDIA PREVIEW (Photo / Video) */}
+          {mediaPreview && (
+            <div className="post-media-preview-box">
+              {mediaType === 'video' ? (
+                <div className="video-box-relative">
+                  <video src={mediaPreview} controls playsInline className="media-preview-element" />
+                  <span className="media-type-badge video">
+                    <FaVideo /> Video Evidence
+                  </span>
+                </div>
+              ) : (
+                <div className="image-box-relative">
+                  <img src={mediaPreview} alt="Evidence preview" className="media-preview-element" />
+                  <span className="media-type-badge image">
+                    <FaCamera /> Photo Evidence
+                  </span>
+                </div>
+              )}
+              <button
+                type="button"
+                className="remove-media-float-btn"
+                onClick={handleRemoveMedia}
+                title="Remove attachment"
+              >
+                <FaTimes />
+              </button>
+            </div>
+          )}
+
+          {/* Hidden File Inputs for Toolbar Icons */}
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoSelect}
+            style={{ display: 'none' }}
+          />
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept="video/*"
+            onChange={handleVideoSelect}
+            style={{ display: 'none' }}
+          />
+
+          {/* 4. LINKEDIN STYLE BOTTOM ACTION TOOLBAR */}
+          <div className="post-modal-bottom-toolbar">
+            <div className="toolbar-icons-group">
+              <span className="toolbar-hint-label">Add to your report:</span>
+
+              {/* Photo Icon Button */}
+              <button
+                type="button"
+                className="toolbar-icon-btn photo-btn"
+                onClick={() => photoInputRef.current?.click()}
+                title="Attach Photo"
+              >
+                <FaCamera />
+              </button>
+
+              {/* Video Icon Button */}
+              <button
+                type="button"
+                className="toolbar-icon-btn video-btn"
+                onClick={() => videoInputRef.current?.click()}
+                title="Attach Video"
+              >
+                <FaVideo />
+              </button>
+
+              {/* Voice Dictation Icon Button */}
+              <button
+                type="button"
+                className="toolbar-icon-btn voice-btn"
+                onClick={() => setShowVoiceModal(true)}
+                title="Voice Dictation Assistant"
+              >
+                <FaMicrophone />
+              </button>
+
+              {/* QR Scanner Icon Button */}
+              <button
+                type="button"
+                className="toolbar-icon-btn qr-btn"
+                onClick={() => setShowQRModal(true)}
+                title="Scan QR Code"
               >
                 <FaQrcode />
               </button>
-            </div>
-            <span className="input-help">Use QR code sticker on the door for instant autofill</span>
-          </div>
-        </div>
 
-        {/* Step 3: Issue Details */}
-        <div className="form-section">
-          <label className="section-title">
-            <FaExclamationTriangle /> Issue Classification
-          </label>
-
-          <div className="form-group">
-            <label htmlFor="title">Issue Summary Title *</label>
-            <input
-              id="title"
-              type="text"
-              name="title"
-              placeholder="e.g., Broken ceiling fan speed regulator or water seepage"
-              value={formData.title}
-              onChange={handleChange}
-              className="form-input"
-              maxLength={120}
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group half">
-              <label htmlFor="category">Category *</label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="form-select"
-              >
-                {CATEGORIES.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
+              {/* GPS Live Telemetry Pill */}
+              <div className="toolbar-gps-indicator" title={`GPS: ${Number(location?.latitude || 20.2185).toFixed(4)}° N, ${Number(location?.longitude || 85.7368).toFixed(4)}° E`}>
+                <div className={`gps-dot ${isTracking ? 'live' : ''}`} />
+                <span>GPS Locked</span>
+              </div>
             </div>
 
-            <div className="form-group half">
-              <label htmlFor="severity">Severity Level *</label>
-              <select
-                id="severity"
-                name="severity"
-                value={formData.severity}
-                onChange={handleChange}
-                className={`form-select severity-select-${formData.severity.toLowerCase()}`}
-              >
-                {SEVERITIES.map(sev => (
-                  <option key={sev.value} value={sev.value}>{sev.label} — {sev.desc}</option>
-                ))}
-              </select>
-            </div>
+            {/* Right: Submit Button */}
+            <button
+              type="submit"
+              className="post-submit-btn"
+              disabled={submitting || !description.trim() || !locationName.trim()}
+            >
+              {submitting ? (
+                <>
+                  <FaSpinner className="spin" /> Posting...
+                </>
+              ) : (
+                <>
+                  <FaPaperPlane /> Post Ticket
+                </>
+              )}
+            </button>
           </div>
+        </form>
+      </div>
 
-          <div className="form-group">
-            <label htmlFor="description">Detailed Description</label>
-            <textarea
-              id="description"
-              name="description"
-              rows={4}
-              placeholder="Provide extra details (e.g. spark seen, leaking for 2 hours, hazardous wire exposed)..."
-              value={formData.description}
-              onChange={handleChange}
-              className="form-textarea"
-            />
-          </div>
+      {/* QR Scanner Camera Modal */}
+      <QRScannerModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        onScanComplete={handleQRScanSuccess}
+      />
 
-          <div className="urgent-toggle-row">
-            <label className="checkbox-container">
-              <input
-                type="checkbox"
-                name="isUrgent"
-                checked={formData.isUrgent}
-                onChange={handleChange}
-              />
-              <span className="checkbox-custom" />
-              <span className="checkbox-label">
-                <strong>Mark as Campus Emergency / Immediate Risk</strong>
-                <span className="checkbox-sub">Triggers high-priority push notification to active on-duty staff</span>
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* Action Button */}
-        <div className="form-actions">
-          <button
-            type="submit"
-            className="submit-report-btn"
-            disabled={submitting}
-          >
-            {submitting ? (
-              <>
-                <FaSpinner className="spin" /> Submitting ticket & uploading media...
-              </>
-            ) : (
-              <>
-                <FaPaperPlane /> Submit Ticket & Dispatch Staff
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-
-      {/* QR Scanner Modal */}
-      {showQRModal && (
-        <QRScannerModal
-          isOpen={showQRModal}
-          onClose={() => setShowQRModal(false)}
-          onScanSuccess={handleQRScanSuccess}
-        />
-      )}
-
-      {/* Voice Assistant Modal */}
-      {showVoiceModal && (
-        <VoiceReportModal
-          isOpen={showVoiceModal}
-          onClose={() => setShowVoiceModal(false)}
-          onTranscribeComplete={handleVoiceData}
-        />
-      )}
+      {/* Voice Report Speech Recognition Modal */}
+      <VoiceReportModal
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        onVoiceParsed={handleVoiceData}
+      />
     </div>
   );
 }
