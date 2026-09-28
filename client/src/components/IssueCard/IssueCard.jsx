@@ -54,6 +54,46 @@ const getCategoryIcon = (cat) => {
   }
 };
 
+export const getDeptAcronym = (dept) => {
+  if (!dept) return 'STUDENT';
+  const trimmed = dept.trim();
+  const known = {
+    'Computer Science & Engineering': 'CSE',
+    'Computer Science and Engineering': 'CSE',
+    'Computer Science': 'CS',
+    'Information Technology': 'IT',
+    'Electronics & Communication Engineering': 'ECE',
+    'Electronics and Communication Engineering': 'ECE',
+    'Electrical & Electronics Engineering': 'EEE',
+    'Electrical and Electronics Engineering': 'EEE',
+    'Electrical Engineering': 'EE',
+    'Mechanical Engineering': 'MECH',
+    'Civil Engineering': 'CIVIL',
+    'Chemical Engineering': 'CHEM',
+    'Biotechnology': 'BIOTECH',
+    'Master of Business Administration': 'MBA',
+    'Master of Computer Applications': 'MCA',
+    'Maintenance & Operations': 'MAINT',
+    'Safety & Security': 'SECURITY',
+    'Facility Management': 'FACILITY',
+    'Admin': 'ADMIN',
+    'Staff': 'STAFF',
+    'Student': 'STUDENT',
+  };
+  if (known[trimmed]) return known[trimmed];
+  for (const [key, val] of Object.entries(known)) {
+    if (trimmed.toLowerCase() === key.toLowerCase() || trimmed.toLowerCase().includes(key.toLowerCase())) {
+      return val;
+    }
+  }
+  if (trimmed.length <= 5) return trimmed.toUpperCase();
+  const words = trimmed.replace(/&/g, ' & ').split(/\s+/).filter(w => !['and', 'of', 'in', 'the'].includes(w.toLowerCase()));
+  if (words.length > 1) {
+    return words.map(w => (w === '&' ? '&' : w[0].toUpperCase())).join('');
+  }
+  return trimmed.slice(0, 4).toUpperCase();
+};
+
 const getTimeAgo = (dateStr) => {
   if (!dateStr) return 'Just now';
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -199,7 +239,7 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
     /\.(mp4|mov|webm|mkv|avi)$/i.test(rawMediaUrl);
 
   const reporterName = issue.reportedBy?.name || issue.reportedByName || 'Campus Member';
-  const reporterDept = issue.reportedBy?.department || (issue.reportedBy?.role ? `${issue.reportedBy.role.toUpperCase()}` : 'Campus Student');
+  const deptAcronym = getDeptAcronym(issue.reportedBy?.department || issue.reportedBy?.role || 'STUDENT');
   const reporterAvatar = issue.reportedBy?.avatar;
   const zoneName = issue.zone || issue.location?.building || 'Campus';
   const roomName = issue.locationName || issue.location?.room || '';
@@ -226,7 +266,9 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
           <div className="author-text-meta">
             <div className="author-name-row">
               <span className="author-name">{reporterName}</span>
-              <span className="author-role-badge">{reporterDept}</span>
+              <span className="author-role-badge" title={issue.reportedBy?.department || issue.reportedBy?.role || 'Campus Student'}>
+                {deptAcronym}
+              </span>
             </div>
             <div className="post-timestamp-row">
               <span className="post-time">{getTimeAgo(issue.createdAt)}</span>

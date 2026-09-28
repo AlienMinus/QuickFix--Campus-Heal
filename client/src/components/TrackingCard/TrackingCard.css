@@ -1,0 +1,335 @@
+.tracking-card {
+  background: #180e2e;
+  border: 1px solid rgba(168, 85, 247, 0.22);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tracking-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.22);
+}
+
+.tracking-card:focus-visible {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+}
+
+.tracking-card-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 1. Meta Row */
+.track-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.track-badges-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.track-id-pill {
+  font-family: monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  color: #38bdf8;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.track-tag-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.track-tag-pill.zone-pill {
+  background: rgba(168, 85, 247, 0.14);
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  color: #c084fc;
+}
+
+.track-tag-pill.cat-pill {
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  color: #7dd3fc;
+}
+
+.track-tag-pill.sev-pill.critical {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.track-tag-pill.sev-pill.high {
+  background: rgba(249, 115, 22, 0.18);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+.track-tag-pill.sev-pill.medium {
+  background: rgba(234, 179, 8, 0.15);
+  color: #fde047;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.track-tag-pill.sev-pill.low {
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+/* Status Pill */
+.track-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.track-status-pill.submitted {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.track-status-pill.under-review {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.track-status-pill.in-progress {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.track-status-pill.resolved,
+.track-status-pill.closed {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* 2. Title & Location */
+.track-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 1px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+
+.track-location-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-pin-icon {
+  color: #ef4444;
+  font-size: 0.68rem;
+  flex-shrink: 0;
+}
+
+.track-location-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 3. Bottom Row: Stepper & Reporter */
+.track-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 3px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(168, 85, 247, 0.1);
+  flex-wrap: wrap;
+}
+
+.track-mini-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-step-dot {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.mini-step-dot .dot-circle {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  transition: all 0.2s ease;
+}
+
+.mini-step-dot.passed .dot-circle {
+  background: #a855f7;
+}
+
+.mini-step-dot.current .dot-circle {
+  background: #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
+}
+
+.mini-step-name {
+  font-size: 0.6rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.mini-step-dot.passed .mini-step-name {
+  color: #cbd5e1;
+}
+
+.mini-step-dot.current .mini-step-name {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.track-reporter-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.reporter-chip {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.dept-acronym-chip {
+  font-size: 0.62rem;
+  font-weight: 800;
+  background: rgba(168, 85, 247, 0.2);
+  color: #d8b4fe;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.track-time-ago {
+  color: #64748b;
+}
+
+/* 4. Right Thumbnail & Chevron */
+.tracking-card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.track-thumb-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #090514;
+  position: relative;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.track-thumb-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.track-thumb-video-icon {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-size: 0.55rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.track-thumb-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #a855f7;
+}
+
+.track-chevron-icon {
+  color: #64748b;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.tracking-card:hover .track-chevron-icon {
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+@media (max-width: 480px) {
+  .tracking-card {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .track-thumb-box,
+  .track-thumb-placeholder {
+    width: 54px;
+    height: 54px;
+  }
+  .track-mini-stepper {
+    display: none;
+  }
+}
