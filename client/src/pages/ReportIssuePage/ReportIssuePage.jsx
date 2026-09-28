@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLocationContext } from '../../context/LocationContext';
@@ -20,6 +20,7 @@ import {
   FaExclamationTriangle,
   FaGlobeAmericas,
   FaChevronDown,
+  FaTags,
 } from 'react-icons/fa';
 import './ReportIssuePage.css';
 
