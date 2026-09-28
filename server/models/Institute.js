@@ -57,6 +57,26 @@ const instituteSchema = new mongoose.Schema(
         lng: { type: Number, default: 85.7360 },
       },
     ],
+    headerConfig: {
+      name: { type: String, default: '', trim: true },
+      subtitle: { type: String, default: '', trim: true },
+      tagline: { type: String, default: '', trim: true },
+    },
+    branches: {
+      type: [String],
+      default: [
+        'Computer Science & Engineering (CSE)',
+        'Artificial Intelligence & Data Science (AI&DS)',
+        'Mechanical Engineering (ME)',
+        'Electrical & Electronics Engineering (EEE)',
+        'Electronics & Comm Engineering (ECE)',
+        'Civil Engineering (CE)',
+        'Master of Computer Applications (MCA)',
+        'MBA / Management Studies',
+        'Campus Estate & Facility Maintenance',
+        'Hostel Administration & Mess',
+      ],
+    },
   },
   {
     timestamps: true,
