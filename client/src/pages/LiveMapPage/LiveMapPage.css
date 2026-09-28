@@ -102,39 +102,7 @@
   border-color: var(--primary);
 }
 
-.map-category-chips {
-  display: flex;
-  gap: 0.35rem;
-  overflow-x: auto;
-  padding-bottom: 2px;
-  pointer-events: auto;
-  scrollbar-width: none;
-}
 
-.map-category-chips::-webkit-scrollbar {
-  display: none;
-}
-
-.category-chip {
-  background: rgba(29, 17, 56, 0.88);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 0.3rem 0.65rem;
-  border-radius: var(--radius-full);
-  font-size: 0.68rem;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.category-chip.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary-hover);
-  box-shadow: 0 2px 8px rgba(95, 37, 159, 0.45);
-}
 
 .map-wrapper-card {
   width: 100%;

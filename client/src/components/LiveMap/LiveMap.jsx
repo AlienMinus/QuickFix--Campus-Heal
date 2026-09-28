@@ -5,7 +5,6 @@ import {
   TileLayer,
   Marker,
   Popup,
-  Circle,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
@@ -18,8 +17,6 @@ import {
   FaCrosshairs,
 } from 'react-icons/fa';
 import api from '../../services/api';
-
-const GIFT_COORDS = [20.2195, 85.7360];
 
 const createCustomIcon = (color, symbol) => {
   return L.divIcon({
@@ -61,7 +58,7 @@ const MapController = ({ center }) => {
   const map = useMap();
   useEffect(() => {
     if (center && center[0] && center[1]) {
-      map.flyTo(center, map.getZoom(), { animate: true, duration: 1 });
+      map.flyTo(center, 17, { animate: true, duration: 1 });
     }
   }, [center, map]);
   return null;
@@ -86,15 +83,33 @@ const LiveMap = ({
   selectable = false,
   selectedLocation = null,
   onLocationSelect = null,
-  height = '480px',
-  showFilters = true,
+  height = '100%',
 }) => {
   const { position } = useLocation();
   const navigate = useNavigate();
 
-  const [activeFilter, setActiveFilter] = useState('All');
   const [staffLocations, setStaffLocations] = useState([]);
-  const [mapCenter, setMapCenter] = useState(GIFT_COORDS);
+  const [mapCenter, setMapCenter] = useState(() => {
+    if (position?.latitude && position?.longitude) {
+      return [position.latitude, position.longitude];
+    }
+    return [20.2195, 85.7360];
+  });
+
+  // Automatically center on user's current GPS location as soon as available
+  useEffect(() => {
+    if (position?.latitude && position?.longitude) {
+      setMapCenter([position.latitude, position.longitude]);
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+        },
+        (err) => console.warn('Browser GPS lookup:', err.message),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, [position?.latitude, position?.longitude]);
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -107,20 +122,12 @@ const LiveMap = ({
           setStaffLocations(staff);
         }
       } catch (err) {
-        setStaffLocations([
-          {
-            _id: 'demo-staff-pos',
-            userName: 'Bikash Mohapatra (Staff Patrol)',
-            latitude: 20.2198,
-            longitude: 85.7364,
-            campusZone: 'Main Academic Walkway',
-          },
-        ]);
+        setStaffLocations([]);
       }
     };
 
     fetchStaff();
-    const staffInterval = setInterval(fetchStaff, 5000);
+    const staffInterval = setInterval(fetchStaff, 8000);
     return () => clearInterval(staffInterval);
   }, []);
 
@@ -135,49 +142,32 @@ const LiveMap = ({
     }
   };
 
-  const filteredIssues = issues.filter((item) => {
-    if (activeFilter === 'All') return true;
-    if (activeFilter === 'Critical') return item.severity === 'Critical';
-    if (activeFilter === 'In Progress') return item.status === 'In Progress';
-    if (activeFilter === 'Resolved') return item.status === 'Resolved';
-    if (activeFilter === 'Submitted') return item.status === 'Submitted';
-    return true;
-  });
-
   const centerOnUser = () => {
-    if (position.latitude && position.longitude) {
+    if (position?.latitude && position?.longitude) {
       setMapCenter([position.latitude, position.longitude]);
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+      });
     }
   };
 
+  const userLat = position?.latitude || mapCenter[0];
+  const userLng = position?.longitude || mapCenter[1];
+
   return (
     <div className="embedded-live-map-wrapper" style={{ height }}>
-      {showFilters && (
-        <div className="map-controls-overlay">
-          <div className="filter-chips">
-            {['All', 'Critical', 'Submitted', 'In Progress', 'Resolved'].map((filter) => (
-              <button
-                key={filter}
-                className={`filter-chip ${activeFilter === filter ? 'active' : ''}`}
-                onClick={() => setActiveFilter(filter)}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
-
-          <button
-            className="recenter-btn"
-            onClick={centerOnUser}
-            title="Recenter map to my 1s GPS location"
-          >
-            <FaCrosshairs />
-          </button>
-        </div>
-      )}
+      {/* Floating Recenter Button to quickly snap to user's location */}
+      <button
+        className="recenter-btn-floating"
+        onClick={centerOnUser}
+        title="Snap map to my live location"
+      >
+        <FaCrosshairs />
+      </button>
 
       <MapContainer
-        center={GIFT_COORDS}
+        center={[userLat, userLng]}
         zoom={17}
         scrollWheelZoom={true}
         className="leaflet-map-element"
@@ -190,44 +180,34 @@ const LiveMap = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <Circle
-          center={GIFT_COORDS}
-          radius={220}
-          pathOptions={{
-            color: '#3b82f6',
-            fillColor: '#3b82f6',
-            fillOpacity: 0.05,
-            weight: 1.5,
-            dashArray: '6 6',
-          }}
-        />
-
-        {position.latitude && position.longitude && (
+        {/* Current User Live Location Marker */}
+        {position?.latitude && position?.longitude && (
           <Marker
             position={[position.latitude, position.longitude]}
             icon={userLiveIcon}
           >
             <Popup>
               <div className="map-popup-card user-popup">
-                <strong>📍 You are here (Live 1s GPS)</strong>
-                <p>Telemetry syncing directly to MongoDB Atlas</p>
-                <small>Accuracy: ±{position.accuracy || 5}m | Speed: {position.speed || 0} m/s</small>
+                <strong>📍 Your Current Location</strong>
+                <p>Telemetry actively synchronized</p>
+                <small>Accuracy: ±{Math.round(position.accuracy || 5)}m</small>
               </div>
             </Popup>
           </Marker>
         )}
 
+        {/* Active Staff Patrol Markers */}
         {staffLocations.map((staff) => (
           <Marker
-            key={staff._id}
+            key={staff._id || staff.userId}
             position={[staff.latitude, staff.longitude]}
             icon={staffLiveIcon}
           >
             <Popup>
               <div className="map-popup-card">
-                <strong>👷 {staff.userName}</strong>
-                <p>Campus Facilities Staff on Patrol</p>
-                <small>Zone: {staff.campusZone || 'GIFT Campus'}</small>
+                <strong>👷 {staff.userName || staff.name || 'Maintenance Staff'}</strong>
+                <p>Facilities Staff on Patrol</p>
+                <small>Zone: {staff.campusZone || 'Campus Facilities'}</small>
               </div>
             </Popup>
           </Marker>
@@ -247,9 +227,10 @@ const LiveMap = ({
           </Marker>
         )}
 
-        {filteredIssues.map((issue) => {
-          const lat = issue.location?.latitude || GIFT_COORDS[0];
-          const lng = issue.location?.longitude || GIFT_COORDS[1];
+        {/* Issue Pins */}
+        {issues.map((issue) => {
+          const lat = issue.location?.latitude || (issue.location && typeof issue.location[1] === 'number' ? issue.location[1] : 20.2195);
+          const lng = issue.location?.longitude || (issue.location && typeof issue.location[0] === 'number' ? issue.location[0] : 85.7360);
           const color = getMarkerColor(issue.severity, issue.status);
           const symbol = issue.status === 'Resolved' ? '✓' : '!';
 
@@ -277,11 +258,11 @@ const LiveMap = ({
                   <h4 className="popup-title">{issue.title}</h4>
                   <p className="popup-category">{issue.category}</p>
                   <p className="popup-loc">
-                    <FaMapMarkerAlt /> {issue.location?.building} {issue.location?.room ? `(${issue.location.room})` : ''}
+                    <FaMapMarkerAlt /> {issue.location?.building || issue.locationName || 'Campus'} {issue.location?.room ? `(${issue.location.room})` : ''}
                   </p>
                   <button
                     className="popup-view-btn"
-                    onClick={() => navigate(`/issue/${issue._id}`)}
+                    onClick={() => navigate(`/issues/${issue._id}`)}
                   >
                     View Issue Details
                   </button>
