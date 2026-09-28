@@ -30,16 +30,16 @@ const LocationTracker = () => {
           <span className={`live-pulse-dot ${isTracking ? 'pulse' : 'off'}`} />
           <div className="status-meta">
             <span className="status-title">
-              {isTracking ? '1s GPS MongoDB Logging Active' : 'GPS Tracking Paused'}
+              {isTracking ? 'Live Field Telemetry Active' : 'GPS Tracking Paused'}
             </span>
             <span className="status-zone">
-              <FaMapMarkerAlt className="mini-icon" /> {lastZone || 'GIFT Autonomous Campus'}
+              <FaMapMarkerAlt className="mini-icon" /> {lastZone || 'Campus Operations'}
             </span>
           </div>
         </div>
 
         <div className="tracker-actions">
-          <div className="logged-counter" title="Total coordinates logged directly to MongoDB">
+          <div className="logged-counter" title="Total telemetry points logged">
             <span className="counter-val">{loggedCount}</span>
             <span className="counter-label">logs</span>
           </div>
@@ -84,9 +84,9 @@ const LocationTracker = () => {
 
           <div className="sync-info-footer">
             <FaSatelliteDish className="footer-icon" />
-            <span>Updating to MongoDB Atlas every 1,000ms (1 second)</span>
+            <span>Streaming real-time dispatch coordinates every 1 second</span>
             <span className="sync-status-badge">
-              <FaCheckCircle /> Direct Stream
+              <FaCheckCircle /> Live Radar
             </span>
           </div>
         </div>

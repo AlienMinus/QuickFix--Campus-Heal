@@ -268,9 +268,9 @@ export default function IssueDetailPage() {
         </div>
       </div>
 
-      {/* Evidence Photos (Cloudinary) */}
+      {/* Evidence Photos */}
       <div className="evidence-section-card">
-        <h3 className="section-heading">Cloudinary Media Evidence</h3>
+        <h3 className="section-heading">Photo & Media Evidence</h3>
         
         <div className="evidence-photos-grid">
           {issue.imageUrl ? (
@@ -361,7 +361,7 @@ export default function IssueDetailPage() {
             </div>
 
             <div className="form-group">
-              <label>Resolution Proof Photo (Cloudinary upload):</label>
+              <label>Resolution Proof Photo:</label>
               <input
                 type="file"
                 accept="image/*"

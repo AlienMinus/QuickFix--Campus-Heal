@@ -256,7 +256,7 @@ export default function StaffDashboardPage() {
               </div>
 
               <div className="form-group">
-                <label>Resolution Proof Photo (Cloudinary upload):</label>
+                <label>Resolution Proof Photo (optional):</label>
                 <input
                   type="file"
                   accept="image/*"

@@ -218,7 +218,7 @@ export default function IssueTrackingPage() {
       {loading ? (
         <div className="loading-state-wrapper">
           <div className="spinner-large" />
-          <p>Syncing campus tickets from MongoDB Atlas...</p>
+          <p>Loading campus tickets...</p>
         </div>
       ) : filteredIssues.length === 0 ? (
         <div className="empty-state-card">

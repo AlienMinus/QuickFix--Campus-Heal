@@ -553,7 +553,7 @@ export default function AdminDashboardPage() {
       {activeTab === 'patrol' && (
         <div className="admin-table-card">
           <div className="patrol-header">
-            <h3>Active Maintenance Staff Geo-Telemetry (MongoDB 1s Stream)</h3>
+            <h3>Active Maintenance Staff Geo-Telemetry (Live Radar)</h3>
             <p>Real-time location stream from mobile personnel</p>
           </div>
 

@@ -314,10 +314,10 @@ export default function ReportIssuePage() {
       )}
 
       <form className="report-form-card" onSubmit={handleSubmit}>
-        {/* Step 1: Evidence Photo Upload (Cloudinary) */}
+        {/* Step 1: Evidence Photo Upload */}
         <div className="form-section">
           <label className="section-title">
-            <FaCamera /> Photo Evidence (Cloudinary Auto-Upload)
+            <FaCamera /> Photo Evidence
           </label>
           <div className="photo-upload-zone">
             {imagePreview ? (
@@ -501,7 +501,7 @@ export default function ReportIssuePage() {
           >
             {submitting ? (
               <>
-                <FaSpinner className="spin" /> Dispatching to Cloudinary & Atlas...
+                <FaSpinner className="spin" /> Submitting ticket & uploading media...
               </>
             ) : (
               <>
