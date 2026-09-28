@@ -645,7 +645,13 @@ export default function ReportIssuePage() {
 
               {/* INSTAGRAM-STYLE AUTOCOMPLETE DROPDOWN */}
               {autocomplete && (
-                <div className="insta-autocomplete-popover">
+                <div
+                  className="insta-autocomplete-popover"
+                  style={{
+                    top: `${autocomplete.coords?.top ?? 34}px`,
+                    left: `${autocomplete.coords?.left ?? 10}px`,
+                  }}
+                >
                   <div className="insta-popover-header">
                     <span className={`popover-trigger-badge trigger-${autocomplete.type === '@' ? 'zone' : autocomplete.type === '#' ? 'category' : 'severity'}`}>
                       {autocomplete.type}
