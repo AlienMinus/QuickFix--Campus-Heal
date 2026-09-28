@@ -498,6 +498,13 @@ export default function SuperAdminDashboardPage() {
             <FaUserShield /> Onboard Admin
           </button>
           <button
+            className="btn-add-category"
+            onClick={handleOpenAddCategory}
+            title="Define a new campus facility category"
+          >
+            <FaTags /> Define Category
+          </button>
+          <button
             className="btn-refresh"
             onClick={fetchData}
             title="Refresh records"
@@ -554,6 +561,17 @@ export default function SuperAdminDashboardPage() {
           </div>
         </div>
 
+        <div className="super-kpi-card categories-card">
+          <div className="super-kpi-icon-box">
+            <FaTags />
+          </div>
+          <div className="super-kpi-details">
+            <span className="super-kpi-number">{categories.length}</span>
+            <span className="super-kpi-label">Categories</span>
+            <span className="super-kpi-sub">Facility Types</span>
+          </div>
+        </div>
+
         <div className="super-kpi-card users-card">
           <div className="super-kpi-icon-box">
             <FaUsers />
@@ -592,6 +610,7 @@ export default function SuperAdminDashboardPage() {
             >
               <option value="institutes">🏛️ Campus Institutes & Respective Admins ({institutes.length})</option>
               <option value="directory">👥 All Campus Administrators Directory ({adminsList.length})</option>
+              <option value="categories">🏷️ Facility Categories Governance ({categories.length})</option>
             </select>
           </div>
         </div>
