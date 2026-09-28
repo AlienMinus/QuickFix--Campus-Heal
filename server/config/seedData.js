@@ -1,9 +1,14 @@
 const User = require('../models/User');
 const Issue = require('../models/Issue');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 
 const seedInitialData = async () => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      console.log('ℹ️ Skipping seed data: MongoDB connection not ready.');
+      return;
+    }
     const userCount = await User.countDocuments();
     if (userCount > 0) {
       return;
