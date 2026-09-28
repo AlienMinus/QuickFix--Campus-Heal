@@ -201,3 +201,38 @@
 .user-avatar:hover {
   transform: scale(1.05);
 }
+
+.user-avatar-initial {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7b2cbf, #5f259f);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border: 2px solid #a855f7;
+}
+
+.nav-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #7b2cbf, #5f259f);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(95, 37, 159, 0.4);
+  transition: all 0.2s ease;
+}
+
+.nav-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(123, 44, 191, 0.6);
+}
