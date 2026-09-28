@@ -11,6 +11,7 @@ import IssueTrackingPage from './pages/IssueTrackingPage/IssueTrackingPage';
 import IssueDetailPage from './pages/IssueDetailPage/IssueDetailPage';
 import LiveMapPage from './pages/LiveMapPage/LiveMapPage';
 import AdminDashboardPage from './pages/AdminDashboardPage/AdminDashboardPage';
+import SuperAdminDashboardPage from './pages/SuperAdminDashboardPage/SuperAdminDashboardPage';
 import StaffDashboardPage from './pages/StaffDashboardPage/StaffDashboardPage';
 import LoginPage from './pages/LoginPage/LoginPage';
 import RegisterPage from './pages/RegisterPage/RegisterPage';
@@ -66,7 +67,8 @@ function App() {
             <Route path="/issue/:id" element={<IssueDetailPage />} />
             <Route path="/issues/:id" element={<IssueDetailPage />} />
             <Route path="/map" element={<LiveMapPage />} />
-            <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/superadmin" element={<SuperAdminDashboardPage />} />
+            <Route path="/admin" element={user?.role === 'superadmin' ? <SuperAdminDashboardPage /> : <AdminDashboardPage />} />
             <Route path="/staff" element={<StaffDashboardPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />

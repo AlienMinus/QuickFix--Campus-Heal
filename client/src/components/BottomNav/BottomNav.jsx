@@ -17,7 +17,8 @@ const BottomNav = () => {
   const { user, isAdmin, isStaff } = useAuth();
 
   const getDashboardLink = () => {
-    if (isAdmin || user?.role === 'superadmin') return '/admin';
+    if (user?.role === 'superadmin') return '/superadmin';
+    if (isAdmin) return '/admin';
     if (isStaff) return '/staff';
     return '/profile';
   };
