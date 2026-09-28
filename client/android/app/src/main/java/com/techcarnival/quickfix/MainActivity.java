@@ -18,15 +18,18 @@ public class MainActivity extends BridgeActivity {
         // 1. Ensure the web view content stacks below the status bar (no overlap)
         WindowCompat.setDecorFitsSystemWindows(window, true);
 
-        // 2. Make phone's status bar black in background
+        // 2. Make phone's status bar and 3-button navigation bar black in background
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(Color.BLACK);
+        window.setNavigationBarColor(Color.BLACK);
 
-        // 3. Keep status bar icons/text white & readable on black background
+        // 3. Keep status bar and navigation bar icons white & visible on dark background
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
         if (controller != null) {
             controller.setAppearanceLightStatusBars(false);
+            controller.setAppearanceLightNavigationBars(false);
         }
     }
 }
