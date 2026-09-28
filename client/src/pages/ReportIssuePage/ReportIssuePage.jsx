@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLocationContext } from '../../context/LocationContext';
 import { useOrg } from '../../context/OrgContext';
-import { issueAPI } from '../../services/api';
+import { issueAPI, categoryAPI } from '../../services/api';
 import QRScannerModal from '../../components/QRScannerModal/QRScannerModal';
 import VoiceReportModal from '../../components/VoiceReportModal/VoiceReportModal';
 import {
@@ -62,6 +62,7 @@ export default function ReportIssuePage() {
   const availableZones = zones && zones.length > 0 ? zones.map(z => z.name) : CAMPUS_ZONES;
 
   // Form State
+  const [categoriesList, setCategoriesList] = useState(CATEGORIES);
   const [description, setDescription] = useState('');
   const [title, setTitle] = useState('');
   const [zone, setZone] = useState(availableZones[0]);
@@ -69,6 +70,24 @@ export default function ReportIssuePage() {
   const [severity, setSeverity] = useState('Medium');
   const [locationName, setLocationName] = useState('');
   
+  // Fetch dynamic categories defined by Super Admin
+  useEffect(() => {
+    categoryAPI.getAll()
+      .then(res => {
+        if (res.data?.categories && res.data.categories.length > 0) {
+          const activeCats = res.data.categories
+            .filter(c => c.status !== 'Inactive')
+            .map(c => c.name);
+          if (activeCats.length > 0) {
+            setCategoriesList(activeCats);
+          }
+        }
+      })
+      .catch(() => {
+        // Fallback to default initial list
+      });
+  }, []);
+
   // Media State
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
@@ -119,13 +138,13 @@ export default function ReportIssuePage() {
     const qrZone = params.get('zone');
     if (qrLoc) setLocationName(qrLoc);
     if (qrZone && availableZones.includes(qrZone)) setZone(qrZone);
-    if (qrCat && CATEGORIES.includes(qrCat)) setCategory(qrCat);
-  }, [routerLocation.search]);
+    if (qrCat && categoriesList.includes(qrCat)) setCategory(qrCat);
+  }, [routerLocation.search, categoriesList]);
 
   // Intelligent parser: parse @zone, #category, $severity from description text in real time
   const parseTagsFromText = (text) => {
     // 1. Detect Category #...
-    for (const cat of CATEGORIES) {
+    for (const cat of categoriesList) {
       const regex = new RegExp(`#${cat.replace(/[^a-zA-Z0-9]/g, '')}\\b|#${cat.replace('/', '')}\\b`, 'i');
       if (regex.test(text)) {
         setCategory(cat);
