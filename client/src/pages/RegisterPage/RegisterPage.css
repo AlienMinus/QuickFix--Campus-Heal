@@ -205,6 +205,16 @@
   text-decoration: underline;
 }
 
+.branches-loader-badge {
+  font-size: 0.72rem;
+  color: #c084fc;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+}
+
 @media (max-width: 480px) {
   .form-row {
     flex-direction: column;

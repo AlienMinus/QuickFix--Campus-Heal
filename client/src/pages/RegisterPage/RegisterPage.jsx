@@ -260,15 +260,18 @@ export default function RegisterPage() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="department">Department / Branch</label>
+            <label htmlFor="department">
+              Department / Academic Stream {loadingBranches && <span className="branches-loader-badge"><FaSpinner className="spin" /> Updating streams...</span>}
+            </label>
             <select
               id="department"
               name="department"
               value={formData.department}
               onChange={handleChange}
               className="register-select"
+              disabled={loadingBranches}
             >
-              {DEPARTMENTS.map((dept) => (
+              {branches.map((dept) => (
                 <option key={dept} value={dept}>
                   {dept}
                 </option>
