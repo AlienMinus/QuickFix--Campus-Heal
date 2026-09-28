@@ -359,10 +359,11 @@ export default function ReportIssuePage() {
           <button
             type="button"
             className="modal-cancel-btn"
-            onClick={() => navigate(-1)}
-            title="Cancel"
+            onClick={handleCancel}
+            title="Cancel and close"
+            aria-label="Cancel and close"
           >
-            <FaTimes />
+            <FaTimes className="cancel-icon" />
           </button>
         </div>
 
@@ -631,22 +632,31 @@ export default function ReportIssuePage() {
               </div>
             </div>
 
-            {/* Right: Submit Button */}
-            <button
-              type="submit"
-              className="post-submit-btn"
-              disabled={submitting || !description.trim() || !locationName.trim()}
-            >
-              {submitting ? (
-                <>
-                  <FaSpinner className="spin" /> Posting...
-                </>
-              ) : (
-                <>
-                  <FaPaperPlane /> Post Ticket
-                </>
-              )}
-            </button>
+            {/* Right: Actions Group */}
+            <div className="post-submit-actions">
+              <button
+                type="button"
+                className="post-cancel-btn"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="post-submit-btn"
+                disabled={submitting || !description.trim() || !locationName.trim()}
+              >
+                {submitting ? (
+                  <>
+                    <FaSpinner className="spin" /> Posting...
+                  </>
+                ) : (
+                  <>
+                    <FaPaperPlane /> Post Ticket
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>
