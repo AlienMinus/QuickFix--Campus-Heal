@@ -1,0 +1,19 @@
+{
+  "short_name": "QuickFix",
+  "name": "Smart Campus QuickFix - BPUT Tech Carnival 2026",
+  "description": "Mobile application for campus issue identification, 1s GPS logging, and resolution tracking",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#2563eb",
+  "background_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity", "education"]
+}

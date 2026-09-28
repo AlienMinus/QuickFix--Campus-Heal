@@ -1,0 +1,57 @@
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+      required: false,
+    },
+    role: {
+      type: String,
+      enum: ['student', 'staff', 'admin'],
+      default: 'student',
+    },
+    department: {
+      type: String,
+      default: 'Campus Community',
+    },
+    identifier: {
+      type: String,
+      default: '',
+    },
+    phone: {
+      type: String,
+      default: '',
+    },
+    avatar: {
+      type: String,
+      default: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    },
+    googleId: {
+      type: String,
+      default: null,
+    },
+    lastActiveLocation: {
+      latitude: Number,
+      longitude: Number,
+      updatedAt: Date,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+module.exports = mongoose.model('User', userSchema);
