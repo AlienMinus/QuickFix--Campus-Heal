@@ -204,6 +204,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
+  z-index: 60;
 }
 
 .unbound-description-input {
@@ -250,6 +252,7 @@
 .unbound-textarea-container {
   position: relative;
   width: 100%;
+  z-index: 60;
 }
 
 /* Floating Instagram-Style Autocomplete Popover (Top-left anchored on cursor) */
@@ -257,13 +260,13 @@
   position: absolute;
   width: 310px;
   max-width: calc(100% - 16px);
-  background: #170b2e;
-  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: #15092a;
+  border: 1.5px solid rgba(168, 85, 247, 0.6);
   border-radius: 14px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 20px rgba(168, 85, 247, 0.25);
-  z-index: 1000;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9), 0 0 28px rgba(168, 85, 247, 0.35);
+  z-index: 99999;
   overflow: hidden;
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
   animation: instaPopoverFadeIn 0.15s ease-out;
 }
 
@@ -330,7 +333,7 @@
 }
 
 .insta-popover-list {
-  max-height: 220px;
+  max-height: 190px;
   overflow-y: auto;
   padding: 6px;
   display: flex;
