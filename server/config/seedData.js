@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Issue = require('../models/Issue');
 const Institute = require('../models/Institute');
+const Notification = require('../models/Notification');
 const { parseCSV } = require('./csvHelper');
 
 const seedInitialData = async () => {
@@ -55,9 +56,27 @@ const seedInitialData = async () => {
       }
     }
 
-    // 3. Backfill any existing users or issues without an institute
+    // 3. Backfill any existing users, issues, or notifications without an institute
     await User.updateMany({ institute: { $exists: false } }, { $set: { institute: 'BPUT Tech Campus' } });
     await Issue.updateMany({ institute: { $exists: false } }, { $set: { institute: 'BPUT Tech Campus' } });
+
+    const unassignedNotifs = await Notification.find({
+      $or: [{ institute: { $exists: false } }, { institute: '' }, { institute: null }],
+    });
+    for (const notif of unassignedNotifs) {
+      if (notif.issueId) {
+        const issue = await Issue.findById(notif.issueId);
+        if (issue && issue.institute) {
+          notif.institute = issue.institute;
+        }
+      }
+      if (notif.recipient) {
+        notif.targetRole = 'personal';
+      }
+      if (notif.institute) {
+        await notif.save();
+      }
+    }
 
     // 4. Remove any random unsplash avatars previously assigned to users
     await User.updateMany(

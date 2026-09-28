@@ -70,7 +70,9 @@ const NotificationBell = () => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await api.get('/notifications');
+      const res = await api.get('/notifications', {
+        params: user?.institute ? { institute: user.institute } : {},
+      });
       if (res.data && res.data.notifications) {
         const items = res.data.notifications.map((n) => ({
           ...n,
@@ -109,7 +111,7 @@ const NotificationBell = () => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.institute]);
 
   const markRead = async (id) => {
     try {
