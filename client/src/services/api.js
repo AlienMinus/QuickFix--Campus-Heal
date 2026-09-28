@@ -38,9 +38,14 @@ export const issueAPI = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   upvote: (id) => api.post(`/issues/${id}/upvote`),
-  updateStatus: (id, formData) => api.patch(`/issues/${id}/status`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  updateStatus: (id, payload) => {
+    if (payload instanceof FormData) {
+      return api.put(`/issues/${id}/status`, payload, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    return api.put(`/issues/${id}/status`, payload);
+  },
   addComment: (id, text) => api.post(`/issues/${id}/comment`, { text }),
   checkDuplicates: (params) => api.get('/issues/check-duplicate', { params }),
   getStats: () => api.get('/issues/stats/overview'),

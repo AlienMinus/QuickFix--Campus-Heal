@@ -9,6 +9,7 @@ import {
   FaTasks,
   FaUserShield,
   FaUser,
+  FaUserCog,
 } from 'react-icons/fa';
 
 const BottomNav = () => {
@@ -28,7 +29,7 @@ const BottomNav = () => {
 
   const getDashboardIcon = () => {
     if (isAdmin) return <FaUserShield />;
-    if (isStaff) return <FaTasks />;
+    if (isStaff) return <FaUserCog />;
     return <FaUser />;
   };
 

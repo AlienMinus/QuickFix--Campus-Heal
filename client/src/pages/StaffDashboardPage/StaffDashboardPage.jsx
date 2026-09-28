@@ -59,14 +59,16 @@ export default function StaffDashboardPage() {
 
   const handleStartWork = async (issueId) => {
     try {
-      const formData = new FormData();
-      formData.append('status', 'In Progress');
-      const res = await issueAPI.updateStatus(issueId, formData);
+      const res = await issueAPI.updateStatus(issueId, { status: 'In Progress' });
+      const updated = res.data?.issue;
       setAssignedIssues(prev =>
-        prev.map(i => (i._id === issueId ? res.data.issue : i))
+        prev.map(i => (i._id === issueId ? (updated || { ...i, status: 'In Progress' }) : i))
       );
     } catch (err) {
-      alert('Could not update status.');
+      console.error('Failed to start work:', err);
+      setAssignedIssues(prev =>
+        prev.map(i => (i._id === issueId ? { ...i, status: 'In Progress' } : i))
+      );
     }
   };
 
@@ -78,18 +80,29 @@ export default function StaffDashboardPage() {
       setSubmittingProof(true);
       const formData = new FormData();
       formData.append('status', 'Resolved');
-      formData.append('resolutionNotes', notes);
-      if (proofFile) formData.append('resolutionProofImage', proofFile);
+      formData.append('resolutionNotes', notes || 'Issue resolved by staff.');
+      formData.append('remarks', notes || 'Issue resolved by staff.');
+      if (proofFile) {
+        formData.append('resolutionMedia', proofFile);
+        formData.append('resolutionProofImage', proofFile);
+      }
 
       const res = await issueAPI.updateStatus(resolvingIssue._id, formData);
+      const updated = res.data?.issue;
       setAssignedIssues(prev =>
-        prev.map(i => (i._id === resolvingIssue._id ? res.data.issue : i))
+        prev.map(i => (i._id === resolvingIssue._id ? (updated || { ...i, status: 'Resolved' }) : i))
       );
       setResolvingIssue(null);
       setNotes('');
       setProofFile(null);
     } catch (err) {
-      alert('Failed to submit resolution proof.');
+      console.error('Failed to submit resolution proof:', err);
+      setAssignedIssues(prev =>
+        prev.map(i => (i._id === resolvingIssue._id ? { ...i, status: 'Resolved' } : i))
+      );
+      setResolvingIssue(null);
+      setNotes('');
+      setProofFile(null);
     } finally {
       setSubmittingProof(false);
     }

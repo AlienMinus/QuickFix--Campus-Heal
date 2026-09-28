@@ -219,8 +219,9 @@ exports.updateIssueStatus = async (req, res) => {
     issue.status = status;
 
     let resolutionMediaUrl = issue.resolutionDetails ? issue.resolutionDetails.resolutionMediaUrl : '';
-    if (req.file) {
-      const media = getMediaUrl(req, req.file);
+    const uploadedFile = req.file || (req.files && (req.files.resolutionMedia?.[0] || req.files.resolutionProofImage?.[0] || req.files.media?.[0]));
+    if (uploadedFile) {
+      const media = getMediaUrl(req, uploadedFile);
       if (media) resolutionMediaUrl = media.url;
     } else if (req.body.resolutionMediaUrl) {
       resolutionMediaUrl = req.body.resolutionMediaUrl;
