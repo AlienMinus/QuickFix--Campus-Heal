@@ -102,6 +102,22 @@ Every ticket features a dedicated real-time progress page:
 
 ---
 
+### 3.5 Institute-Scoped Live Notifications & Passive Feed
+The notification bell in the top navigation bar delivers real-time ticket alerts:
+1. **Strict Institute Boundary:** Students and staff only receive notifications generated within their own enrolled campus. Cross-campus notifications are completely filtered out.
+2. **Impersonal Passive Phrasing:** Broadcast notifications are written in clean passive voice without second-person pronouns (e.g., *"Reported issue status has been updated to 'Resolved'"* and *"Technician has been assigned to resolve the issue at Main Academic Block"*), preventing confusion across students or staff viewing the alert list.
+3. **Personalized Privacy Routing:** Ticket status updates and assignment dispatches are securely routed only to the reporter and assigned staff.
+
+---
+
+### 3.6 Dynamic Registration & Academic Stream Selection (`/register`)
+When new students or staff members create an account:
+1. **Dynamic Campus Binding:** Selecting an **Institute / College** from the dropdown instantly queries that institute's active registry via `GET /api/institutes/branches/:identifier`.
+2. **Synchronized Stream Dropdown:** The **Department / Academic Stream** select list dynamically populates with the exact branches configured by that college's administrator (e.g., *Computer Science & Engineering (CSE)*, *AI & DS*, *Mechanical Engineering*, *MBA*).
+3. **Dedicated Campus Data:** Account data, reports, and zones remain isolated within the selected college.
+
+---
+
 ## 4. 🛠️ Field Maintenance Staff Manual (`/staff`)
 
 The Staff Portal is engineered for field technicians on duty across campus.
@@ -190,6 +206,26 @@ Tap the **"Export CSV"** button in the header of the Admin Dashboard. The system
 
 ---
 
+### 5.8 Institute Header Customization (Normal Admin)
+Normal college administrators have dedicated controls to customize portal branding for their campus:
+1. Tap the **"Customize"** button in the Admin Dashboard header to open the **Institute Header Customization** modal.
+2. Edit **Institute / Campus Header Title** and **Header Tagline / Subtitle**.
+3. Changes immediately update the portal navbar branding for all students, technicians, and faculty belonging to that college (`PUT /api/institutes/my-institute/header`).
+4. **Security Boundary:** Normal administrators cannot modify or access the platform-wide Global Header.
+
+---
+
+### 5.9 Academic Branches & Streams Registry
+Campus administrators can manage the official list of academic departments and streams offered by their institution:
+1. Navigate to the **"Academic Branches & Streams"** section in the Admin Console (accessible via the section selector dropdown or dashboard tabs).
+2. **Add New Stream:** Tap **"+ Add New Stream"**, input the academic stream name (e.g., *Computer Science & Engineering (CSE)*, *Electrical & Electronics Engineering (EEE)*, *MBA*), and confirm.
+3. **Edit Stream:** Tap the edit icon to rename or update stream designations.
+4. **Delete Stream:** Remove obsolete or inactive streams with confirmation.
+5. **Reset to Defaults:** Restore the 10 standard engineering and management defaults at any time.
+6. **Live Registration Synchronization:** All active streams configured here instantly populate the *Department / Academic Stream* dropdown on the user registration page for new students and staff joining this college.
+
+---
+
 ## 6. 👑 Super Administrator Manual (Apex Governance Directorate)
 
 When logged in as `superadmin@quickfix.org`, the user is directed to the dedicated **Super Admin Directorate** (`/superadmin`).
@@ -219,6 +255,31 @@ The Super Admin dashboard displays aggregated platform-wide counters:
 * **Total Platform Users:** Total registered users system-wide (aggregated count only, zero private records exposed).
 * **Field Staff Personnel:** Total active maintenance technicians across all campuses.
 * **Security Governance:** Status of role-based access control (RBAC) and privacy isolation.
+
+---
+
+### 6.4 Global Platform Header Governance
+Super Administrators hold exclusive central authority over the platform-wide brand identity:
+1. Tap the **"Global Header"** button in the directorate header actions bar.
+2. Configure **Platform Name / Main Header Title** (e.g., *Smart Campus QuickFix*), **Secondary Subtitle**, and **Header Tagline / Mission**.
+3. Changes update central platform branding for guests, unauthenticated landing screens, login/register pages, and Super Admin views via `PUT /api/settings/global-header`.
+4. Stored centrally in the `SystemSetting` key-value collection (`global_header`).
+
+---
+
+### 6.5 Campus Facility Category Governance
+Super Administrators manage the standardized campus maintenance taxonomy:
+1. Tap **"Define Category"** in the directorate top action bar.
+2. Specify Category Name (e.g., *HVAC & Climate Control*, *Fire Safety & Extinguishers*), unique Category Code (e.g., `HVAC`, `FIRE`), Description, Default Severity Level (*Low*, *Medium*, *High*, *Critical*), SLA Target Turnaround Hours, Icon, and Status (*Active* / *Inactive*).
+3. Super Admins can edit existing categories, adjust SLA requirements, or remove categories from governance.
+4. Changes automatically propagate across all campus reporting forms, dynamic hashtag dropdowns, and analytics filters.
+
+---
+
+### 6.6 Responsive KPI Grid
+The Super Admin console features an adaptive executive grid:
+* **Large Desktop Viewports:** Enhanced 4-column layout with spacious typography and instant status chips.
+* **Tablet & Mobile Screens:** Clean stacked auto-fitting cards with optimal alignment and zero horizontal overflow.
 
 ---
 

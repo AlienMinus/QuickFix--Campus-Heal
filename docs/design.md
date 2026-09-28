@@ -99,8 +99,10 @@ The backend isolates business operations into distinct controllers:
 | [`issueController.js`](file:///e:/Semesters/7th%20Sem/Tech-Carnival2026/server/controllers/issueController.js) | Issue lifecycle, duplicate detection, media upload, upvoting, status updates. | `createIssue()`, `getIssues()`, `getIssueById()`, `updateIssueStatus()`, `upvoteIssue()`, `checkDuplicates()`, `assignIssue()` |
 | [`locationController.js`](file:///e:/Semesters/7th%20Sem/Tech-Carnival2026/server/controllers/locationController.js) | 1-second continuous GPS stream ingestion, geofencing, recent active staff queries. | `logLocation()`, `getLatestLocations()`, `getLocationHistory()`, `getCampusZones()` |
 | [`adminController.js`](file:///e:/Semesters/7th%20Sem/Tech-Carnival2026/server/controllers/adminController.js) | Executive KPI aggregations, user role elevation, technician assignment, duplicate merging. | `getDashboardStats()`, `getAllUsers()`, `updateUserRole()`, `assignTechnician()`, `mergeDuplicates()`, `deleteIssue()` |
-| [`instituteController.js`](file:///e:/Semesters/7th%20Sem/Tech-Carnival2026/server/controllers/instituteController.js) | Multi-campus tenancy management, college registration, global superadmin oversight. | `getInstitutes()`, `createInstitute()`, `updateInstitute()`, `deleteInstitute()`, `getSuperAdminOverview()` |
-| [`notificationController.js`](file:///e:/Semesters/7th%20Sem/Tech-Carnival2026/server/controllers/notificationController.js) | Role-targeted notification dispatching, feed retrieval, read acknowledgments. | `getNotifications()`, `markAsRead()` |
+| [`instituteController.js`](file:///e:/Semesters/7th%20Sem/Tech-Carnival2026/server/controllers/instituteController.js) | Multi-campus tenancy management, college registration, normal admin institute header branding, academic branches/streams registry, global superadmin overview. | `getInstitutes()`, `createInstitute()`, `updateInstitute()`, `deleteInstitute()`, `getMyInstitute()`, `updateMyInstituteHeader()`, `getMyInstituteBranches()`, `updateMyInstituteBranches()`, `getInstituteBranches()` |
+| [`notificationController.js`](file:///e:/Semesters/7th%20Sem/Tech-Carnival2026/server/controllers/notificationController.js) | Strict campus-isolated notification routing, impersonal passive formatting, role/personal targeting. | `getNotifications()`, `markAsRead()` |
+| [`settingsController.js`](file:///e:/Semesters/7th%20Sem/Tech-Carnival2026/server/controllers/settingsController.js) | Central global platform settings (strictly Super Admin authorized) for platform name, subtitle, and mission branding. | `getGlobalHeader()`, `updateGlobalHeader()` |
+| [`categoryController.js`](file:///e:/Semesters/7th%20Sem/Tech-Carnival2026/server/controllers/categoryController.js) | Standardized facility category taxonomy, default severities, and SLA turnaround hour governance. | `getCategories()`, `createCategory()`, `updateCategory()`, `deleteCategory()` |
 
 ### 2.3 Middleware & Security (`middleware/authMiddleware.js`)
 - `protect`: Extracts the `Bearer <token>` from the HTTP `Authorization` header, verifies the JWT using the secret key, fetches the user record from MongoDB, and attaches it to `req.user`.
@@ -139,6 +141,8 @@ erDiagram
         string city
         string state
         string status
+        object headerConfig "name, subtitle, tagline"
+        array branches "Academic streams & departments"
         array zones
     }
 
@@ -162,6 +166,7 @@ erDiagram
         string title
         string description
         string category
+        array categories "Multi-category tags"
         string severity "Low | Medium | High | Critical"
         number priorityScore
         string status "Submitted | In Progress | Resolved"
@@ -195,25 +200,46 @@ erDiagram
     NOTIFICATION {
         ObjectId _id PK
         ObjectId recipient FK
-        string targetRole "all | student | staff | admin"
+        string institute "Campus Boundary Isolation"
+        string targetRole "all | student | staff | admin | personal"
         string title
-        string message
+        string message "Impersonal Passive Phrasing"
         string type
         ObjectId issueId FK
         boolean read
         date createdAt
     }
+
+    SYSTEM_SETTING {
+        ObjectId _id PK
+        string key UK "e.g. global_header"
+        object value "name, subtitle, tagline"
+        date updatedAt
+    }
+
+    CATEGORY {
+        ObjectId _id PK
+        string name UK
+        string code UK
+        string description
+        string defaultSeverity
+        string icon
+        number slaHours
+        string status "Active | Inactive"
+    }
 ```
 
 ### 3.2 Data Models In-Depth
 1. **User Schema (`models/User.js`):** Stores user identity, hashed credentials, assigned role, institute affiliation, student/staff identifier, and last known GPS telemetry coordinates.
-2. **Issue Schema (`models/Issue.js`):** Central document representing maintenance tickets. Embeds location coordinates, Cloudinary media pointers, resolution details (notes and proof photo URL), upvote references, and a full chronological `statusHistory` array.
+2. **Issue Schema (`models/Issue.js`):** Central document representing maintenance tickets. Embeds location coordinates, Cloudinary media pointers, resolution details (notes and proof photo URL), upvote references, multi-category tags (`categories: [String]`), and a full chronological `statusHistory` array.
 3. **LocationLog Schema (`models/LocationLog.js`):** Captures high-frequency 1-second telematics pings. Features a MongoDB TTL index on `loggedAt`:
    ```javascript
    locationLogSchema.index({ loggedAt: 1 }, { expireAfterSeconds: 604800 }); // 7 Days
    ```
-4. **Notification Schema (`models/Notification.js`):** Handles internal event broadcasts. Supports broadcast by role or targeted notification by user ID.
-5. **Institute Schema (`models/Institute.js`):** Manages multi-campus tenancy, storing institutional codes (e.g. `GIFT-01`, `BPUT-MAIN`), zones, and contact credentials.
+4. **Notification Schema (`models/Notification.js`):** Handles internal campus alerts with strict multi-campus isolation via `institute`, supporting role broadcasts or private direct routing (`targetRole: 'personal'`). Employs passive phrasing for clarity.
+5. **Institute Schema (`models/Institute.js`):** Manages multi-campus tenancy, storing institutional codes (e.g. `SILICON`, `BPUT-MAIN`), zones, contact credentials, customized header branding (`headerConfig: { name, subtitle, tagline }`), and active academic streams (`branches: [String]`).
+6. **SystemSetting Schema (`models/SystemSetting.js`):** Key-value document store for apex governance, securing the central platform-wide header branding (`key: 'global_header'`) accessible exclusively to Super Administrators.
+7. **Category Schema (`models/Category.js`):** Maintains the standardized facility maintenance taxonomy, default severity levels, icons, and target SLA turnaround hours.
 
 ---
 

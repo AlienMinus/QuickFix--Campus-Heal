@@ -89,6 +89,7 @@ This specification directly fulfills the official evaluation parameters of the *
 * **FR-1.3: Google OAuth 2.0 Integration:** The system shall support one-click Single Sign-On (SSO) via Google OAuth 2.0 with backend token verification.
 * **FR-1.4: 1-Click Evaluator Fast Login:** The login interface shall provide one-click demo login buttons for Student (`student.demo@gift.ac.in`), Staff (`maintenance.staff@gift.ac.in`), Admin (`admin.campus@gift.ac.in`), and Super Admin (`superadmin@quickfix.org`) to enable instant evaluation without manual typing.
 * **FR-1.5: Role-Based Access Control (RBAC):** Backend endpoints shall enforce route-level authorization guards preventing non-privileged users from performing administrative or staff-restricted operations.
+* **FR-1.6: Dynamic Academic Stream Population on Registration:** When registering a new account, selecting an Institute shall dynamically fetch and populate the official academic branches/streams registered by that institution via `GET /api/institutes/branches/:identifier`.
 
 ### Module 2: Smart Multi-Modal Issue Reporting
 * **FR-2.1: Structured Issue Submission:** Users shall be able to submit issues specifying Title, Description, Category, Severity, Building, Room, Landmark, and GPS coordinates.
@@ -150,17 +151,25 @@ This specification directly fulfills the official evaluation parameters of the *
 * **FR-9.3: User Role Management:** Administrators can view all registered campus members and promote or demote roles (`student` $\leftrightarrow$ `staff` $\leftrightarrow$ `admin`).
 * **FR-9.4: Campus Zone Configuration:** Administrators can add, edit, or delete campus zones with custom coordinates, category defaults, and inspection recommendations.
 * **FR-9.5: 1-Click CSV Export:** Administrators can export comprehensive campus ticket logs to CSV format for board presentations and compliance audits.
+* **FR-9.6: Institute Header Branding Customization:** Normal college administrators shall have exclusive authority to customize the navbar title and tagline specifically for members of their own college (`PUT /api/institutes/my-institute/header`), while being strictly barred from altering the global platform header.
+* **FR-9.7: Academic Branches & Streams Management Console:** Administrators shall be able to manage the registered departments/streams offered by their campus (add, edit, delete, reorder, and reset to defaults) to govern registration options.
 
 ### Module 10: Super Administrator Governance Directorate (`/superadmin`)
 * **FR-10.1: Campus Administrator Governance:** Super administrators have dedicated authority to manage normal campus administrators across all colleges (creating new admin accounts, updating administrative assignments, resetting credentials, or revoking accounts).
 * **FR-10.2: Privacy Safeguard & Isolation:** Super administrators are strictly insulated from private student complaints, personal descriptions, and direct discussion logs; civic maintenance data remains confidential at the campus administrator level.
 * **FR-10.3: Unified Management (No Institute Filter):** All normal campus administrators are managed in a consolidated directory without institute dropdown filtering.
 * **FR-10.4: Modular CSV Data Seeding:** The backend initializes campus seed datasets (institutions, user credentials, and maintenance issues) from structured CSV files located in `server/data/` (`institutes.csv`, `users.csv`, `issues.csv`).
+* **FR-10.5: Global Platform Header Governance:** Super administrators shall hold exclusive authority over central platform header branding (`PUT /api/settings/global-header`), setting the central platform name, subtitle, and mission tagline.
+* **FR-10.6: Centralized Campus Facility Category Governance:** Super administrators shall be able to define, edit, and manage platform-wide maintenance categories (`/api/categories`), default severity levels, icons, and SLA turnaround hour standards.
+* **FR-10.7: Responsive Directorate KPI Grid:** The directorate dashboard shall adapt fluidly between 4-column large desktop monitors and stacked mobile viewports without layout breaking or misalignment.
 
 ### Module 11: Real-Time Campus Notifications
 * **FR-11.1: Role-Targeted Broadcasts:** Notifications shall support targeting by role (`all`, `student`, `staff`, `admin`) or direct user recipient.
 * **FR-11.2: Ticket Event Triggers:** Automated notifications shall be dispatched upon ticket submission (notifying staff), task assignment (notifying technician), and status changes (notifying reporter).
 * **FR-11.3: Read State Tracking:** Users can mark notifications as read, updating the unread counter in the navigation bell.
+* **FR-11.4: Strict Institute-Level Boundary Isolation:** The system shall strictly confine all notifications within the authenticated user's own institute (`institute: userInstitute`), preventing alerts from broadcasting across college boundaries.
+* **FR-11.5: Impersonal Passive Voice Phrasing:** All broadcast notifications shall be phrased in impersonal passive voice without second-person pronouns (e.g., *"Reported issue status has been updated to..."* and *"Technician has been assigned to resolve the issue at..."*).
+* **FR-11.6: Personal Route Targeting:** Private work orders and reporter status updates (`targetRole: 'personal'`) shall be delivered exclusively to the designated recipient user ID.
 
 ---
 

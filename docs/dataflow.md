@@ -520,4 +520,196 @@ sequenceDiagram
 
 ---
 
+### 3.5 Global & Institutional Header Branding Endpoints (`/api/settings` & `/api/institutes`)
+
+#### `GET /api/settings/global-header` (Public)
+* **Response Payload (HTTP 200):**
+  ```json
+  {
+    "success": true,
+    "header": {
+      "name": "Smart Campus QuickFix",
+      "subtitle": "Civic & Facility Operations",
+      "tagline": "Rapid Resolution Platform"
+    }
+  }
+  ```
+
+#### `PUT /api/settings/global-header` (Super Admin Only)
+* **Headers:** `Authorization: Bearer <superadmin_jwt>`
+* **Request Payload:**
+  ```json
+  {
+    "name": "Apex Smart Campus QuickFix",
+    "subtitle": "Central Directorate Operations",
+    "tagline": "Real-Time Telematics & Governance"
+  }
+  ```
+* **Response Payload (HTTP 200):**
+  ```json
+  {
+    "success": true,
+    "message": "Global platform header updated successfully",
+    "header": { ... }
+  }
+  ```
+* *Access Restriction:* Returns HTTP 403 Forbidden if called by normal admin or regular user.
+
+#### `PUT /api/institutes/my-institute/header` (Normal Admin Only)
+* **Headers:** `Authorization: Bearer <admin_jwt>`
+* **Request Payload:**
+  ```json
+  {
+    "name": "GIFT Autonomous College",
+    "subtitle": "Campus Facility & Maintenance Operations"
+  }
+  ```
+* **Response Payload (HTTP 200):**
+  ```json
+  {
+    "success": true,
+    "message": "Institute header updated successfully",
+    "headerConfig": { ... }
+  }
+  ```
+
+---
+
+### 3.6 Academic Branches & Registration Endpoints (`/api/institutes`)
+
+#### `GET /api/institutes/my-institute/branches` (Normal Admin Only)
+* **Headers:** `Authorization: Bearer <admin_jwt>`
+* **Response Payload (HTTP 200):**
+  ```json
+  {
+    "success": true,
+    "institute": "GIFT Autonomous College",
+    "branches": [
+      "Computer Science & Engineering (CSE)",
+      "Artificial Intelligence & Data Science (AI&DS)",
+      "Mechanical Engineering (ME)",
+      "Electrical & Electronics Engineering (EEE)",
+      "MBA / Management Studies"
+    ]
+  }
+  ```
+
+#### `PUT /api/institutes/my-institute/branches` (Normal Admin Only)
+* **Headers:** `Authorization: Bearer <admin_jwt>`
+* **Request Payload:**
+  ```json
+  {
+    "branches": [
+      "Computer Science & Engineering (CSE)",
+      "Artificial Intelligence & Machine Learning (AI&ML)",
+      "Electronics & Telecommunication (ETC)",
+      "Civil Engineering (CE)"
+    ]
+  }
+  ```
+* **Response Payload (HTTP 200):**
+  ```json
+  {
+    "success": true,
+    "message": "Branches for GIFT Autonomous College updated successfully",
+    "branches": [ ... ]
+  }
+  ```
+
+#### `GET /api/institutes/branches/:identifier` (Public — Registration Lookup)
+* **URL Parameter:** `identifier` = Institute Name or Code (URL-encoded)
+* **Response Payload (HTTP 200):**
+  ```json
+  {
+    "success": true,
+    "institute": "Silicon Institute of Technology",
+    "branches": [
+      "Computer Science & Engineering (CSE)",
+      "Information Technology (IT)",
+      "Electrical & Electronics Engineering (EEE)"
+    ],
+    "headerConfig": { ... }
+  }
+  ```
+
+---
+
+### 3.7 Campus Facility Category Endpoints (`/api/categories`)
+
+#### `GET /api/categories` (Public)
+* **Response Payload (HTTP 200):**
+  ```json
+  {
+    "success": true,
+    "categories": [
+      {
+        "_id": "66f81010e0b123456789aaaa",
+        "name": "Electrical & Lighting",
+        "code": "ELEC",
+        "defaultSeverity": "High",
+        "slaHours": 12,
+        "icon": "bolt",
+        "status": "Active"
+      }
+    ]
+  }
+  ```
+
+#### `POST /api/categories` (Super Admin Only)
+* **Headers:** `Authorization: Bearer <superadmin_jwt>`
+* **Request Payload:**
+  ```json
+  {
+    "name": "HVAC & Air Conditioning",
+    "code": "HVAC",
+    "description": "Central AC, Split Units, Ducting, Chiller Plants",
+    "defaultSeverity": "Medium",
+    "slaHours": 24,
+    "icon": "snowflake",
+    "status": "Active"
+  }
+  ```
+
+---
+
+### 3.8 Real-Time Notifications Endpoints (`/api/notifications`)
+
+#### `GET /api/notifications`
+* **Headers:** `Authorization: Bearer <jwt_token>` (Optional query param: `?institute=...`)
+* **Behavior:**
+  * Strictly scoped to the authenticated user's `institute`.
+  * Returns user-specific dispatches (`recipient: userId`) and role broadcast alerts (`targetRole: 'all' | userRole`).
+  * Text automatically formatted in passive voice without personal pronouns.
+* **Response Payload (HTTP 200):**
+  ```json
+  {
+    "success": true,
+    "count": 2,
+    "notifications": [
+      {
+        "_id": "6abaad39262182e71363eabb",
+        "title": "Task Assigned: Damaged Staircase Granite Edge",
+        "message": "Technician has been assigned to resolve the issue at Main Academic Block (MAB) (Medium severity).",
+        "type": "assignment",
+        "targetRole": "personal",
+        "institute": "BPUT Tech Campus",
+        "read": false,
+        "createdAt": "2026-09-28T23:38:00.000Z"
+      },
+      {
+        "_id": "6aba7dddf722042f91cc5308",
+        "title": "Issue Status Update: Water Pipe Leakage Flooding Washroom",
+        "message": "Reported issue status has been updated to \"Resolved\".",
+        "type": "issue_status",
+        "targetRole": "personal",
+        "institute": "BPUT Tech Campus",
+        "read": true,
+        "createdAt": "2026-09-28T20:16:00.000Z"
+      }
+    ]
+  }
+  ```
+
+---
+
 *End of Data Flow & Interaction Architecture Document.*

@@ -30,8 +30,9 @@ It bridges the communication gap between students, facility maintenance technici
 | **10** | **SVG Favicon & Manifest** | Vector favicon (`favicon.svg`) and PWA web app manifest (`manifest.json`) for native-like mobile homescreen installation. |
 | **11** | **Modular Architecture** | Clean component/page hierarchy: `components/ModuleName/ModuleName.jsx` + `.css` and `pages/ModulePage/ModulePage.jsx` + `.css`. |
 | **12** | **Deployment Manifests** | Production deployment configurations ready for **Vercel** (`vercel.json`, `client/vercel.json`) and **Render** (`render.yaml`). |
-| **13** | **Multi-Role Portals** | Dedicated experiences for **Students**, **Maintenance Staff**, and a comprehensive **Admin Dashboard** (`usertype: 'admin'`). |
+| **13** | **Multi-Role Portals** | Dedicated experiences for **Students**, **Maintenance Staff**, **College Admins**, and an Apex **Super Admin Directorate**. |
 | **14** | **7-Day JWT Sessions** | JSON Web Tokens signed with HMAC-SHA256 and configured with 7-day validity (`expiresIn: '7d'`). |
+| **15** | **Multi-Tenant Governance** | Global vs. Institute Header branding, academic stream registries, dynamic registration binding, and isolated campus notifications. |
 
 ---
 
@@ -334,8 +335,23 @@ npm run build
 * `PATCH /api/admin/issues/:id/assign` — Assign work order to specific technician
 * `DELETE /api/admin/issues/:id` — Remove invalid or spam ticket
 
-### Notifications (`/api/notifications`)
-* `GET /api/notifications` — Fetch user's notification feed
+### Multi-Campus Tenancy & Headers (`/api/institutes` & `/api/settings`)
+* `GET /api/settings/global-header` — Retrieve central platform branding
+* `PUT /api/settings/global-header` — Update central platform branding (Super Admin only)
+* `GET /api/institutes/my-institute/header` — Get college header branding
+* `PUT /api/institutes/my-institute/header` — Update college navbar branding (Normal Admin only)
+* `GET /api/institutes/my-institute/branches` — Fetch academic streams for college
+* `PUT /api/institutes/my-institute/branches` — Update academic streams (Normal Admin only)
+* `GET /api/institutes/branches/:identifier` — Fetch streams and branding for registration
+
+### Facility Category Governance (`/api/categories`)
+* `GET /api/categories` — List standardized maintenance categories and SLAs
+* `POST /api/categories` — Create new facility maintenance category (Super Admin only)
+* `PUT /api/categories/:id` — Update category properties and turnaround hours (Super Admin only)
+* `DELETE /api/categories/:id` — Remove category from governance (Super Admin only)
+
+### Real-Time Campus Notifications (`/api/notifications`)
+* `GET /api/notifications` — Fetch institute-isolated notification feed (strictly scoped to user's campus)
 * `PATCH /api/notifications/:id/read` — Mark notification as acknowledged
 
 ---
