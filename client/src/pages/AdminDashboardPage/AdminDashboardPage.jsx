@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
+import { useOrg } from '../../context/OrgContext';
 import { adminAPI, issueAPI, locationAPI } from '../../services/api';
 import SeverityBadge from '../../components/SeverityBadge/SeverityBadge';
 import {
@@ -8,20 +10,36 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaUsers,
-  FaClock,
   FaFileDownload,
   FaUserShield,
   FaTrash,
-  FaTools,
   FaSync,
   FaFilter,
   FaSatelliteDish,
-  FaSearch
+  FaSearch,
+  FaQrcode,
+  FaPlus,
+  FaDownload,
+  FaPrint,
+  FaTimes,
+  FaBuilding,
+  FaLightbulb,
 } from 'react-icons/fa';
 import './AdminDashboardPage.css';
 
+const CATEGORIES = [
+  'Damaged Infrastructure',
+  'Electrical & Lighting',
+  'Water Leakage & Plumbing',
+  'Cleanliness & Sanitation',
+  'Network & Wi-Fi',
+  'Lab & Classroom Equipment',
+  'Safety & Security Hazard',
+];
+
 export default function AdminDashboardPage() {
   const { user } = useAuth();
+  const { orgConfig, updateOrgInfo, zones, addZone, deleteZone } = useOrg();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState(null);
@@ -30,11 +48,29 @@ export default function AdminDashboardPage() {
   const [activeStaff, setActiveStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  // Table filters
+
+  // Table filters & active tab
   const [tableFilter, setTableFilter] = useState('all');
   const [tableSearch, setTableSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('issues'); // 'issues' | 'users' | 'patrol'
+  const [activeTab, setActiveTab] = useState('issues'); // 'issues' | 'zones' | 'users' | 'patrol'
+
+  // Organization branding form state
+  const [orgName, setOrgName] = useState(orgConfig.name);
+  const [orgSubtitle, setOrgSubtitle] = useState(orgConfig.subtitle);
+  const [orgSavedToast, setOrgSavedToast] = useState(false);
+
+  // New Zone Form state
+  const [newZoneName, setNewZoneName] = useState('');
+  const [newBuilding, setNewBuilding] = useState('');
+  const [newRoom, setNewRoom] = useState('');
+  const [newCategory, setNewCategory] = useState(CATEGORIES[0]);
+  const [newRecommendation, setNewRecommendation] = useState('');
+  const [newLat, setNewLat] = useState('20.2195');
+  const [newLng, setNewLng] = useState('85.7360');
+
+  // QR Modal preview state
+  const [activeQRZone, setActiveQRZone] = useState(null);
+  const [generatedQRUrl, setGeneratedQRUrl] = useState('');
 
   const fetchAdminData = async () => {
     try {
@@ -44,7 +80,7 @@ export default function AdminDashboardPage() {
         adminAPI.getStats(),
         issueAPI.getAll({ limit: 100 }),
         adminAPI.getUsers(),
-        locationAPI.getActiveStaff()
+        locationAPI.getActiveStaff(),
       ]);
 
       if (statsRes.status === 'fulfilled') setStats(statsRes.value.data.stats);
@@ -62,11 +98,70 @@ export default function AdminDashboardPage() {
     fetchAdminData();
   }, []);
 
+  const handleSaveOrgInfo = (e) => {
+    e.preventDefault();
+    updateOrgInfo(orgName.trim(), orgSubtitle.trim());
+    setOrgSavedToast(true);
+    setTimeout(() => setOrgSavedToast(false), 3000);
+  };
+
+  const handleAddZone = (e) => {
+    e.preventDefault();
+    if (!newZoneName.trim() || !newBuilding.trim()) {
+      alert('Please provide Zone Name and Building.');
+      return;
+    }
+
+    addZone({
+      name: newZoneName.trim(),
+      building: newBuilding.trim(),
+      room: newRoom.trim(),
+      category: newCategory,
+      recommendation: newRecommendation.trim() || 'Standard facility inspection.',
+      lat: parseFloat(newLat) || 20.2195,
+      lng: parseFloat(newLng) || 85.7360,
+    });
+
+    setNewZoneName('');
+    setNewBuilding('');
+    setNewRoom('');
+    setNewRecommendation('');
+  };
+
+  const handleGenerateQR = async (zone) => {
+    setActiveQRZone(zone);
+    try {
+      const payload = JSON.stringify({
+        zone: zone.name,
+        building: zone.building,
+        room: zone.room,
+        category: zone.category,
+        recommendation: zone.recommendation,
+        lat: zone.lat,
+        lng: zone.lng,
+      });
+
+      const qrUrl = await QRCode.toDataURL(payload, {
+        width: 320,
+        margin: 2,
+        color: {
+          dark: '#140b28',
+          light: '#ffffff',
+        },
+      });
+
+      setGeneratedQRUrl(qrUrl);
+    } catch (err) {
+      console.error('QR generation failed:', err);
+      alert('Failed to generate QR code.');
+    }
+  };
+
   const handleRoleChange = async (userId, newRole) => {
     try {
       await adminAPI.updateUserRole(userId, newRole);
-      setUsersList(prev =>
-        prev.map(u => (u._id === userId ? { ...u, role: newRole } : u))
+      setUsersList((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, role: newRole } : u))
       );
     } catch (err) {
       alert('Failed to update user role');
@@ -76,8 +171,8 @@ export default function AdminDashboardPage() {
   const handleAssignTechnician = async (issueId, staffId) => {
     try {
       const res = await adminAPI.assignTechnician(issueId, staffId);
-      setIssues(prev =>
-        prev.map(i => (i._id === issueId ? res.data.issue : i))
+      setIssues((prev) =>
+        prev.map((i) => (i._id === issueId ? res.data.issue : i))
       );
     } catch (err) {
       alert('Failed to assign technician');
@@ -88,7 +183,7 @@ export default function AdminDashboardPage() {
     if (!window.confirm('Are you sure you want to permanently delete this campus ticket?')) return;
     try {
       await adminAPI.deleteIssue(issueId);
-      setIssues(prev => prev.filter(i => i._id !== issueId));
+      setIssues((prev) => prev.filter((i) => i._id !== issueId));
     } catch (err) {
       alert('Failed to delete issue');
     }
@@ -97,7 +192,7 @@ export default function AdminDashboardPage() {
   const handleExportCSV = () => {
     if (!issues.length) return;
     const headers = ['TrackingID', 'Title', 'Category', 'Severity', 'Status', 'Zone', 'Location', 'ReportedBy', 'CreatedAt'];
-    const rows = issues.map(i => [
+    const rows = issues.map((i) => [
       i.trackingId || i._id,
       `"${(i.title || '').replace(/"/g, '""')}"`,
       i.category,
@@ -106,23 +201,24 @@ export default function AdminDashboardPage() {
       `"${i.zone || ''}"`,
       `"${(i.locationName || '').replace(/"/g, '""')}"`,
       `"${i.reportedBy?.name || 'Anonymous'}"`,
-      new Date(i.createdAt).toISOString()
+      new Date(i.createdAt).toISOString(),
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Campus_QuickFix_Report_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `${orgConfig.name.replace(/\s+/g, '_')}_Report_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const staffMembers = usersList.filter(u => u.role === 'staff' || u.role === 'admin');
+  const staffMembers = usersList.filter((u) => u.role === 'staff' || u.role === 'admin');
 
-  const filteredIssues = issues.filter(issue => {
+  const filteredIssues = issues.filter((issue) => {
     const matchesFilter = tableFilter === 'all' || issue.status === tableFilter;
-    const matchesSearch = !tableSearch || 
+    const matchesSearch =
+      !tableSearch ||
       issue.title?.toLowerCase().includes(tableSearch.toLowerCase()) ||
       issue.locationName?.toLowerCase().includes(tableSearch.toLowerCase()) ||
       issue.category?.toLowerCase().includes(tableSearch.toLowerCase());
@@ -131,18 +227,18 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="admin-page-container">
-      {/* Top Banner */}
+      {/* Top Banner with Generalized Organization Name */}
       <div className="admin-header-row">
         <div>
           <div className="admin-role-badge">
-            <FaUserShield /> GIFT Autonomous • Campus Command Center
+            <FaUserShield /> {orgConfig.name} • Command Center
           </div>
-          <h1>Operations & Facility Administration</h1>
+          <h1>Facility & Operations Administration</h1>
         </div>
 
         <div className="admin-header-actions">
           <button className="csv-export-btn" onClick={handleExportCSV}>
-            <FaFileDownload /> Export CSV Data
+            <FaFileDownload /> Export CSV
           </button>
           <button className="admin-refresh-btn" onClick={fetchAdminData} title="Refresh records">
             <FaSync className={loading ? 'spin' : ''} />
@@ -150,13 +246,13 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
+      {/* Small Square KPI Cards Grid with Reduced Text Size */}
       <div className="kpi-cards-grid">
         <div className="kpi-card total">
           <div className="kpi-icon-box"><FaChartLine /></div>
           <div className="kpi-details">
             <span className="kpi-number">{stats?.totalIssues ?? issues.length}</span>
-            <span className="kpi-label">Total Tickets Logged</span>
+            <span className="kpi-label">Total Logged</span>
           </div>
         </div>
 
@@ -164,9 +260,9 @@ export default function AdminDashboardPage() {
           <div className="kpi-icon-box"><FaCheckCircle /></div>
           <div className="kpi-details">
             <span className="kpi-number">
-              {stats?.resolutionRate ?? (issues.length ? Math.round((issues.filter(i => i.status === 'Resolved').length / issues.length) * 100) : 0)}%
+              {stats?.resolutionRate ?? (issues.length ? Math.round((issues.filter((i) => i.status === 'Resolved').length / issues.length) * 100) : 0)}%
             </span>
-            <span className="kpi-label">Resolution Rate</span>
+            <span className="kpi-label">Resolution</span>
           </div>
         </div>
 
@@ -174,9 +270,9 @@ export default function AdminDashboardPage() {
           <div className="kpi-icon-box"><FaExclamationTriangle /></div>
           <div className="kpi-details">
             <span className="kpi-number">
-              {issues.filter(i => i.severity === 'Critical' && i.status !== 'Resolved').length}
+              {issues.filter((i) => i.severity === 'Critical' && i.status !== 'Resolved').length}
             </span>
-            <span className="kpi-label">Critical Active Risks</span>
+            <span className="kpi-label">Critical Risks</span>
           </div>
         </div>
 
@@ -184,7 +280,7 @@ export default function AdminDashboardPage() {
           <div className="kpi-icon-box"><FaUsers /></div>
           <div className="kpi-details">
             <span className="kpi-number">{activeStaff.length}</span>
-            <span className="kpi-label">Staff On-Patrol (1s GPS)</span>
+            <span className="kpi-label">Staff Patrol</span>
           </div>
         </div>
       </div>
@@ -195,19 +291,25 @@ export default function AdminDashboardPage() {
           className={`tab-btn ${activeTab === 'issues' ? 'active' : ''}`}
           onClick={() => setActiveTab('issues')}
         >
-          Campus Issues Dispatch ({issues.length})
+          Issues Dispatch ({issues.length})
         </button>
         <button
-          className={`tab-btn ${activeTab === 'patrol' ? 'active' : ''}`}
-          onClick={() => setActiveTab('patrol')}
+          className={`tab-btn ${activeTab === 'zones' ? 'active' : ''}`}
+          onClick={() => setActiveTab('zones')}
         >
-          <FaSatelliteDish /> 1-Sec Staff Patrol Telemetry ({activeStaff.length})
+          <FaQrcode /> Zones & QR Generator ({zones.length})
         </button>
         <button
           className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => setActiveTab('users')}
         >
-          User Roles & Access Control ({usersList.length})
+          <FaUsers /> User Roles ({usersList.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'patrol' ? 'active' : ''}`}
+          onClick={() => setActiveTab('patrol')}
+        >
+          <FaSatelliteDish /> Staff Patrol ({activeStaff.length})
         </button>
       </div>
 
@@ -261,7 +363,7 @@ export default function AdminDashboardPage() {
                     <td colSpan={7} className="empty-table-msg">No tickets match criteria.</td>
                   </tr>
                 ) : (
-                  filteredIssues.map(issue => (
+                  filteredIssues.map((issue) => (
                     <tr key={issue._id}>
                       <td>
                         <strong
@@ -290,7 +392,7 @@ export default function AdminDashboardPage() {
                           className="staff-assign-select"
                         >
                           <option value="">Unassigned</option>
-                          {staffMembers.map(staff => (
+                          {staffMembers.map((staff) => (
                             <option key={staff._id} value={staff._id}>
                               {staff.name} ({staff.department || 'Staff'})
                             </option>
@@ -317,12 +419,258 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Tab 2: Live 1s Patrol Telemetry */}
+      {/* Tab 2: Campus Zones & QR Code Generator */}
+      {activeTab === 'zones' && (
+        <div className="zones-management-container">
+          {/* Organization Generalization Settings */}
+          <div className="admin-card-section">
+            <div className="section-title-wrap">
+              <FaBuilding className="sec-icon" />
+              <div>
+                <h3>Organization / Campus Customization</h3>
+                <p>Configure the organization name so the app can be deployed anywhere</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveOrgInfo} className="org-edit-form">
+              <div className="form-row-grid">
+                <div className="admin-form-group">
+                  <label>Campus / Organization Name</label>
+                  <input
+                    type="text"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    placeholder="e.g. Apex University, City Tech Park"
+                    className="admin-input"
+                    required
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label>Tagline / Subtitle</label>
+                  <input
+                    type="text"
+                    value={orgSubtitle}
+                    onChange={(e) => setOrgSubtitle(e.target.value)}
+                    placeholder="e.g. Facility & Operations Portal"
+                    className="admin-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-submit-row">
+                <button type="submit" className="save-org-btn">
+                  Save Organization Settings
+                </button>
+                {orgSavedToast && (
+                  <span className="saved-toast">
+                    <FaCheckCircle /> Organization updated across entire app!
+                  </span>
+                )}
+              </div>
+            </form>
+          </div>
+
+          {/* Add New Zone Form */}
+          <div className="admin-card-section">
+            <div className="section-title-wrap">
+              <FaPlus className="sec-icon" />
+              <div>
+                <h3>Define New Campus Zone & Inspection Advice</h3>
+                <p>Register a building or room to generate its physical QR code</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleAddZone} className="add-zone-form">
+              <div className="form-grid-three">
+                <div className="admin-form-group">
+                  <label>Zone Name *</label>
+                  <input
+                    type="text"
+                    value={newZoneName}
+                    onChange={(e) => setNewZoneName(e.target.value)}
+                    placeholder="e.g. Computer Science Lab 3"
+                    className="admin-input"
+                    required
+                  />
+                </div>
+
+                <div className="admin-form-group">
+                  <label>Building / Block *</label>
+                  <input
+                    type="text"
+                    value={newBuilding}
+                    onChange={(e) => setNewBuilding(e.target.value)}
+                    placeholder="e.g. Tech Block B"
+                    className="admin-input"
+                    required
+                  />
+                </div>
+
+                <div className="admin-form-group">
+                  <label>Room / Area</label>
+                  <input
+                    type="text"
+                    value={newRoom}
+                    onChange={(e) => setNewRoom(e.target.value)}
+                    placeholder="e.g. Room 204"
+                    className="admin-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-grid-two">
+                <div className="admin-form-group">
+                  <label>Recommended Category</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="admin-select"
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="admin-form-group">
+                  <label>Admin Recommendation Advice (Auto-fills on scan)</label>
+                  <input
+                    type="text"
+                    value={newRecommendation}
+                    onChange={(e) => setNewRecommendation(e.target.value)}
+                    placeholder="e.g. Check power sockets, AC cooling, and projectors"
+                    className="admin-input"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="create-zone-btn">
+                <FaPlus /> Add Zone to Campus Registry
+              </button>
+            </form>
+          </div>
+
+          {/* Zones Table with QR Generation */}
+          <div className="admin-table-card">
+            <div className="patrol-header">
+              <h3>Registered Campus Zones ({zones.length})</h3>
+              <p>Generate and print QR codes to paste on campus doors, walls, and desks</p>
+            </div>
+
+            <div className="responsive-table-wrapper">
+              <table className="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>Zone Name</th>
+                    <th>Location</th>
+                    <th>Default Category</th>
+                    <th>Recommendation Advice</th>
+                    <th>QR Action</th>
+                    <th>Delete</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {zones.map((zone) => (
+                    <tr key={zone.id}>
+                      <td>
+                        <strong>{zone.name}</strong>
+                      </td>
+                      <td>
+                        <span>{zone.building}</span>
+                        {zone.room && <span className="table-sub">{zone.room}</span>}
+                      </td>
+                      <td>
+                        <span className="zone-cat-pill">{zone.category}</span>
+                      </td>
+                      <td>
+                        <span className="advice-text">{zone.recommendation || 'Standard check'}</span>
+                      </td>
+                      <td>
+                        <button
+                          className="generate-qr-btn"
+                          onClick={() => handleGenerateQR(zone)}
+                          title="Generate QR code for this zone"
+                        >
+                          <FaQrcode /> View QR
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          className="delete-icon-btn"
+                          onClick={() => deleteZone(zone.id)}
+                          title="Delete zone"
+                        >
+                          <FaTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: User Role Management */}
+      {activeTab === 'users' && (
+        <div className="admin-table-card">
+          <div className="patrol-header">
+            <h3>Registered Users & Access Roles ({usersList.length})</h3>
+            <p>Assign administrative and maintenance staff privileges</p>
+          </div>
+
+          <div className="responsive-table-wrapper">
+            <table className="admin-data-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Department / Roll</th>
+                  <th>Current Role</th>
+                  <th>Change Permission</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersList.map((u) => (
+                  <tr key={u._id}>
+                    <td>
+                      <strong>{u.name}</strong>
+                    </td>
+                    <td>{u.email}</td>
+                    <td>{u.department || 'General Member'}</td>
+                    <td>
+                      <span className={`role-badge-cell ${u.role}`}>
+                        {u.role ? u.role.toUpperCase() : 'STUDENT'}
+                      </span>
+                    </td>
+                    <td>
+                      <select
+                        value={u.role || 'student'}
+                        onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                        className="role-change-select"
+                      >
+                        <option value="student">Student</option>
+                        <option value="staff">Maintenance Staff</option>
+                        <option value="admin">Administrator</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Live 1s Patrol Telemetry */}
       {activeTab === 'patrol' && (
         <div className="admin-table-card">
           <div className="patrol-header">
             <h3>Active Maintenance Staff Geo-Telemetry (MongoDB 1s Stream)</h3>
-            <p>Monitors high-frequency updates from mobile field technicians</p>
+            <p>Real-time location stream from mobile field personnel</p>
           </div>
 
           <div className="responsive-table-wrapper">
@@ -333,7 +681,7 @@ export default function AdminDashboardPage() {
                   <th>Department</th>
                   <th>Current Lat / Lng</th>
                   <th>Accuracy</th>
-                  <th>Last Ping</th>
+                  <th>Status</th>
                   <th>Live Map</th>
                 </tr>
               </thead>
@@ -345,7 +693,7 @@ export default function AdminDashboardPage() {
                     </td>
                   </tr>
                 ) : (
-                  activeStaff.map(staff => (
+                  activeStaff.map((staff) => (
                     <tr key={staff.userId || staff._id}>
                       <td>
                         <strong>{staff.name}</strong>
@@ -380,53 +728,47 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Tab 3: User Role Management */}
-      {activeTab === 'users' && (
-        <div className="admin-table-card">
-          <div className="patrol-header">
-            <h3>Registered Campus Users & Permissions</h3>
-            <p>Elevate students to maintenance staff or campus administrators</p>
-          </div>
+      {/* Modal: Generated QR Code for Zone */}
+      {activeQRZone && generatedQRUrl && (
+        <div className="admin-qr-modal-backdrop" onClick={() => setActiveQRZone(null)}>
+          <div className="admin-qr-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-qr-modal-header">
+              <h4>Zone QR Code: {activeQRZone.name}</h4>
+              <button
+                className="admin-qr-close"
+                onClick={() => setActiveQRZone(null)}
+              >
+                <FaTimes />
+              </button>
+            </div>
 
-          <div className="responsive-table-wrapper">
-            <table className="admin-data-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Email</th>
-                  <th>Department / Roll</th>
-                  <th>Current Role</th>
-                  <th>Elevate Permission</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersList.map(u => (
-                  <tr key={u._id}>
-                    <td>
-                      <strong>{u.name}</strong>
-                    </td>
-                    <td>{u.email}</td>
-                    <td>{u.department || 'General'}</td>
-                    <td>
-                      <span className={`role-badge-cell ${u.role}`}>
-                        {u.role.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <select
-                        value={u.role}
-                        onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                        className="role-change-select"
-                      >
-                        <option value="student">Student</option>
-                        <option value="staff">Maintenance Staff</option>
-                        <option value="admin">Administrator</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="admin-qr-body">
+              <div className="qr-image-frame">
+                <img src={generatedQRUrl} alt={`QR for ${activeQRZone.name}`} />
+              </div>
+
+              <div className="qr-meta-box">
+                <p><strong>Building:</strong> {activeQRZone.building} {activeQRZone.room ? `• ${activeQRZone.room}` : ''}</p>
+                <p><strong>Recommended Category:</strong> {activeQRZone.category}</p>
+                <p><strong>Inspection Advice:</strong> {activeQRZone.recommendation}</p>
+              </div>
+
+              <div className="admin-qr-actions">
+                <a
+                  href={generatedQRUrl}
+                  download={`QR_${activeQRZone.name.replace(/\s+/g, '_')}.png`}
+                  className="download-qr-btn"
+                >
+                  <FaDownload /> Download PNG
+                </a>
+                <button
+                  className="print-qr-btn"
+                  onClick={() => window.print()}
+                >
+                  <FaPrint /> Print Code
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

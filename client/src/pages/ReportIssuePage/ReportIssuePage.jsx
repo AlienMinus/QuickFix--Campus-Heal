@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLocationContext } from '../../context/LocationContext';
+import { useOrg } from '../../context/OrgContext';
 import { issueAPI } from '../../services/api';
 import QRScannerModal from '../../components/QRScannerModal/QRScannerModal';
 import VoiceReportModal from '../../components/VoiceReportModal/VoiceReportModal';
@@ -168,21 +169,28 @@ export default function ReportIssuePage() {
 
   const handleQRScanSuccess = (decodedData) => {
     setShowQRModal(false);
-    // Parse QR payload (supports JSON or string format)
-    try {
-      const parsed = JSON.parse(decodedData);
-      setFormData(prev => ({
-        ...prev,
-        locationName: parsed.location || parsed.room || decodedData,
-        category: parsed.category || prev.category,
-        zone: parsed.zone || prev.zone
-      }));
-    } catch {
-      setFormData(prev => ({
-        ...prev,
-        locationName: decodedData
-      }));
+    let parsed = typeof decodedData === 'object' && decodedData !== null ? decodedData : null;
+    if (!parsed) {
+      try {
+        parsed = JSON.parse(decodedData);
+      } catch {
+        parsed = { location: decodedData };
+      }
     }
+
+    const locName = parsed.room
+      ? `${parsed.building ? parsed.building + ' • ' : ''}${parsed.room}`
+      : (parsed.location || parsed.name || '');
+
+    setFormData(prev => ({
+      ...prev,
+      locationName: locName || prev.locationName,
+      category: parsed.category && CATEGORIES.some(c => c.value === parsed.category) ? parsed.category : prev.category,
+      zone: parsed.zone || parsed.name || prev.zone,
+      description: parsed.recommendation && !prev.description.includes(parsed.recommendation)
+        ? (prev.description ? `${prev.description}\n[Recommended Check: ${parsed.recommendation}]` : `[Recommended Check: ${parsed.recommendation}]`)
+        : prev.description,
+    }));
   };
 
   const handleVoiceData = (voiceReport) => {
