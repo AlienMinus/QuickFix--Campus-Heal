@@ -8,6 +8,8 @@ import QRScannerModal from '../../components/QRScannerModal/QRScannerModal';
 import VoiceReportModal from '../../components/VoiceReportModal/VoiceReportModal';
 import {
   FaCamera,
+  FaVideo,
+  FaPlay,
   FaQrcode,
   FaMicrophone,
   FaMapMarkerAlt,
@@ -74,8 +76,9 @@ export default function ReportIssuePage() {
     isUrgent: false
   });
 
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaPreview, setMediaPreview] = useState(null);
+  const [mediaType, setMediaType] = useState('image');
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -146,26 +149,34 @@ export default function ReportIssuePage() {
     }));
   };
 
-  const handleImageSelect = (e) => {
+  const handleMediaSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 8 * 1024 * 1024) {
-        setErrorMessage('Image size must be less than 8MB');
+      const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi)$/i.test(file.name);
+      const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+      const label = isVideo ? '50MB' : '10MB';
+
+      if (file.size > maxSize) {
+        setErrorMessage(`File size must be less than ${label}`);
         return;
       }
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+
+      setMediaFile(file);
+      setMediaType(isVideo ? 'video' : 'image');
+
+      const previewUrl = URL.createObjectURL(file);
+      setMediaPreview(previewUrl);
       setErrorMessage('');
     }
   };
 
-  const handleRemoveImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
+  const handleRemoveMedia = () => {
+    if (mediaPreview && mediaPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(mediaPreview);
+    }
+    setMediaFile(null);
+    setMediaPreview(null);
+    setMediaType('image');
   };
 
   const handleQRScanSuccess = (decodedData) => {
@@ -234,8 +245,10 @@ export default function ReportIssuePage() {
       submitData.append('longitude', formData.longitude);
       submitData.append('isUrgent', formData.isUrgent);
 
-      if (imageFile) {
-        submitData.append('image', imageFile);
+      if (mediaFile) {
+        submitData.append('media', mediaFile);
+        submitData.append('image', mediaFile);
+        submitData.append('mediaType', mediaType);
       }
 
       const res = await issueAPI.create(submitData);
@@ -314,36 +327,56 @@ export default function ReportIssuePage() {
       )}
 
       <form className="report-form-card" onSubmit={handleSubmit}>
-        {/* Step 1: Evidence Photo Upload */}
+        {/* Step 1: Visual Evidence (Photo / Video) */}
         <div className="form-section">
-          <label className="section-title">
-            <FaCamera /> Photo Evidence
-          </label>
+          <div className="section-title-row">
+            <label className="section-title">
+              <FaCamera /> Visual Evidence (Photo or Video)
+            </label>
+            <span className="optional-tag">Optional</span>
+          </div>
           <div className="photo-upload-zone">
-            {imagePreview ? (
+            {mediaPreview ? (
               <div className="image-preview-wrapper">
-                <img src={imagePreview} alt="Evidence preview" className="evidence-img" />
+                {mediaType === 'video' ? (
+                  <div className="video-preview-wrapper">
+                    <video
+                      src={mediaPreview}
+                      controls
+                      playsInline
+                      className="evidence-video-player"
+                    />
+                    <div className="video-pill-tag">
+                      <FaVideo /> Video Evidence
+                    </div>
+                  </div>
+                ) : (
+                  <img src={mediaPreview} alt="Evidence preview" className="evidence-img" />
+                )}
                 <button
                   type="button"
                   className="remove-photo-btn"
-                  onClick={handleRemoveImage}
-                  title="Remove photo"
+                  onClick={handleRemoveMedia}
+                  title="Remove media"
                 >
-                  <FaTrash /> Remove
+                  <FaTrash /> Remove {mediaType === 'video' ? 'Video' : 'Photo'}
                 </button>
               </div>
             ) : (
               <label className="upload-placeholder">
                 <input
                   type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleImageSelect}
+                  accept="image/*,video/*"
+                  onChange={handleMediaSelect}
                   className="hidden-file-input"
                 />
-                <FaCamera className="placeholder-icon" />
-                <span className="placeholder-title">Tap to Take or Upload Photo</span>
-                <span className="placeholder-hint">Supports Camera, JPG, PNG (Max 8MB)</span>
+                <div className="upload-dual-icons">
+                  <FaCamera className="placeholder-icon" />
+                  <span className="icon-slash">/</span>
+                  <FaVideo className="placeholder-icon" />
+                </div>
+                <span className="placeholder-title">Tap to Take or Upload Photo / Video</span>
+                <span className="placeholder-hint">Supports Camera, Gallery, MP4, WebM, MOV (Max 50MB)</span>
               </label>
             )}
           </div>

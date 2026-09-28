@@ -178,8 +178,26 @@ const issueSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+
+issueSchema.virtual('imageUrl').get(function () {
+  return this.media?.url || '';
+});
+
+issueSchema.virtual('resolutionProofUrl').get(function () {
+  return this.resolutionDetails?.resolutionMediaUrl || '';
+});
+
+issueSchema.virtual('resolutionMediaType').get(function () {
+  return this.resolutionDetails?.resolutionMediaType || 'image';
+});
+
+issueSchema.virtual('resolutionNotes').get(function () {
+  return this.resolutionDetails?.resolutionNotes || '';
+});
 
 issueSchema.pre('save', function (next) {
   let baseScore = 40;

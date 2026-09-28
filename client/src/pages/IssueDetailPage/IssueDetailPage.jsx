@@ -14,6 +14,7 @@ import {
   FaClock,
   FaTools,
   FaCamera,
+  FaVideo,
   FaPaperPlane,
   FaShareAlt,
   FaSpinner,
@@ -49,6 +50,7 @@ export default function IssueDetailPage() {
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [proofImage, setProofImage] = useState(null);
   const [proofPreview, setProofPreview] = useState(null);
+  const [proofType, setProofType] = useState('image');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [actionSuccess, setActionSuccess] = useState('');
 
@@ -116,6 +118,8 @@ export default function IssueDetailPage() {
   const handleProofSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      const isVid = file.type.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi)$/i.test(file.name);
+      setProofType(isVid ? 'video' : 'image');
       setProofImage(file);
       const reader = new FileReader();
       reader.onloadend = () => setProofPreview(reader.result);
@@ -132,13 +136,20 @@ export default function IssueDetailPage() {
       const updateData = new FormData();
       updateData.append('status', newStatus);
       if (resolutionNotes) updateData.append('resolutionNotes', resolutionNotes);
-      if (proofImage) updateData.append('resolutionProofImage', proofImage);
+      if (proofImage) {
+        updateData.append('resolutionProofImage', proofImage);
+        updateData.append('resolutionMedia', proofImage);
+        if (proofType === 'video') {
+          updateData.append('resolutionVideo', proofImage);
+        }
+      }
 
       const res = await issueAPI.updateStatus(issue._id, updateData);
       setIssue(res.data.issue);
       setActionSuccess(`Ticket status updated to "${newStatus}"!`);
       setProofImage(null);
       setProofPreview(null);
+      setProofType('image');
     } catch (err) {
       console.error('Status update error:', err);
     } finally {
@@ -268,52 +279,115 @@ export default function IssueDetailPage() {
         </div>
       </div>
 
-      {/* Evidence Photos */}
-      <div className="evidence-section-card">
-        <h3 className="section-heading">Photo & Media Evidence</h3>
-        
-        <div className="evidence-photos-grid">
-          {issue.imageUrl ? (
-            <div className="evidence-photo-box">
-              <span className="photo-label before">Initial Report Evidence</span>
-              <a href={issue.imageUrl} target="_blank" rel="noopener noreferrer">
-                <img src={issue.imageUrl} alt="Issue before" className="evidence-photo" />
-              </a>
-            </div>
-          ) : (
-            <div className="no-photo-box">
-              <FaCamera className="no-photo-icon" />
-              <p>No initial photo provided with report</p>
-            </div>
-          )}
+      {/* Evidence Media (Photos / Videos) */}
+      {(() => {
+        const initialMediaUrl = issue.media?.url || issue.imageUrl || '';
+        const isInitialVideo =
+          issue.media?.mediaType === 'video' ||
+          issue.mediaType === 'video' ||
+          /\.(mp4|mov|webm|mkv|avi)$/i.test(initialMediaUrl);
 
-          {issue.resolutionProofUrl && (
-            <div className="evidence-photo-box">
-              <span className="photo-label after">Resolved Work Proof</span>
-              <a href={issue.resolutionProofUrl} target="_blank" rel="noopener noreferrer">
-                <img src={issue.resolutionProofUrl} alt="Issue resolved" className="evidence-photo resolved" />
-              </a>
-            </div>
-          )}
-        </div>
+        const resolutionMediaUrl =
+          issue.resolutionDetails?.resolutionMediaUrl || issue.resolutionProofUrl || '';
+        const isResolutionVideo =
+          issue.resolutionDetails?.resolutionMediaType === 'video' ||
+          issue.resolutionMediaType === 'video' ||
+          /\.(mp4|mov|webm|mkv|avi)$/i.test(resolutionMediaUrl);
 
-        {issue.description && (
-          <div className="issue-full-description">
-            <h4>Description & Context:</h4>
-            <p>{issue.description}</p>
+        return (
+          <div className="evidence-section-card">
+            <h3 className="section-heading">Photo & Video Evidence</h3>
+            
+            <div className="evidence-photos-grid">
+              {initialMediaUrl ? (
+                isInitialVideo ? (
+                  <div className="evidence-photo-box evidence-video-box">
+                    <span className="photo-label before video-badge">
+                      <FaVideo /> Initial Report Video
+                    </span>
+                    <video
+                      src={initialMediaUrl}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="evidence-video-player-detail"
+                    />
+                    <a
+                      href={initialMediaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="media-fullscreen-link"
+                    >
+                      Open video in new tab ↗
+                    </a>
+                  </div>
+                ) : (
+                  <div className="evidence-photo-box">
+                    <span className="photo-label before">Initial Report Evidence</span>
+                    <a href={initialMediaUrl} target="_blank" rel="noopener noreferrer">
+                      <img src={initialMediaUrl} alt="Issue before" className="evidence-photo" />
+                    </a>
+                  </div>
+                )
+              ) : (
+                <div className="no-photo-box">
+                  <FaCamera className="no-photo-icon" />
+                  <p>No initial photo or video provided with report</p>
+                </div>
+              )}
+
+              {resolutionMediaUrl && (
+                isResolutionVideo ? (
+                  <div className="evidence-photo-box evidence-video-box">
+                    <span className="photo-label after video-badge">
+                      <FaVideo /> Resolved Work Video Proof
+                    </span>
+                    <video
+                      src={resolutionMediaUrl}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="evidence-video-player-detail resolved"
+                    />
+                    <a
+                      href={resolutionMediaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="media-fullscreen-link"
+                    >
+                      Open proof video in new tab ↗
+                    </a>
+                  </div>
+                ) : (
+                  <div className="evidence-photo-box">
+                    <span className="photo-label after">Resolved Work Proof</span>
+                    <a href={resolutionMediaUrl} target="_blank" rel="noopener noreferrer">
+                      <img src={resolutionMediaUrl} alt="Issue resolved" className="evidence-photo resolved" />
+                    </a>
+                  </div>
+                )
+              )}
+            </div>
+
+            {issue.description && (
+              <div className="issue-full-description">
+                <h4>Description & Context:</h4>
+                <p>{issue.description}</p>
+              </div>
+            )}
+
+            {issue.resolutionNotes && (
+              <div className="resolution-notes-callout">
+                <FaCheckCircle className="res-icon" />
+                <div>
+                  <strong>Resolution Notes from Maintenance Staff:</strong>
+                  <p>{issue.resolutionNotes}</p>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-        {issue.resolutionNotes && (
-          <div className="resolution-notes-callout">
-            <FaCheckCircle className="res-icon" />
-            <div>
-              <strong>Resolution Notes from Maintenance Staff:</strong>
-              <p>{issue.resolutionNotes}</p>
-            </div>
-          </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* Staff & Admin Action Panel */}
       {isStaffOrAdmin && (
@@ -361,16 +435,20 @@ export default function IssueDetailPage() {
             </div>
 
             <div className="form-group">
-              <label>Resolution Proof Photo:</label>
+              <label>Resolution Proof Photo or Video:</label>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*"
                 onChange={handleProofSelect}
                 className="form-file-input"
               />
               {proofPreview && (
                 <div className="proof-mini-preview">
-                  <img src={proofPreview} alt="Proof preview" />
+                  {proofType === 'video' ? (
+                    <video src={proofPreview} controls playsInline className="proof-mini-video" />
+                  ) : (
+                    <img src={proofPreview} alt="Proof preview" />
+                  )}
                 </div>
               )}
             </div>

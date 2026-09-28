@@ -16,6 +16,8 @@ import {
   FaLaptop,
   FaShieldAlt,
   FaQuestionCircle,
+  FaPlay,
+  FaVideo,
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
@@ -107,8 +109,14 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
     }
   };
 
+  const rawMediaUrl = issue.media?.url || issue.imageUrl || '';
+  const isVideo =
+    issue.media?.mediaType === 'video' ||
+    issue.mediaType === 'video' ||
+    /\.(mp4|mov|webm|mkv|avi)$/i.test(rawMediaUrl);
+
   const mediaUrl =
-    issue.media?.url ||
+    rawMediaUrl ||
     'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80';
 
   return (
@@ -117,12 +125,28 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
       onClick={() => navigate(`/issue/${issue._id}`)}
     >
       <div className="card-media-wrapper">
-        <img
-          src={mediaUrl}
-          alt={issue.title}
-          className="card-media-img"
-          loading="lazy"
-        />
+        {isVideo ? (
+          <div className="card-video-wrap">
+            <video
+              src={mediaUrl}
+              muted
+              playsInline
+              preload="metadata"
+              className="card-media-video"
+            />
+            <div className="video-play-indicator" title="Video evidence attached">
+              <FaPlay className="play-icon" />
+              <span>Video</span>
+            </div>
+          </div>
+        ) : (
+          <img
+            src={mediaUrl}
+            alt={issue.title}
+            className="card-media-img"
+            loading="lazy"
+          />
+        )}
         <div className="card-media-overlay">
           <div className="category-tag">
             {getCategoryIcon(issue.category)}
