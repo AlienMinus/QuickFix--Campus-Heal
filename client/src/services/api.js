@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://smart-campus-quickfix-server.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -63,7 +63,6 @@ export const locationAPI = {
 export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   register: (data) => api.post('/auth/register', data),
-  google: (token) => api.post('/auth/google', { token }),
   getProfile: () => api.get('/auth/me'),
 };
 

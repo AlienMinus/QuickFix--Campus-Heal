@@ -74,19 +74,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const googleAuth = async (credential, userInfo) => {
-    try {
-      const res = await api.post('/auth/google', { credential, userInfo });
-      saveAuthSession(res.data.token, res.data.user);
-      return { success: true, user: res.data.user };
-    } catch (err) {
-      return {
-        success: false,
-        message: err.response?.data?.message || 'Google authentication failed.',
-      };
-    }
-  };
-
   const demoLogin = async (role) => {
     try {
       const res = await api.post('/auth/demo-login', { role });
@@ -141,7 +128,6 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         register,
-        googleAuth,
         demoLogin,
         logout,
         isAuthenticated: Boolean(user),

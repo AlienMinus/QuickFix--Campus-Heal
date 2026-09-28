@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { GoogleLogin } from '@react-oauth/google';
 import {
   FaSignInAlt,
-  FaGoogle,
   FaShieldAlt,
   FaUserGraduate,
   FaTools,
   FaUserShield,
   FaSpinner,
   FaExclamationCircle,
-  FaCheckCircle
+  FaCheckCircle,
+  FaEnvelope,
+  FaLock
 } from 'react-icons/fa';
 import './LoginPage.css';
 
 export default function LoginPage() {
-  const { login, googleLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -37,10 +37,14 @@ export default function LoginPage() {
     try {
       setLoading(true);
       setError('');
-      await login(email, password);
+      const res = await login(email.trim(), password);
+      if (res && !res.success) {
+        setError(res.message || 'Login failed. Please check credentials.');
+        return;
+      }
       navigate(redirectPath, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check credentials.');
+      setError(err.response?.data?.message || err.message || 'Login failed. Please check credentials.');
     } finally {
       setLoading(false);
     }
@@ -52,23 +56,14 @@ export default function LoginPage() {
       setError('');
       setEmail(demoEmail);
       setPassword(demoPassword);
-      await login(demoEmail, demoPassword);
+      const res = await login(demoEmail, demoPassword);
+      if (res && !res.success) {
+        setError(res.message || 'Demo login failed.');
+        return;
+      }
       navigate(redirectPath, { replace: true });
     } catch (err) {
       setError('Demo login failed. Ensure database has been seeded.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      setLoading(true);
-      setError('');
-      await googleLogin(credentialResponse.credential);
-      navigate(redirectPath, { replace: true });
-    } catch (err) {
-      setError('Google Sign-In failed.');
     } finally {
       setLoading(false);
     }
@@ -85,7 +80,7 @@ export default function LoginPage() {
           <h2>QuickFix Campus Portal</h2>
           <p>Sign in to report civic issues & track maintenance dispatch</p>
           <div className="jwt-badge">
-            <FaShieldAlt /> 7-Day Persistent JWT Session
+            <FaShieldAlt /> 7-Day Persistent Session
           </div>
         </div>
 
@@ -95,23 +90,6 @@ export default function LoginPage() {
             <span>{error}</span>
           </div>
         )}
-
-        {/* Google OAuth Section */}
-        <div className="oauth-section">
-          <div className="google-btn-wrapper">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setError('Google OAuth Login failed.')}
-              theme="filled_black"
-              shape="pill"
-              text="signin_with"
-              width="100%"
-            />
-          </div>
-          <div className="divider-row">
-            <span>or sign in with email</span>
-          </div>
-        </div>
 
         {/* Standard Email/Password Form */}
         <form onSubmit={handleSubmit} className="login-form">

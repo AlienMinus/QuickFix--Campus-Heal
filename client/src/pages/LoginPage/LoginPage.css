@@ -77,38 +77,6 @@
   font-size: 0.84rem;
 }
 
-.oauth-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
-
-.google-btn-wrapper {
-  display: flex;
-  justify-content: center;
-}
-
-.divider-row {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.divider-row::before,
-.divider-row::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--border);
-}
-
-.divider-row span {
-  padding: 0 0.65rem;
-}
-
 .login-form {
   display: flex;
   flex-direction: column;

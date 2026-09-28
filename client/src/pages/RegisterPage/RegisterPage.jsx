@@ -55,10 +55,17 @@ export default function RegisterPage() {
     try {
       setLoading(true);
       setError('');
-      await register(formData);
+      const res = await register({
+        ...formData,
+        identifier: formData.studentOrStaffId,
+      });
+      if (res && !res.success) {
+        setError(res.message || 'Registration failed. Try a different email.');
+        return;
+      }
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Try a different email.');
+      setError(err.response?.data?.message || err.message || 'Registration failed. Try a different email.');
     } finally {
       setLoading(false);
     }

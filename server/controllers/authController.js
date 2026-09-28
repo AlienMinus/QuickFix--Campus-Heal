@@ -1,9 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
-
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || '');
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -106,78 +103,6 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error('Login Error:', error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-exports.googleAuth = async (req, res) => {
-  try {
-    const { credential, userInfo } = req.body;
-    let email, name, avatar, googleId;
-
-    if (credential && process.env.GOOGLE_CLIENT_ID) {
-      try {
-        const ticket = await googleClient.verifyIdToken({
-          idToken: credential,
-          audience: process.env.GOOGLE_CLIENT_ID,
-        });
-        const payload = ticket.getPayload();
-        email = payload.email;
-        name = payload.name;
-        avatar = payload.picture;
-        googleId = payload.sub;
-      } catch (err) {
-        console.warn('Google verifyIdToken failed, falling back to payload parsing:', err.message);
-      }
-    }
-
-    if (!email && userInfo) {
-      email = userInfo.email;
-      name = userInfo.name;
-      avatar = userInfo.picture || userInfo.avatar;
-      googleId = userInfo.id || userInfo.sub;
-    }
-
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Could not extract Google account details' });
-    }
-
-    let user = await User.findOne({ email: email.toLowerCase() });
-
-    if (!user) {
-      user = await User.create({
-        name: name || 'Google Campus User',
-        email: email.toLowerCase(),
-        googleId: googleId || Date.now().toString(),
-        avatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-        role: req.body.role || 'student',
-        department: 'BPUT / GIFT Campus Community',
-      });
-    } else {
-      if (avatar && (!user.avatar || user.avatar.includes('unsplash'))) {
-        user.avatar = avatar;
-        await user.save();
-      }
-    }
-
-    const token = generateToken(user);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Google authentication successful',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        department: user.department,
-        identifier: user.identifier,
-        avatar: user.avatar,
-      },
-    });
-  } catch (error) {
-    console.error('Google Auth Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
