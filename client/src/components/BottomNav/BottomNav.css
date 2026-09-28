@@ -29,32 +29,41 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  color: #a79bbf;
+  gap: 3px;
+  color: #c4b5fd;
   text-decoration: none;
-  font-size: 0.64rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
+  font-size: 0.65rem;
+  font-weight: 700;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   flex: 1;
-  padding: 4px 0;
+  padding: 6px 4px;
+  margin: 0 3px;
+  border-radius: 16px;
+  background: rgba(43, 23, 84, 0.35);
+  border: 1px solid rgba(168, 85, 247, 0.12);
 }
 
 .nav-tab-icon {
-  font-size: 1.15rem;
+  font-size: 1.12rem;
   transition: transform 0.2s ease;
 }
 
 .nav-tab:hover {
-  color: #e2e8f0;
+  background: rgba(95, 37, 159, 0.3);
+  color: #ffffff;
+  border-color: rgba(168, 85, 247, 0.28);
 }
 
 .nav-tab.active {
-  color: #d8b4fe;
+  background: linear-gradient(180deg, rgba(95, 37, 159, 0.6) 0%, rgba(65, 22, 114, 0.85) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(192, 132, 252, 0.45);
+  box-shadow: 0 2px 10px rgba(95, 37, 159, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .nav-tab.active .nav-tab-icon {
-  color: #c084fc;
-  transform: translateY(-1px);
+  color: #f3e8ff;
+  transform: translateY(-2px) scale(1.08);
 }
 
 .center-action-tab {
