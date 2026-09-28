@@ -28,6 +28,16 @@ import {
   FaUserCheck,
   FaCity,
   FaTags,
+  FaBolt,
+  FaTint,
+  FaWrench,
+  FaBroom,
+  FaWifi,
+  FaLaptop,
+  FaClock,
+  FaSnowflake,
+  FaFire,
+  FaTrashAlt,
 } from 'react-icons/fa';
 import './SuperAdminDashboardPage.css';
 
@@ -319,6 +329,101 @@ export default function SuperAdminDashboardPage() {
     }
   };
 
+  // Category Icon Helper
+  const getCategoryIcon = (iconName) => {
+    switch (iconName?.toLowerCase()) {
+      case 'bolt': return <FaBolt />;
+      case 'tint': return <FaTint />;
+      case 'broom': return <FaBroom />;
+      case 'wifi': return <FaWifi />;
+      case 'shield':
+      case 'shield-alt': return <FaShieldAlt />;
+      case 'laptop': return <FaLaptop />;
+      case 'snowflake': return <FaSnowflake />;
+      case 'fire': return <FaFire />;
+      case 'trash': return <FaTrashAlt />;
+      default: return <FaWrench />;
+    }
+  };
+
+  // Open Add Category Modal
+  const handleOpenAddCategory = () => {
+    setEditingCategory(null);
+    setCategoryForm({
+      name: '',
+      code: '',
+      description: '',
+      defaultSeverity: 'Medium',
+      icon: 'wrench',
+      slaHours: 24,
+      status: 'Active',
+    });
+    setShowCategoryModal(true);
+  };
+
+  // Open Edit Category Modal
+  const handleOpenEditCategory = (cat) => {
+    setEditingCategory(cat);
+    setCategoryForm({
+      name: cat.name || '',
+      code: cat.code || '',
+      description: cat.description || '',
+      defaultSeverity: cat.defaultSeverity || 'Medium',
+      icon: cat.icon || 'wrench',
+      slaHours: cat.slaHours !== undefined ? cat.slaHours : 24,
+      status: cat.status || 'Active',
+    });
+    setShowCategoryModal(true);
+  };
+
+  // Submit Category (Create or Update)
+  const handleSubmitCategory = async (e) => {
+    e.preventDefault();
+    if (!categoryForm.name.trim()) {
+      setError('Category name is required.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError('');
+
+      if (editingCategory) {
+        await categoryAPI.update(editingCategory._id, categoryForm);
+        setActionSuccess(`Facility category "${categoryForm.name}" updated successfully!`);
+      } else {
+        await categoryAPI.create(categoryForm);
+        setActionSuccess(`Facility category "${categoryForm.name}" defined successfully!`);
+      }
+
+      setShowCategoryModal(false);
+      fetchData();
+      setTimeout(() => setActionSuccess(''), 4000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save facility category.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Delete Category
+  const handleDeleteCategory = async () => {
+    if (!deletingCategory) return;
+    try {
+      setSubmitting(true);
+      setError('');
+      await categoryAPI.delete(deletingCategory._id);
+      setActionSuccess(`Facility category "${deletingCategory.name}" removed successfully.`);
+      setDeletingCategory(null);
+      fetchData();
+      setTimeout(() => setActionSuccess(''), 4000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete facility category.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Filtered institutes based on search
   const filteredInstitutes = institutes.filter((inst) => {
     if (!instituteSearch.trim()) return true;
@@ -346,6 +451,19 @@ export default function SuperAdminDashboardPage() {
       a.institute?.toLowerCase().includes(q) ||
       a.department?.toLowerCase().includes(q) ||
       a.identifier?.toLowerCase().includes(q)
+    );
+  });
+
+  // Filtered categories for facility category tab
+  const filteredCategories = categories.filter((cat) => {
+    if (!categorySearch.trim()) return true;
+    const q = categorySearch.toLowerCase();
+    return (
+      cat.name?.toLowerCase().includes(q) ||
+      cat.code?.toLowerCase().includes(q) ||
+      cat.description?.toLowerCase().includes(q) ||
+      cat.defaultSeverity?.toLowerCase().includes(q) ||
+      cat.status?.toLowerCase().includes(q)
     );
   });
 
