@@ -477,6 +477,17 @@
   font-size: 0.68rem;
 }
 
+.detected-pill.heading {
+  background: rgba(14, 165, 233, 0.18);
+  color: #7dd3fc;
+  border-color: rgba(14, 165, 233, 0.45);
+  font-weight: 700;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .detected-pill.zone {
   background: rgba(168, 85, 247, 0.15);
   color: #c084fc;
@@ -621,6 +632,11 @@
   background: rgba(168, 85, 247, 0.2);
   border-color: rgba(168, 85, 247, 0.5);
   color: #ffffff;
+}
+
+.quick-tag-trigger-btn.heading .sym {
+  color: #38bdf8;
+  font-weight: 900;
 }
 
 .quick-tag-trigger-btn.zone .sym {
