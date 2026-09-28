@@ -99,9 +99,10 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         isAuthenticated: Boolean(user),
-        isAdmin: user?.role === 'admin',
+        isAdmin: user?.role === 'admin' || user?.role === 'superadmin',
+        isSuperAdmin: user?.role === 'superadmin',
         isStaff: user?.role === 'staff',
-        isStudent: user?.role === 'student' || !user?.role,
+        isStudent: user?.role === 'student' || (!user?.role && !user),
       }}
     >
       {children}

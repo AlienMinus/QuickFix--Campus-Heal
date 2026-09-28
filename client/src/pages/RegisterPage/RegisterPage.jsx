@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useOrg } from '../../context/OrgContext';
+import { instituteAPI } from '../../services/api';
 import {
   FaUserPlus,
   FaShieldAlt,
   FaBuilding,
+  FaUniversity,
   FaIdCard,
   FaSpinner,
-  FaExclamationCircle
+  FaExclamationCircle,
+  FaCheckCircle,
 } from 'react-icons/fa';
 import './RegisterPage.css';
+
+const DEFAULT_INSTITUTES = [
+  { name: 'BPUT Tech Campus', code: 'BPUT', city: 'Rourkela' },
+  { name: 'GIFT Autonomous College', code: 'GIFT', city: 'Bhubaneswar' },
+  { name: 'Silicon Institute of Technology', code: 'SILICON', city: 'Bhubaneswar' },
+  { name: 'NIT Rourkela', code: 'NITR', city: 'Rourkela' },
+  { name: 'CV Raman Global University', code: 'CVRGU', city: 'Bhubaneswar' },
+  { name: 'IIT Bhubaneswar', code: 'IITBBS', city: 'Bhubaneswar' },
+];
 
 const DEPARTMENTS = [
   'Computer Science & Engineering (CSE)',
@@ -22,7 +34,7 @@ const DEPARTMENTS = [
   'Master of Computer Applications (MCA)',
   'MBA / Management Studies',
   'Campus Estate & Facility Maintenance',
-  'Hostel Administration & Mess'
+  'Hostel Administration & Mess',
 ];
 
 export default function RegisterPage() {
@@ -30,26 +42,47 @@ export default function RegisterPage() {
   const { orgConfig } = useOrg();
   const navigate = useNavigate();
 
+  const [institutes, setInstitutes] = useState(DEFAULT_INSTITUTES);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     role: 'student',
+    institute: DEFAULT_INSTITUTES[0].name,
     department: DEPARTMENTS[0],
-    studentOrStaffId: ''
+    studentOrStaffId: '',
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    const fetchInstitutesList = async () => {
+      try {
+        const res = await instituteAPI.getAll();
+        if (res.data && res.data.institutes && res.data.institutes.length > 0) {
+          setInstitutes(res.data.institutes);
+          // Set first institute if available
+          setFormData((prev) => ({
+            ...prev,
+            institute: prev.institute || res.data.institutes[0].name,
+          }));
+        }
+      } catch (e) {
+        console.warn('Could not load live institutes list, fallback to defaults');
+      }
+    };
+    fetchInstitutesList();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || !formData.email || !formData.password || !formData.institute) {
       setError('Please fill in all mandatory fields.');
       return;
     }
@@ -81,9 +114,9 @@ export default function RegisterPage() {
             <FaUserPlus />
           </div>
           <h2>Create Account</h2>
-          <p>Join {orgConfig.name} Civic & Maintenance Network</p>
-          <div className="jwt-badge">
-            <FaShieldAlt /> 7-Day Authenticated Access
+          <p>Join the Multi-Institute Facility Network</p>
+          <div className="secure-badge">
+            <FaShieldAlt /> Verified Account Access
           </div>
         </div>
 
@@ -95,6 +128,30 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit} className="register-form">
+          {/* Institute Selection Section */}
+          <div className="form-group institute-form-group">
+            <label htmlFor="institute" className="institute-field-label">
+              <FaUniversity className="institute-label-icon" /> Select Your Institute / College *
+            </label>
+            <select
+              id="institute"
+              name="institute"
+              value={formData.institute}
+              onChange={handleChange}
+              className="register-select institute-select-highlight"
+              required
+            >
+              {institutes.map((inst) => (
+                <option key={inst._id || inst.code || inst.name} value={inst.name}>
+                  {inst.name} {inst.city ? `(${inst.city})` : ''}
+                </option>
+              ))}
+            </select>
+            <span className="institute-help-text">
+              <FaCheckCircle /> Data is segregated per institute — your account, reports, and zones remain dedicated to your campus.
+            </span>
+          </div>
+
           <div className="form-group">
             <label htmlFor="name">Full Name *</label>
             <input
@@ -178,8 +235,10 @@ export default function RegisterPage() {
               onChange={handleChange}
               className="register-select"
             >
-              {DEPARTMENTS.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
+              {DEPARTMENTS.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
               ))}
             </select>
           </div>

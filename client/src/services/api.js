@@ -52,11 +52,19 @@ export const issueAPI = {
 };
 
 export const adminAPI = {
-  getStats: () => api.get('/admin/stats'),
-  getUsers: () => api.get('/admin/users'),
-  updateUserRole: (userId, role) => api.patch(`/admin/users/${userId}/role`, { role }),
-  assignTechnician: (issueId, staffId) => api.patch(`/admin/issues/${issueId}/assign`, { staffId }),
-  deleteIssue: (issueId) => api.delete(`/admin/issues/${issueId}`),
+  getStats: (params) => api.get('/admin/stats', { params }),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  updateUserRole: (userId, data) => api.put(`/admin/users/${userId}/role`, typeof data === 'object' ? data : { role: data }),
+  assignTechnician: (issueId, staffId) => api.put(`/issues/${issueId}/assign`, { staffId }),
+  deleteIssue: (issueId) => api.delete(`/issues/${issueId}`),
+};
+
+export const instituteAPI = {
+  getAll: () => api.get('/institutes'),
+  create: (data) => api.post('/institutes', data),
+  update: (id, data) => api.put(`/institutes/${id}`, data),
+  delete: (id) => api.delete(`/institutes/${id}`),
+  getSuperAdminOverview: () => api.get('/institutes/superadmin/overview'),
 };
 
 export const locationAPI = {
