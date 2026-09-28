@@ -13,8 +13,14 @@ const {
 const { protect, optionalAuth, authorize } = require('../middleware/authMiddleware');
 const { upload } = require('../config/cloudinary');
 
+const uploadIssueMedia = upload.fields([
+  { name: 'media', maxCount: 1 },
+  { name: 'image', maxCount: 1 },
+  { name: 'video', maxCount: 1 },
+]);
+
 router.route('/')
-  .post(optionalAuth, upload.single('media'), createIssue)
+  .post(optionalAuth, uploadIssueMedia, createIssue)
   .get(optionalAuth, getIssues);
 
 router.post('/check-duplicates', checkDuplicates);
@@ -26,6 +32,7 @@ router.route('/:id')
 const uploadStatusMedia = upload.fields([
   { name: 'resolutionMedia', maxCount: 1 },
   { name: 'resolutionProofImage', maxCount: 1 },
+  { name: 'resolutionVideo', maxCount: 1 },
   { name: 'media', maxCount: 1 },
 ]);
 

@@ -40,18 +40,28 @@ exports.createIssue = async (req, res) => {
       url: '',
       publicId: '',
       provider: 'none',
+      mediaType: 'none',
     };
 
-    if (req.file) {
-      const media = getMediaUrl(req, req.file);
+    const uploadedFile =
+      req.file ||
+      (req.files &&
+        (req.files.media?.[0] || req.files.video?.[0] || req.files.image?.[0]));
+
+    if (uploadedFile) {
+      const media = getMediaUrl(req, uploadedFile);
       if (media) {
         mediaData = media;
       }
     } else if (req.body.mediaUrl) {
+      const isVideo =
+        /\.(mp4|mov|webm|mkv|avi)$/i.test(req.body.mediaUrl) ||
+        req.body.mediaType === 'video';
       mediaData = {
         url: req.body.mediaUrl,
         publicId: '',
         provider: 'direct-url',
+        mediaType: isVideo ? 'video' : 'image',
       };
     }
 
@@ -231,12 +241,29 @@ exports.updateIssueStatus = async (req, res) => {
     issue.status = status;
 
     let resolutionMediaUrl = issue.resolutionDetails ? issue.resolutionDetails.resolutionMediaUrl : '';
-    const uploadedFile = req.file || (req.files && (req.files.resolutionMedia?.[0] || req.files.resolutionProofImage?.[0] || req.files.media?.[0]));
+    let resolutionMediaType = issue.resolutionDetails?.resolutionMediaType || 'image';
+
+    const uploadedFile =
+      req.file ||
+      (req.files &&
+        (req.files.resolutionMedia?.[0] ||
+          req.files.resolutionVideo?.[0] ||
+          req.files.resolutionProofImage?.[0] ||
+          req.files.media?.[0]));
+
     if (uploadedFile) {
       const media = getMediaUrl(req, uploadedFile);
-      if (media) resolutionMediaUrl = media.url;
+      if (media) {
+        resolutionMediaUrl = media.url;
+        resolutionMediaType = media.mediaType || 'image';
+      }
     } else if (req.body.resolutionMediaUrl) {
       resolutionMediaUrl = req.body.resolutionMediaUrl;
+      if (req.body.resolutionMediaType) {
+        resolutionMediaType = req.body.resolutionMediaType;
+      } else if (/\.(mp4|mov|webm|mkv|avi)$/i.test(req.body.resolutionMediaUrl)) {
+        resolutionMediaType = 'video';
+      }
     }
 
     if (status === 'Resolved') {
@@ -246,6 +273,7 @@ exports.updateIssueStatus = async (req, res) => {
         resolvedByName: req.user ? req.user.name : 'Campus Staff',
         resolutionNotes: resolutionNotes || remarks || 'Issue resolved successfully.',
         resolutionMediaUrl,
+        resolutionMediaType,
       };
     }
 

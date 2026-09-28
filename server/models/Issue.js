@@ -81,6 +81,11 @@ const issueSchema = new mongoose.Schema(
         type: String,
         default: 'cloudinary',
       },
+      mediaType: {
+        type: String,
+        enum: ['image', 'video', 'none'],
+        default: 'image',
+      },
     },
     reportedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -155,6 +160,11 @@ const issueSchema = new mongoose.Schema(
       resolutionMediaUrl: {
         type: String,
         default: '',
+      },
+      resolutionMediaType: {
+        type: String,
+        enum: ['image', 'video', 'none'],
+        default: 'image',
       },
     },
     statusHistory: [
