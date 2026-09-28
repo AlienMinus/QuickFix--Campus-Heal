@@ -20,15 +20,21 @@ function App() {
   const { user, isAdmin, isStaff } = useAuth();
   const [isFrameMode, setIsFrameMode] = useState(false);
 
-  return (
-    <div className={`app-outer-wrapper ${isFrameMode ? 'frame-mode-active' : 'fullscreen-mode'}`}>
-      <DeviceFrameToggle
-        isFrameMode={isFrameMode}
-        onToggle={(val) => setIsFrameMode(val)}
-      />
+  // Small screen mobile devices must always remain in native fullscreen view
+  const isMobileScreen = typeof window !== 'undefined' ? window.innerWidth <= 1024 : true;
+  const activeFrameMode = !isMobileScreen && isFrameMode;
 
-      <div className={`device-viewport ${isFrameMode ? 'device-frame' : ''}`}>
-        {isFrameMode && (
+  return (
+    <div className={`app-outer-wrapper ${activeFrameMode ? 'frame-mode-active' : 'fullscreen-mode'}`}>
+      {!isMobileScreen && (
+        <DeviceFrameToggle
+          isFrameMode={activeFrameMode}
+          onToggle={(val) => setIsFrameMode(val)}
+        />
+      )}
+
+      <div className={`device-viewport ${activeFrameMode ? 'device-frame' : ''}`}>
+        {activeFrameMode && (
           <div className="phone-notch-bar">
             <span className="phone-time">09:41</span>
             <div className="phone-camera-lens" />
