@@ -70,6 +70,11 @@ export default function ReportIssuePage() {
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [severity, setSeverity] = useState('Medium');
   const [locationName, setLocationName] = useState('');
+
+  // Active detected tags parsed in real time
+  const [detectedCategories, setDetectedCategories] = useState([]);
+  const [detectedZones, setDetectedZones] = useState([]);
+  const [detectedSeverities, setDetectedSeverities] = useState([]);
   
   // Fetch dynamic categories defined by Super Admin
   useEffect(() => {
@@ -141,34 +146,100 @@ export default function ReportIssuePage() {
     if (qrCat && categoriesList.includes(qrCat)) setCategory(qrCat);
   }, [routerLocation.search, categoriesList]);
 
+  // Match category in text (supports full hashtag, clean name, or individual keywords like #Plumbing, #Electrical)
+  const matchCategoryInText = (cat, text) => {
+    const cleanFull = cat.replace(/[^a-zA-Z0-9]/g, '');
+    const escapedFull = cat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const fullRegex = new RegExp(`#${escapedFull}\\b|#${cleanFull}\\b`, 'i');
+    const fullMatch = fullRegex.exec(text);
+    if (fullMatch) return { index: fullMatch.index, matchText: fullMatch[0] };
+
+    // Match individual significant words (e.g. #Plumbing for Water Leakage & Plumbing)
+    const words = cat.split(/[\s&/\\-]+/).filter(w => w.length >= 4);
+    for (const word of words) {
+      const wordRegex = new RegExp(`#${word}\\b`, 'i');
+      const wordMatch = wordRegex.exec(text);
+      if (wordMatch) {
+        return { index: wordMatch.index, matchText: wordMatch[0] };
+      }
+    }
+    return null;
+  };
+
+  // Match zone in text (supports full zone, clean name, or main acronym/keyword)
+  const matchZoneInText = (z, text) => {
+    const cleanFull = z.replace(/[^a-zA-Z0-9]/g, '');
+    const escapedFull = z.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const fullRegex = new RegExp(`@${escapedFull}\\b|@${cleanFull}\\b`, 'i');
+    const fullMatch = fullRegex.exec(text);
+    if (fullMatch) return { index: fullMatch.index, matchText: fullMatch[0] };
+
+    const words = z.split(/[\s&/\\()-]+/).filter(w => w.length >= 3);
+    for (const word of words) {
+      const wordRegex = new RegExp(`@${word}\\b`, 'i');
+      const wordMatch = wordRegex.exec(text);
+      if (wordMatch) {
+        return { index: wordMatch.index, matchText: wordMatch[0] };
+      }
+    }
+    return null;
+  };
+
+  // Match severity in text ($Critical, $High, $Medium, $Low)
+  const matchSeverityInText = (sev, text) => {
+    const regex = new RegExp(`\\$${sev}\\b`, 'i');
+    const match = regex.exec(text);
+    if (match) return { index: match.index, matchText: match[0] };
+    return null;
+  };
+
   // Intelligent parser: parse @zone, #category, $severity from description text in real time
+  // Multiple categories (#) ALLOWED
+  // Single zone (@) and Single severity ($) ENFORCED
   const parseTagsFromText = (text) => {
-    // 1. Detect Category #...
+    // 1. Detect Category #... (Multiple allowed)
+    const foundCategories = [];
     for (const cat of categoriesList) {
-      const regex = new RegExp(`#${cat.replace(/[^a-zA-Z0-9]/g, '')}\\b|#${cat.replace('/', '')}\\b`, 'i');
-      if (regex.test(text)) {
-        setCategory(cat);
-        break;
+      const match = matchCategoryInText(cat, text);
+      if (match) {
+        foundCategories.push({ cat, index: match.index });
       }
     }
+    foundCategories.sort((a, b) => a.index - b.index);
+    const catNames = [...new Set(foundCategories.map(item => item.cat))];
+    setDetectedCategories(catNames);
+    if (catNames.length > 0) {
+      setCategory(prev => (catNames.includes(prev) ? prev : catNames[0]));
+    }
 
-    // 2. Detect Severity $...
+    // 2. Detect Severity $... (Only 1 allowed)
+    const foundSeverities = [];
     for (const sev of SEVERITIES) {
-      const regex = new RegExp(`\\$${sev}\\b`, 'i');
-      if (regex.test(text)) {
-        setSeverity(sev);
-        break;
+      const match = matchSeverityInText(sev, text);
+      if (match) {
+        foundSeverities.push({ sev, index: match.index });
       }
     }
+    foundSeverities.sort((a, b) => a.index - b.index);
+    const sevNames = [...new Set(foundSeverities.map(item => item.sev))];
+    setDetectedSeverities(sevNames);
+    if (sevNames.length === 1) {
+      setSeverity(sevNames[0]);
+    }
 
-    // 3. Detect Zone @...
+    // 3. Detect Zone @... (Only 1 allowed)
+    const foundZones = [];
     for (const z of availableZones) {
-      const shortName = z.split(' ')[0];
-      const regex = new RegExp(`@${shortName}\\b|@${z.replace(/\s+/g, '')}\\b`, 'i');
-      if (regex.test(text)) {
-        setZone(z);
-        break;
+      const match = matchZoneInText(z, text);
+      if (match) {
+        foundZones.push({ zone: z, index: match.index });
       }
+    }
+    foundZones.sort((a, b) => a.index - b.index);
+    const zoneNames = [...new Set(foundZones.map(item => item.zone))];
+    setDetectedZones(zoneNames);
+    if (zoneNames.length === 1) {
+      setZone(zoneNames[0]);
     }
   };
 
