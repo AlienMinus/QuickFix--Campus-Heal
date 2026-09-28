@@ -7,9 +7,15 @@ const notificationSchema = new mongoose.Schema(
       ref: 'User',
       required: false,
     },
+    institute: {
+      type: String,
+      trim: true,
+      index: true,
+      default: '',
+    },
     targetRole: {
       type: String,
-      enum: ['all', 'student', 'staff', 'admin'],
+      enum: ['all', 'student', 'staff', 'admin', 'personal'],
       default: 'all',
     },
     title: {

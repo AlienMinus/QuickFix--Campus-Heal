@@ -140,6 +140,7 @@ exports.createIssue = async (req, res) => {
       message: `Reported at ${building || 'Campus'} (${category})`,
       type: severity === 'Critical' ? 'critical_alert' : 'issue_status',
       targetRole: 'staff',
+      institute: newIssue.institute,
       issueId: newIssue._id,
     });
 
@@ -323,6 +324,8 @@ exports.updateIssueStatus = async (req, res) => {
         title: `Issue Status Update: ${issue.title}`,
         message: `Reported issue status has been updated to "${status}".`,
         type: 'issue_status',
+        targetRole: 'personal',
+        institute: issue.institute,
         issueId: issue._id,
       });
     }
@@ -426,6 +429,8 @@ exports.assignIssue = async (req, res) => {
         title: `Task Assigned: ${issue.title}`,
         message: `Technician has been assigned to resolve the issue at ${issue.location.building} (${issue.severity} severity).`,
         type: 'assignment',
+        targetRole: 'personal',
+        institute: issue.institute,
         issueId: issue._id,
       });
     }
