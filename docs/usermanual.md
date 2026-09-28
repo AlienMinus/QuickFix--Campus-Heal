@@ -190,19 +190,35 @@ Tap the **"Export CSV"** button in the header of the Admin Dashboard. The system
 
 ---
 
-## 6. 👑 Super Administrator Manual (Multi-Campus Governance)
+## 6. 👑 Super Administrator Manual (Apex Governance Directorate)
 
-When logged in as `superadmin@quickfix.org`, the administrator gains access to **Multi-Institute Governance**:
+When logged in as `superadmin@quickfix.org`, the user is directed to the dedicated **Super Admin Directorate** (`/superadmin`).
 
-### 6.1 Multi-Campus Aggregations
-- **Cross-Campus Overview:** Compares total volume, resolution rate, and active users across affiliated colleges (e.g. *GIFT Autonomous*, *CET Bhubaneswar*, *VSSUT Burla*).
-- **Institute Filter Dropdown:** Filter the entire admin console by specific institute or view global data.
+### 6.1 Purpose & Role Definition
+* **Managing Normal Admins:** The Super Admin's explicit mandate is to govern and manage normal Campus Administrators across institutions.
+* **Privacy by Design:** Super Administrators do not have access to private student complaint logs, chat message threads, confidential photos, or personal student profiles. Private operations remain strictly isolated at the campus administrator level.
+* **Unified Governance (No Institute Filter):** All campus administrators are managed in a single, unified administrative directory without cumbersome institute dropdown filters.
 
-### 6.2 Registering a New Institution
-1. Tap **"+ Register New Institute"**.
-2. Enter Institute Name, Unique Code (e.g., `GIFT-AUTONOMOUS`, `BPUT-MAIN`), City, State, and Official Contact Email.
-3. Tap **"Create Institute"**.
-4. The institute is instantly available in the registration dropdown for new student onboarding.
+### 6.2 Managing Campus Administrators
+1. **Admin Directory:** View all registered campus administrators, their official emails, assigned campuses, administrative departments, employee identifiers, phone numbers, and onboarding dates.
+2. **Onboarding a New Campus Admin:**
+   - Tap **"+ Onboard Campus Admin"**.
+   - Enter Full Name, Official Email Address, Initial Temporary Password, Assigned Campus/Institute, Department, Employee Identifier, and Contact Phone.
+   - Tap **"Register Admin"**. The new administrator can now sign in immediately to their campus console.
+3. **Editing Administrator Details:**
+   - Tap **"Edit"** on any administrator card.
+   - Modify department, assigned campus, contact details, or promote/demote access levels (*Admin* $\leftrightarrow$ *Staff* $\leftrightarrow$ *Student*).
+   - Enter a new temporary password to reset the administrator's credentials if requested.
+4. **Revoking Administrator Access:**
+   - Tap the red trash icon on any administrator card.
+   - Confirm revocation to delete the administrator account. All existing tickets supervised by the administrator remain preserved in the system.
+
+### 6.3 High-Level System Governance Metrics
+The Super Admin dashboard displays aggregated platform-wide counters:
+* **Campus Admins:** Total number of active campus administrators.
+* **Total Platform Users:** Total registered users system-wide (aggregated count only, zero private records exposed).
+* **Field Staff Personnel:** Total active maintenance technicians across all campuses.
+* **Security Governance:** Status of role-based access control (RBAC) and privacy isolation.
 
 ---
 

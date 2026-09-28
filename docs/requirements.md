@@ -151,10 +151,11 @@ This specification directly fulfills the official evaluation parameters of the *
 * **FR-9.4: Campus Zone Configuration:** Administrators can add, edit, or delete campus zones with custom coordinates, category defaults, and inspection recommendations.
 * **FR-9.5: 1-Click CSV Export:** Administrators can export comprehensive campus ticket logs to CSV format for board presentations and compliance audits.
 
-### Module 10: Multi-Campus / Multi-Institute Governance (`/admin` Super Admin Mode)
-* **FR-10.1: Multi-Tenancy Isolation:** Users and issues shall be partitioned by `institute`. Non-superadmin users can only view and manage data from their own institution.
-* **FR-10.2: Institute Registration:** Super administrators can register new institutions with unique college codes, cities, states, and contact details.
-* **FR-10.3: Cross-Campus Governance Dashboard:** Super administrators can view an aggregate overview comparing total tickets, resolution rates, and user counts across all affiliated colleges.
+### Module 10: Super Administrator Governance Directorate (`/superadmin`)
+* **FR-10.1: Campus Administrator Governance:** Super administrators have dedicated authority to manage normal campus administrators across all colleges (creating new admin accounts, updating administrative assignments, resetting credentials, or revoking accounts).
+* **FR-10.2: Privacy Safeguard & Isolation:** Super administrators are strictly insulated from private student complaints, personal descriptions, and direct discussion logs; civic maintenance data remains confidential at the campus administrator level.
+* **FR-10.3: Unified Management (No Institute Filter):** All normal campus administrators are managed in a consolidated directory without institute dropdown filtering.
+* **FR-10.4: Modular CSV Data Seeding:** The backend initializes campus seed datasets (institutions, user credentials, and maintenance issues) from structured CSV files located in `server/data/` (`institutes.csv`, `users.csv`, `issues.csv`).
 
 ### Module 11: Real-Time Campus Notifications
 * **FR-11.1: Role-Targeted Broadcasts:** Notifications shall support targeting by role (`all`, `student`, `staff`, `admin`) or direct user recipient.
