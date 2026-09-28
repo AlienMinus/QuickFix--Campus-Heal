@@ -848,7 +848,7 @@ export default function ReportIssuePage() {
                     detectAutocomplete(e.target.value, e.target.selectionStart);
                   }
                 }}
-                placeholder="What needs maintenance or fixing? Describe freely...&#10;Type @ for Campus Zone, # for Category, $ for Severity&#10;e.g. Broken exhaust fan in @Visvesvaraya Labs #Electrical $High"
+                placeholder="What needs maintenance or fixing? Describe freely...&#10;Type - for Heading, @ for Campus Zone, # for Category, $ for Severity&#10;e.g. - Broken exhaust fan in @Visvesvaraya Labs #Electrical $High"
                 className="unbound-description-input"
                 autoFocus
                 required
@@ -964,9 +964,16 @@ export default function ReportIssuePage() {
             </div>
 
             {/* Active Recognition Bar (Read-only pills, not dropboxes) */}
-            {(zone || category || severity || detectedCategories.length > 0) && (
+            {(zone || category || severity || detectedCategories.length > 0 || detectedHeading) && (
               <div className="active-detected-tags-strip">
                 <span className="strip-title">Recognized:</span>
+
+                {/* HEADING: Designated by hyphen (-) */}
+                {detectedHeading && (
+                  <span className="detected-pill heading" title="Designated Issue Heading">
+                    <FaHeading className="mini-icon" /> - {detectedHeading}
+                  </span>
+                )}
 
                 {/* ZONE: Single Zone Allowed */}
                 {hasMultipleZones ? (
@@ -1030,9 +1037,17 @@ export default function ReportIssuePage() {
               </div>
             )}
 
-            {/* Quick Insert Trigger Shortcuts (Type @ # $, or tap below - NO permanent dropboxes) */}
+            {/* Quick Insert Trigger Shortcuts (Type - @ # $, or tap below - NO permanent dropboxes) */}
             <div className="insta-typing-guide">
               <span className="guide-label">Special characters:</span>
+              <button
+                type="button"
+                className="quick-tag-trigger-btn heading"
+                onClick={() => insertTriggerChar('- ')}
+                title="Designate Issue Heading with hyphen (-)"
+              >
+                <span className="sym">-</span> Heading
+              </button>
               <button type="button" className="quick-tag-trigger-btn zone" onClick={() => insertTriggerChar('@')}>
                 <span className="sym">@</span> Zone
               </button>
