@@ -172,6 +172,90 @@ export default function ReportIssuePage() {
     }
   };
 
+  // Calculate pixel coordinates of the caret within the textarea to place top-left corner of dropdown on cursor
+  const getCaretCoordinates = (element, position) => {
+    if (!element || typeof window === 'undefined') return { top: 34, left: 12 };
+
+    const properties = [
+      'direction',
+      'boxSizing',
+      'width',
+      'overflowX',
+      'overflowY',
+      'borderTopWidth',
+      'borderRightWidth',
+      'borderBottomWidth',
+      'borderLeftWidth',
+      'paddingTop',
+      'paddingRight',
+      'paddingBottom',
+      'paddingLeft',
+      'fontStyle',
+      'fontVariant',
+      'fontWeight',
+      'fontStretch',
+      'fontSize',
+      'lineHeight',
+      'fontFamily',
+      'textAlign',
+      'textTransform',
+      'textIndent',
+      'letterSpacing',
+      'wordSpacing',
+      'tabSize',
+    ];
+
+    const div = document.createElement('div');
+    div.id = 'input-textarea-caret-position-mirror-div';
+    document.body.appendChild(div);
+
+    const style = div.style;
+    const computed = window.getComputedStyle(element);
+
+    style.whiteSpace = 'pre-wrap';
+    style.wordWrap = 'break-word';
+    style.position = 'absolute';
+    style.visibility = 'hidden';
+    style.top = '0px';
+    style.left = '-9999px';
+
+    properties.forEach((prop) => {
+      style[prop] = computed[prop];
+    });
+
+    // Substring before cursor
+    div.textContent = element.value.substring(0, position);
+
+    const span = document.createElement('span');
+    span.textContent = element.value.substring(position) || '.';
+    div.appendChild(span);
+
+    const borderLeft = parseInt(computed['borderLeftWidth'] || '0', 10) || 0;
+    const borderTop = parseInt(computed['borderTopWidth'] || '0', 10) || 0;
+    const lineHeight = parseInt(computed['lineHeight'] || '22', 10) || 22;
+
+    const rawTop = span.offsetTop + borderTop - element.scrollTop;
+    const rawLeft = span.offsetLeft + borderLeft - element.scrollLeft;
+
+    document.body.removeChild(div);
+
+    // Position top-left corner of the dropdown directly under the cursor line
+    const containerWidth = element.clientWidth || 340;
+    const popoverWidth = Math.min(310, containerWidth - 16);
+
+    let boundedLeft = rawLeft;
+    if (boundedLeft + popoverWidth > containerWidth) {
+      boundedLeft = Math.max(8, containerWidth - popoverWidth - 8);
+    } else {
+      boundedLeft = Math.max(8, boundedLeft);
+    }
+
+    return {
+      top: rawTop + lineHeight + 4,
+      left: boundedLeft,
+    };
+  };
+
   // Detect whether cursor is currently at a special character tag (@, #, $)
   const detectAutocomplete = (text, cursorPos) => {
     if (cursorPos === undefined || cursorPos === null) {
@@ -185,6 +269,7 @@ export default function ReportIssuePage() {
       const trigger = match[1]; // '@' | '#' | '$'
       const query = match[2] || '';
       const triggerIndex = textBeforeCursor.lastIndexOf(trigger);
+      const coords = getCaretCoordinates(textareaRef.current, cursorPos);
 
       setAutocomplete({
         type: trigger,
@@ -192,6 +277,7 @@ export default function ReportIssuePage() {
         startIndex: triggerIndex,
         endIndex: cursorPos,
         activeIndex: 0,
+        coords,
       });
     } else {
       setAutocomplete(null);
