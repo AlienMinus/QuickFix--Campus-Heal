@@ -5,19 +5,22 @@ import { useOrg } from '../../context/OrgContext';
 import { issueAPI, authAPI } from '../../services/api';
 import SeverityBadge from '../../components/SeverityBadge/SeverityBadge';
 import {
-  FaUser,
-  FaEnvelope,
-  FaBuilding,
   FaSignOutAlt,
-  FaListAlt,
-  FaCheckCircle,
-  FaClock,
-  FaExclamationCircle,
-  FaPlus,
-  FaUniversity,
   FaCamera,
   FaTrash,
   FaSpinner,
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaUniversity,
+  FaEnvelope,
+  FaBuilding,
+  FaIdBadge,
+  FaTicketAlt,
+  FaClock,
+  FaClipboardList,
+  FaFolderOpen,
+  FaPlus,
+  FaMapMarkerAlt,
 } from 'react-icons/fa';
 import './ProfilePage.css';
 
@@ -32,13 +35,31 @@ export default function ProfilePage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarMessage, setAvatarMessage] = useState({ type: '', text: '' });
 
+  // Disregard any legacy random unsplash photo and clean it up automatically
+  const displayAvatar =
+    user?.avatar && !user.avatar.includes('images.unsplash.com') ? user.avatar : null;
+
+  useEffect(() => {
+    if (user?.avatar && user.avatar.includes('images.unsplash.com')) {
+      authAPI
+        .removeAvatar()
+        .then((res) => {
+          if (res.data?.success) {
+            updateUser(res.data.user);
+          }
+        })
+        .catch(() => {
+          updateUser({ avatar: '' });
+        });
+    }
+  }, [user?.avatar]);
+
   useEffect(() => {
     const fetchUserIssues = async () => {
       try {
         setLoading(true);
         const res = await issueAPI.getAll({ limit: 100 });
         const allIssues = res.data.issues || [];
-        // Match user's issues
         const userTickets = allIssues.filter(
           (i) =>
             i.reportedBy?._id === user?._id ||
@@ -73,7 +94,7 @@ export default function ProfilePage() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setAvatarMessage({ type: 'error', text: 'Please select an image file (JPG, PNG, WebP).' });
+      setAvatarMessage({ type: 'error', text: 'Select an image file (JPG, PNG, WebP).' });
       return;
     }
 
@@ -92,8 +113,8 @@ export default function ProfilePage() {
       const res = await authAPI.updateAvatar(formData);
       if (res.data?.success) {
         updateUser(res.data.user);
-        setAvatarMessage({ type: 'success', text: 'Profile picture updated successfully!' });
-        setTimeout(() => setAvatarMessage({ type: '', text: '' }), 4000);
+        setAvatarMessage({ type: 'success', text: 'Profile picture updated!' });
+        setTimeout(() => setAvatarMessage({ type: '', text: '' }), 3000);
       } else {
         setAvatarMessage({ type: 'error', text: res.data?.message || 'Failed to update photo.' });
       }
@@ -101,7 +122,7 @@ export default function ProfilePage() {
       console.error('Avatar upload failed:', err);
       setAvatarMessage({
         type: 'error',
-        text: err.response?.data?.message || 'Failed to upload photo. Please try again.',
+        text: err.response?.data?.message || 'Failed to update photo.',
       });
     } finally {
       setUploadingAvatar(false);
@@ -122,7 +143,7 @@ export default function ProfilePage() {
       if (res.data?.success) {
         updateUser(res.data.user);
         setAvatarMessage({ type: 'success', text: 'Profile picture removed.' });
-        setTimeout(() => setAvatarMessage({ type: '', text: '' }), 4000);
+        setTimeout(() => setAvatarMessage({ type: '', text: '' }), 3000);
       } else {
         setAvatarMessage({ type: 'error', text: res.data?.message || 'Failed to remove photo.' });
       }
@@ -157,62 +178,68 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* User Identity Card */}
-      <div className="profile-hero-card">
-        <div className="profile-avatar-column">
+      {/* Modern Compact Profile Identity Card */}
+      <div className="profile-card">
+        {/* Top bar with Role on left and sleek Sign Out icon on right */}
+        <div className="profile-card-topbar">
+          <span className={`profile-role-pill ${user?.role || 'student'}`}>
+            {user?.role ? user.role.toUpperCase() : 'STUDENT'}
+          </span>
+
+          <button
+            className="icon-logout-btn"
+            onClick={handleLogout}
+            title="Sign Out"
+            aria-label="Sign Out"
+          >
+            <FaSignOutAlt />
+          </button>
+        </div>
+
+        {/* Center Avatar with Camera / Trash Icon Badges */}
+        <div className="profile-avatar-center">
           <div
-            className="profile-avatar-wrap"
+            className="avatar-wrapper"
             onClick={handleTriggerUpload}
-            title="Click to change profile picture"
+            title="Tap to change photo"
           >
             {uploadingAvatar ? (
               <div className="avatar-loading-overlay">
-                <FaSpinner className="avatar-spinner-icon" />
+                <FaSpinner className="avatar-spin" />
               </div>
-            ) : user?.avatar ? (
-              <img src={user.avatar} alt={user.name} className="user-avatar-img" />
+            ) : displayAvatar ? (
+              <img src={displayAvatar} alt={user?.name} className="avatar-img" />
             ) : (
-              <div className="avatar-placeholder">
+              <div className="avatar-initials">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
             )}
 
             <button
               type="button"
-              className="avatar-camera-btn"
+              className="avatar-badge-btn edit"
               onClick={(e) => {
                 e.stopPropagation();
                 handleTriggerUpload();
               }}
-              title="Upload new profile picture"
+              title="Change Photo"
               disabled={uploadingAvatar}
             >
               <FaCamera />
             </button>
 
-            <span className={`role-badge ${user?.role || 'student'}`}>
-              {user?.role ? user.role.toUpperCase() : 'STUDENT'}
-            </span>
-          </div>
-
-          <div className="avatar-actions-row">
-            <button
-              type="button"
-              className="avatar-change-btn"
-              onClick={handleTriggerUpload}
-              disabled={uploadingAvatar}
-            >
-              <FaCamera /> {user?.avatar ? 'Change' : 'Upload'}
-            </button>
-            {user?.avatar && (
+            {displayAvatar && (
               <button
                 type="button"
-                className="avatar-remove-btn"
-                onClick={handleRemoveAvatar}
+                className="avatar-badge-btn delete"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveAvatar();
+                }}
+                title="Remove Photo"
                 disabled={uploadingAvatar}
-                title="Remove photo and use initials"
               >
-                <FaTrash /> Remove
+                <FaTrash />
               </button>
             )}
           </div>
@@ -226,61 +253,96 @@ export default function ProfilePage() {
           />
         </div>
 
-        <div className="profile-user-info">
-          <h2>{user?.name || 'Campus Member'}</h2>
-          <div className="info-meta-row">
-            <span className="info-chip">
-              <FaUniversity /> {user?.institute || 'BPUT Tech Campus'}
-            </span>
-            <span className="info-chip">
-              <FaEnvelope /> {user?.email}
-            </span>
-            <span className="info-chip">
-              <FaBuilding /> {user?.department || 'General Campus'}
-            </span>
-          </div>
-        </div>
+        {/* User Name */}
+        <h2 className="profile-name">{user?.name || 'Campus Member'}</h2>
 
-        <button className="logout-btn" onClick={handleLogout}>
-          <FaSignOutAlt /> Sign Out
-        </button>
-      </div>
-
-      {/* User Quick Activity Summary (No developer technical jargon) */}
-      <div className="profile-summary-grid">
-        <div className="summary-stat-box">
-          <span className="summary-number">{totalCount}</span>
-          <span className="summary-label">Tickets Filed</span>
-        </div>
-        <div className="summary-stat-box active">
-          <span className="summary-number">{inProgressCount}</span>
-          <span className="summary-label">In Progress</span>
-        </div>
-        <div className="summary-stat-box resolved">
-          <span className="summary-number">{resolvedCount}</span>
-          <span className="summary-label">Resolved</span>
+        {/* Clean, Compact Metadata Chips */}
+        <div className="profile-chips-wrap">
+          {user?.institute && (
+            <span className="profile-chip">
+              <FaUniversity className="chip-icon" /> {user.institute}
+            </span>
+          )}
+          {user?.email && (
+            <span className="profile-chip">
+              <FaEnvelope className="chip-icon" /> {user.email}
+            </span>
+          )}
+          {user?.department && (
+            <span className="profile-chip">
+              <FaBuilding className="chip-icon" /> {user.department}
+            </span>
+          )}
+          {user?.identifier && (
+            <span className="profile-chip">
+              <FaIdBadge className="chip-icon" /> {user.identifier}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* User's Reported Tickets */}
-      <div className="user-tickets-card">
-        <div className="tickets-card-header">
-          <div className="tickets-title-wrap">
-            <FaListAlt />
-            <h3>My Filed Campus Tickets ({myIssues.length})</h3>
+      {/* Activity Statistics with Icons & Clean Numbers */}
+      <div className="profile-stats-grid">
+        <div className="stat-card">
+          <div className="stat-card-icon total">
+            <FaTicketAlt />
           </div>
-          <button className="file-more-btn" onClick={() => navigate('/report')}>
-            <FaPlus /> Report New
+          <div className="stat-card-data">
+            <span className="stat-count">{totalCount}</span>
+            <span className="stat-text">Total</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-icon pending">
+            <FaClock />
+          </div>
+          <div className="stat-card-data">
+            <span className="stat-count">{inProgressCount}</span>
+            <span className="stat-text">Active</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-icon resolved">
+            <FaCheckCircle />
+          </div>
+          <div className="stat-card-data">
+            <span className="stat-count">{resolvedCount}</span>
+            <span className="stat-text">Solved</span>
+          </div>
+        </div>
+      </div>
+
+      {/* My Campus Tickets Section */}
+      <div className="profile-tickets-section">
+        <div className="tickets-section-header">
+          <div className="header-left">
+            <FaClipboardList className="header-icon" />
+            <h3>My Tickets</h3>
+            <span className="badge-count">{myIssues.length}</span>
+          </div>
+
+          <button
+            className="icon-report-btn"
+            onClick={() => navigate('/report')}
+            title="Report New Issue"
+          >
+            <FaPlus /> <span>New</span>
           </button>
         </div>
 
         {loading ? (
-          <p className="tickets-loading">Loading your reports...</p>
+          <div className="tickets-loading-box">
+            <FaSpinner className="loading-spin" />
+            <span>Loading tickets...</span>
+          </div>
         ) : myIssues.length === 0 ? (
-          <div className="empty-user-tickets">
-            <p>You haven't reported any campus issues yet.</p>
-            <button className="primary-action-btn" onClick={() => navigate('/report')}>
-              Report Your First Problem
+          <div className="empty-tickets-card">
+            <FaFolderOpen className="empty-folder-icon" />
+            <p>No tickets reported yet</p>
+            <button className="report-action-btn" onClick={() => navigate('/report')}>
+              <FaPlus /> Report Issue
             </button>
           </div>
         ) : (
@@ -294,7 +356,10 @@ export default function ProfilePage() {
                 <div className="row-left">
                   <span className="ticket-cat">{issue.category}</span>
                   <span className="ticket-title">{issue.title}</span>
-                  <span className="ticket-location">📍 {issue.locationName || issue.zone || 'Campus Area'}</span>
+                  <span className="ticket-location">
+                    <FaMapMarkerAlt className="loc-pin" />{' '}
+                    {issue.locationName || issue.zone || issue.location?.building || 'Campus Area'}
+                  </span>
                 </div>
                 <div className="row-right">
                   <SeverityBadge severity={issue.severity} />
