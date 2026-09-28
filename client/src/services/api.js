@@ -77,6 +77,11 @@ export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   register: (data) => api.post('/auth/register', data),
   getProfile: () => api.get('/auth/me'),
+  updateAvatar: (formData) => api.put('/auth/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  removeAvatar: () => api.delete('/auth/avatar'),
+  updateProfile: (data) => api.put('/auth/profile', data),
 };
 
 export const notificationAPI = {

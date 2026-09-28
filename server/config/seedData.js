@@ -79,7 +79,7 @@ const seedInitialData = async () => {
         department: 'Higher Education Governance & Audits',
         identifier: 'SUPER-CHIEF-01',
         phone: '+91 99999 00000',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        avatar: '',
       });
       console.log('👑 Super Admin account initialized: superadmin@quickfix.org / quickfix2026');
     }
@@ -87,6 +87,12 @@ const seedInitialData = async () => {
     // 3. Backfill any existing users or issues without an institute
     await User.updateMany({ institute: { $exists: false } }, { $set: { institute: 'BPUT Tech Campus' } });
     await Issue.updateMany({ institute: { $exists: false } }, { $set: { institute: 'BPUT Tech Campus' } });
+
+    // 4. Remove any random unsplash avatars previously assigned to users
+    await User.updateMany(
+      { avatar: { $regex: 'images\\.unsplash\\.com/photo-(1534528741775|1500648767791|1507003211169|1539571696357)' } },
+      { $set: { avatar: '' } }
+    );
 
     const userCount = await User.countDocuments();
     if (userCount > 1) {
@@ -104,7 +110,7 @@ const seedInitialData = async () => {
       department: 'Central Campus Administration',
       identifier: 'ADMIN-001',
       phone: '+91 94370 12345',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+      avatar: '',
     });
 
     const staffUser = await User.create({
@@ -116,7 +122,7 @@ const seedInitialData = async () => {
       department: 'Electrical & Facilities Maintenance',
       identifier: 'STAFF-EM-108',
       phone: '+91 98610 54321',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+      avatar: '',
     });
 
     const studentUser = await User.create({
@@ -128,7 +134,7 @@ const seedInitialData = async () => {
       department: 'Computer Science & Engineering',
       identifier: 'GIFT-2022-CSE-042',
       phone: '+91 70081 99887',
-      avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=200&q=80',
+      avatar: '',
     });
 
     const sampleIssues = [

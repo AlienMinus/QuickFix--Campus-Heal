@@ -81,6 +81,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (updatedUserData) => {
+    setUser((prev) => {
+      const merged = { ...prev, ...updatedUserData };
+      localStorage.setItem('quickfix_user', JSON.stringify(merged));
+      return merged;
+    });
+  };
+
   const logout = () => {
     localStorage.removeItem('quickfix_token');
     localStorage.removeItem('quickfix_user');
@@ -98,6 +106,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateUser,
         isAuthenticated: Boolean(user),
         isAdmin: user?.role === 'admin' || user?.role === 'superadmin',
         isSuperAdmin: user?.role === 'superadmin',

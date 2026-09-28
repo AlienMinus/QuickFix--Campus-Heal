@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { getMediaUrl } = require('../config/cloudinary');
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -136,7 +137,7 @@ exports.demoLogin = async (req, res) => {
         institute: 'BPUT Tech Campus',
         department: 'Computer Science & Engineering (7th Sem)',
         identifier: 'GIFT-2022-CSE-042',
-        avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=200&q=80',
+        avatar: '',
       },
       staff: {
         email: 'maintenance.staff@gift.ac.in',
@@ -145,7 +146,7 @@ exports.demoLogin = async (req, res) => {
         institute: 'BPUT Tech Campus',
         department: 'Campus Electrical & Facilities Maintenance',
         identifier: 'STAFF-EM-108',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+        avatar: '',
       },
       admin: {
         email: 'admin.campus@gift.ac.in',
@@ -154,7 +155,7 @@ exports.demoLogin = async (req, res) => {
         institute: 'BPUT Tech Campus',
         department: 'BPUT / GIFT Central Administration',
         identifier: 'ADMIN-CENTRAL-001',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+        avatar: '',
       },
       superadmin: {
         email: 'superadmin@quickfix.org',
@@ -163,7 +164,7 @@ exports.demoLogin = async (req, res) => {
         institute: 'Apex Multi-Campus Authority',
         department: 'Higher Education Governance & Audits',
         identifier: 'SUPER-CHIEF-01',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        avatar: '',
       },
     };
 
@@ -177,6 +178,10 @@ exports.demoLogin = async (req, res) => {
         ...targetProfile,
         password: hashedPassword,
       });
+    } else if (user.avatar && user.avatar.includes('images.unsplash.com')) {
+      // Clean up previous random unsplash picture
+      user.avatar = '';
+      await user.save();
     }
 
     const token = generateToken(user);
@@ -193,11 +198,135 @@ exports.demoLogin = async (req, res) => {
         institute: user.institute || 'BPUT Tech Campus',
         department: user.department,
         identifier: user.identifier,
-        avatar: user.avatar,
+        avatar: user.avatar || '',
       },
     });
   } catch (error) {
     console.error('Demo Login Error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateAvatar = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id || req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    let avatarUrl = '';
+    if (req.file) {
+      const media = getMediaUrl(req, req.file);
+      if (media && media.url) {
+        avatarUrl = media.url;
+      }
+    } else if (req.body.avatar) {
+      avatarUrl = req.body.avatar;
+    } else {
+      return res.status(400).json({ success: false, message: 'No avatar image provided' });
+    }
+
+    user.avatar = avatarUrl;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile picture updated successfully',
+      avatar: user.avatar,
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        institute: user.institute,
+        department: user.department,
+        identifier: user.identifier,
+        phone: user.phone,
+        avatar: user.avatar,
+      },
+    });
+  } catch (error) {
+    console.error('Update Avatar Error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.removeAvatar = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id || req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.avatar = '';
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile picture removed successfully',
+      avatar: '',
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        institute: user.institute,
+        department: user.department,
+        identifier: user.identifier,
+        phone: user.phone,
+        avatar: '',
+      },
+    });
+  } catch (error) {
+    console.error('Remove Avatar Error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id || req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const { name, department, identifier, phone, removeAvatar } = req.body;
+    if (name) user.name = name.trim();
+    if (department !== undefined) user.department = department.trim();
+    if (identifier !== undefined) user.identifier = identifier.trim();
+    if (phone !== undefined) user.phone = phone.trim();
+
+    if (removeAvatar === 'true' || removeAvatar === true) {
+      user.avatar = '';
+    } else if (req.file) {
+      const media = getMediaUrl(req, req.file);
+      if (media && media.url) user.avatar = media.url;
+    } else if (req.body.avatar !== undefined) {
+      user.avatar = req.body.avatar;
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        institute: user.institute,
+        department: user.department,
+        identifier: user.identifier,
+        phone: user.phone,
+        avatar: user.avatar,
+      },
+    });
+  } catch (error) {
+    console.error('Update Profile Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

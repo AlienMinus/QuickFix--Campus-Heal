@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useOrg } from '../../context/OrgContext';
-import { issueAPI } from '../../services/api';
+import { issueAPI, authAPI } from '../../services/api';
 import SeverityBadge from '../../components/SeverityBadge/SeverityBadge';
 import {
   FaUser,
@@ -15,16 +15,22 @@ import {
   FaExclamationCircle,
   FaPlus,
   FaUniversity,
+  FaCamera,
+  FaTrash,
+  FaSpinner,
 } from 'react-icons/fa';
 import './ProfilePage.css';
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { orgConfig } = useOrg();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [myIssues, setMyIssues] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     const fetchUserIssues = async () => {
