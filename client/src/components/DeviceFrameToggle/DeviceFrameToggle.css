@@ -40,7 +40,17 @@
   box-shadow: 0 2px 8px rgba(95, 37, 159, 0.4);
 }
 
-@media (max-width: 1024px) {
+.scale-indicator-badge {
+  font-size: 0.65rem;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 1px 6px;
+  border-radius: 9999px;
+  margin-left: 2px;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
   .device-frame-toggle-bar {
     display: none !important;
   }
