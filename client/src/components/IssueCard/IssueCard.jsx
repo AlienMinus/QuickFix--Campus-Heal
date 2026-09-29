@@ -19,9 +19,7 @@ import {
   FaPlay,
   FaVideo,
   FaComment,
-  FaShareAlt,
-  FaGlobeAmericas,
-  FaCheck
+  FaGlobeAmericas
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
@@ -128,7 +126,6 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
   const [isUpvoted, setIsUpvoted] = useState(checkInitialVoted);
   const [upvotes, setUpvotes] = useState(issue.upvotesCount ?? (issue.upvotes?.length || 0));
   const [upvoting, setUpvoting] = useState(false);
-  const [sharedToast, setSharedToast] = useState(false);
 
   useEffect(() => {
     setIsUpvoted(checkInitialVoted());
@@ -172,31 +169,6 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
       }
     } finally {
       setUpvoting(false);
-    }
-  };
-
-  const handleShare = async (e) => {
-    e.stopPropagation();
-    const shareUrl = `${window.location.origin}/issues/${issue._id}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Campus Issue: ${issue.title}`,
-          text: `Check out this reported campus issue: ${issue.title}`,
-          url: shareUrl,
-        });
-        return;
-      } catch (err) {
-        // Fallback to clipboard
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setSharedToast(true);
-      setTimeout(() => setSharedToast(false), 2000);
-    } catch (err) {
-      console.warn('Clipboard failed');
     }
   };
 
@@ -392,16 +364,6 @@ const IssueCard = ({ issue, onUpvoteChange }) => {
           <FaComment />
           <span>Comment</span>
           {commentsCount > 0 && <span className="comment-count-pill">{commentsCount}</span>}
-        </button>
-
-        <button
-          type="button"
-          className="action-btn share-btn"
-          onClick={handleShare}
-          title="Share ticket link"
-        >
-          {sharedToast ? <FaCheck className="copied-icon" /> : <FaShareAlt />}
-          <span>{sharedToast ? 'Copied!' : 'Share'}</span>
         </button>
       </div>
     </article>
